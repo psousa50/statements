@@ -9,6 +9,7 @@ import UploadPage from './pages/UploadPage';
 import TransactionsPage from './pages/TransactionsPage';
 import CategoriesPage from './pages/CategoriesPage';
 import SourcesPage from './pages/SourcesPage';
+import ChartsPage from './pages/ChartsPage';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -29,6 +30,7 @@ function App() {
           <Routes>
             <Route path="/" element={<UploadPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/charts" element={<ChartsPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/sources" element={<SourcesPage />} />
           </Routes>

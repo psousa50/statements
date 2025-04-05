@@ -30,6 +30,13 @@ const Navigation: React.FC = () => {
             </Nav.Link>
             <Nav.Link 
               as={Link} 
+              to="/charts" 
+              active={location.pathname === '/charts'}
+            >
+              Charts
+            </Nav.Link>
+            <Nav.Link 
+              as={Link} 
               to="/categories" 
               active={location.pathname === '/categories'}
             >
