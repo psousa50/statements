@@ -1,0 +1,43 @@
+from datetime import date
+from typing import List, Optional
+from pydantic import BaseModel, Field, ConfigDict
+
+
+class CategoryBase(BaseModel):
+    category_name: str
+    parent_category_id: Optional[int] = None
+
+
+class CategoryCreate(CategoryBase):
+    pass
+
+
+class Category(CategoryBase):
+    id: int
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionBase(BaseModel):
+    date: date
+    description: str
+    amount: float
+    currency: str = "EUR"
+
+
+class TransactionCreate(TransactionBase):
+    category_id: Optional[int] = None
+
+
+class Transaction(TransactionBase):
+    id: int
+    category_id: Optional[int] = None
+    category: Optional[Category] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FileUploadResponse(BaseModel):
+    message: str
+    transactions_processed: int
+    transactions: List[Transaction]
