@@ -33,6 +33,7 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     date = Column(Date, index=True)
     description = Column(String)
+    normalized_description = Column(String, index=True)
     amount = Column(Numeric(10, 2))
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     currency = Column(String, default="EUR")

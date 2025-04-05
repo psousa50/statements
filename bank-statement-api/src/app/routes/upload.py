@@ -1,13 +1,15 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 import pandas as pd
 import io
+import re
 from datetime import datetime
 
 from ..db import get_db
-from ..models import Transaction, Source
-from ..schemas import FileUploadResponse, Transaction as TransactionSchema
+from ..models import Transaction, Source, Category
+from ..schemas import Transaction as TransactionSchema, FileUploadResponse
 from ..services.categorizer import TransactionCategorizer
 
 router = APIRouter(
@@ -63,6 +65,17 @@ def parse_date(date_str):
     except ValueError:
         raise ValueError("Invalid date format")
 
+def normalize_description(description):
+    if not description:
+        return ""
+    # Convert to lowercase
+    normalized = description.lower()
+    # Remove punctuation
+    normalized = re.sub(r'[^\w\s]', '', normalized)
+    # Remove extra whitespace
+    normalized = re.sub(r'\s+', ' ', normalized).strip()
+    return normalized
+
 @router.post("/", response_model=FileUploadResponse)
 async def upload_file(
     file: UploadFile = File(...),
@@ -98,45 +111,73 @@ async def upload_file(
             db.commit()
             db.refresh(default_source)
         source_id = default_source.id
-    else:
-        # Verify that the source exists
-        source = db.query(Source).filter(Source.id == source_id).first()
-        if source is None:
-            raise HTTPException(status_code=404, detail=f"Source with ID {source_id} not found")
     
     # Process transactions
     transactions = []
+    skipped_count = 0
+    
     for _, row in df.iterrows():
-        # Parse date
         try:
+            # Parse date
             transaction_date = parse_date(row['date'])
-        except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid date format: {row['date']}")
-        
-        # Create transaction object
-        transaction = Transaction(
-            date=transaction_date,
-            description=row['description'],
-            amount=float(row['amount']),
-            currency=row.get('currency', 'EUR'),
-            source_id=source_id
-        )
-        
-        db.add(transaction)
-        transactions.append(transaction)
+            
+            # Get amount
+            amount = float(row['amount'])
+            
+            # Normalize description
+            description = str(row['description'])
+            normalized_description = normalize_description(description)
+            
+            # Check for duplicates using the normalized_description field
+            existing_transaction = db.query(Transaction).filter(
+                Transaction.date == transaction_date,
+                Transaction.amount == amount,
+                Transaction.source_id == source_id,
+                Transaction.normalized_description == normalized_description
+            ).first()
+            
+            if existing_transaction:
+                skipped_count += 1
+                continue
+            
+            # Create new transaction
+            new_transaction = Transaction(
+                date=transaction_date,
+                description=description,
+                normalized_description=normalized_description,
+                amount=amount,
+                source_id=source_id
+            )
+            
+            # Add currency if available
+            if 'currency' in row and pd.notna(row['currency']):
+                new_transaction.currency = row['currency']
+            
+            # Categorize transaction
+            categorizer = TransactionCategorizer(db)
+            category = categorizer.categorize(description)
+            if category:
+                new_transaction.category_id = category.id
+            
+            db.add(new_transaction)
+            transactions.append(new_transaction)
+            
+        except Exception as e:
+            # Log the error but continue processing other rows
+            print(f"Error processing row: {row}. Error: {str(e)}")
     
-    db.commit()
+    # Commit all transactions at once
+    if transactions:
+        db.commit()
+        for transaction in transactions:
+            db.refresh(transaction)
     
-    # Categorize transactions
-    categorizer = TransactionCategorizer(db)
-    categorizer.categorize_transactions(transactions)
-    
-    # Refresh transactions to get updated data
-    for transaction in transactions:
-        db.refresh(transaction)
+    # Convert to schema
+    transaction_schemas = [TransactionSchema.model_validate(t, from_attributes=True) for t in transactions]
     
     return FileUploadResponse(
         message="File processed successfully",
         transactions_processed=len(transactions),
-        transactions=transactions
+        transactions=transaction_schemas,
+        skipped_duplicates=skipped_count
     )

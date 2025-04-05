@@ -58,3 +58,4 @@ class FileUploadResponse(BaseModel):
     message: str
     transactions_processed: int
     transactions: List[Transaction]
+    skipped_duplicates: int = 0

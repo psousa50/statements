@@ -43,6 +43,21 @@ class TransactionCategorizer:
         
         return None
     
+    def categorize(self, description: str) -> Optional[Category]:
+        """
+        Categorize a transaction description and return the Category object.
+        
+        Args:
+            description: The transaction description
+            
+        Returns:
+            The Category object or None if no match is found
+        """
+        category_name = self.categorize_transaction(description)
+        if category_name:
+            return self.get_or_create_category(category_name)
+        return None
+    
     def get_or_create_category(self, category_name: str) -> Category:
         """
         Get an existing category or create a new one if it doesn't exist.
