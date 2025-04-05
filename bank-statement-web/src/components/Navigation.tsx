@@ -19,6 +19,13 @@ const Navigation: React.FC = () => {
               to="/" 
               active={location.pathname === '/'}
             >
+              Home
+            </Nav.Link>
+            <Nav.Link 
+              as={Link} 
+              to="/upload" 
+              active={location.pathname === '/upload'}
+            >
               Upload
             </Nav.Link>
             <Nav.Link 

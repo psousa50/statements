@@ -1,0 +1,97 @@
+.home-header {
+  padding: 2rem 0;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  transition: transform 0.3s ease;
+  border-left: 5px solid;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.income-card {
+  border-left-color: #28a745;
+}
+
+.expense-card {
+  border-left-color: #dc3545;
+}
+
+.balance-card {
+  border-left-color: #17a2b8;
+}
+
+.transaction-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.transaction-row:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+.action-button {
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+
+.search-button {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.source-badge {
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.source-badge:hover {
+  transform: scale(1.05);
+}
+
+.category-badge {
+  font-size: 0.8rem;
+  font-weight: normal;
+}
+
+.quick-action-card {
+  height: 100%;
+}
+
+.summary-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.summary-value {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.summary-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}

@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 import Navigation from './components/Navigation';
+import HomePage from './pages/HomePage';
 import UploadPage from './pages/UploadPage';
 import TransactionsPage from './pages/TransactionsPage';
 import CategoriesPage from './pages/CategoriesPage';
@@ -28,7 +29,8 @@ function App() {
         <div className="App">
           <Navigation />
           <Routes>
-            <Route path="/" element={<UploadPage />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/upload" element={<UploadPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
             <Route path="/charts" element={<ChartsPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
