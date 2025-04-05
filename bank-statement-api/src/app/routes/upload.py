@@ -82,6 +82,9 @@ async def upload_file(
     source_id: Optional[int] = Query(None),
     db: Session = Depends(get_db)
 ):
+    # Debug info
+    print(f"Received source_id: {source_id}, type: {type(source_id)}")
+    
     # Read file content
     file_content = await file.read()
     
