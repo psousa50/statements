@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import categories, transactions, upload
+from .routes import categories, transactions, upload, sources
 from .db import engine
 from . import models
 
@@ -27,6 +27,7 @@ app.add_middleware(
 app.include_router(categories.router)
 app.include_router(transactions.router)
 app.include_router(upload.router)
+app.include_router(sources.router)
 
 @app.get("/")
 def read_root():
@@ -37,5 +38,6 @@ def read_root():
             {"path": "/categories", "methods": ["GET", "POST"]},
             {"path": "/transactions", "methods": ["GET"]},
             {"path": "/upload", "methods": ["POST"]},
+            {"path": "/sources", "methods": ["GET", "POST"]},
         ]
     }

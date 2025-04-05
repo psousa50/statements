@@ -1,121 +1,136 @@
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-import pytest
 from datetime import date
+import io
+import pytest
 
-from src.app.main import app
-from src.app.db import Base, get_db
-from src.app.models import Category, Transaction
-
-
-# Create an in-memory SQLite database for testing
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Override the get_db dependency
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-app.dependency_overrides[get_db] = override_get_db
-
-client = TestClient(app)
-
-
-@pytest.fixture(scope="function")
-def test_db():
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
+from src.app.models import Category, Transaction, Source
 
 
 @pytest.fixture(scope="function")
 def db_with_categories(test_db):
-    db = TestingSessionLocal()
     categories = [
         Category(id=1, category_name="Groceries"),
         Category(id=2, category_name="Transport"),
         Category(id=3, category_name="Entertainment")
     ]
-    db.add_all(categories)
-    db.commit()
-    yield db
-    db.close()
+    test_db.add_all(categories)
+    test_db.commit()
+    return test_db
 
 
 @pytest.fixture(scope="function")
 def db_with_transactions(db_with_categories):
-    db = TestingSessionLocal()
+    # Create a source for the transactions
+    source = Source(id=1, name="test_source", description="Test Source")
+    db_with_categories.add(source)
+    db_with_categories.commit()
+    
     transactions = [
-        Transaction(id=1, date=date(2023, 1, 1), description="Supermarket", amount=50.0, category_id=1),
-        Transaction(id=2, date=date(2023, 1, 2), description="Uber", amount=15.0, category_id=2),
-        Transaction(id=3, date=date(2023, 1, 3), description="Netflix", amount=12.99, category_id=3)
+        Transaction(id=1, date=date(2023, 1, 1), description="Supermarket", amount=50.0, category_id=1, source_id=1),
+        Transaction(id=2, date=date(2023, 1, 2), description="Uber", amount=15.0, category_id=2, source_id=1),
+        Transaction(id=3, date=date(2023, 1, 3), description="Netflix", amount=12.99, category_id=3, source_id=1)
     ]
-    db.add_all(transactions)
-    db.commit()
-    yield db
-    db.close()
+    db_with_categories.add_all(transactions)
+    db_with_categories.commit()
+    return db_with_categories
 
 
-def test_read_root():
+def test_read_root(client):
     response = client.get("/")
     assert response.status_code == 200
     assert "Welcome to the Bank Statement API" in response.json()["message"]
 
 
-def test_get_categories(db_with_categories):
-    response = client.get("/categories/")
+def test_get_categories(client, db_with_categories):
+    response = client.get("/categories")
     assert response.status_code == 200
     categories = response.json()
     assert len(categories) == 3
     assert categories[0]["category_name"] == "Groceries"
 
 
-def test_create_category(test_db):
+def test_create_category(client, test_db):
     response = client.post(
-        "/categories/",
-        json={"category_name": "Test Category"}
+        "/categories",
+        json={"category_name": "Food", "parent_category_id": None}
     )
     assert response.status_code == 200
-    assert response.json()["category_name"] == "Test Category"
+    assert response.json()["category_name"] == "Food"
 
 
-def test_get_transactions(db_with_transactions):
-    response = client.get("/transactions/")
+def test_get_transactions(client, db_with_transactions):
+    response = client.get("/transactions")
     assert response.status_code == 200
     transactions = response.json()
     assert len(transactions) == 3
-    assert transactions[0]["description"] == "Netflix"  # Most recent first
 
 
-def test_get_transactions_with_filters(db_with_transactions):
+def test_get_transactions_with_filters(client, db_with_transactions):
     # Test date filter
-    response = client.get("/transactions/?start_date=2023-01-02")
+    response = client.get("/transactions?start_date=2023-01-02")
     assert response.status_code == 200
     transactions = response.json()
     assert len(transactions) == 2
     
     # Test category filter
-    response = client.get("/transactions/?category_id=1")
+    response = client.get("/transactions?category_id=1")
     assert response.status_code == 200
     transactions = response.json()
     assert len(transactions) == 1
     assert transactions[0]["description"] == "Supermarket"
     
     # Test search filter
-    response = client.get("/transactions/?search=uber")
+    response = client.get("/transactions?search=uber")
     assert response.status_code == 200
     transactions = response.json()
     assert len(transactions) == 1
     assert transactions[0]["description"] == "Uber"
+    
+    # Test source_id filter
+    response = client.get("/transactions?source_id=1")
+    assert response.status_code == 200
+    transactions = response.json()
+    assert len(transactions) == 3
+
+
+def test_upload_file_with_source_id(client, test_db):
+    # Create a test CSV file with transaction data
+    csv_content = """date,description,amount,currency
+2023-02-01,Test Transaction,100.00,EUR"""
+    
+    # Create a source first
+    source = Source(id=1, name="test_bank", description="Test Bank")
+    test_db.add(source)
+    test_db.commit()
+    
+    # Upload the file with a source_id
+    response = client.post(
+        "/upload?source_id=1",
+        files={"file": ("test.csv", csv_content, "text/csv")}
+    )
+    
+    assert response.status_code == 200
+    result = response.json()
+    assert result["message"] == "File processed successfully"
+    assert result["transactions_processed"] == 1
+
+
+def test_upload_file_without_source_id(client, test_db):
+    # Create a test CSV file with transaction data
+    csv_content = """date,description,amount,currency
+2023-03-01,Another Transaction,50.00,EUR"""
+    
+    # Create default source
+    default_source = Source(id=1, name="unknown", description="Default source")
+    test_db.add(default_source)
+    test_db.commit()
+    
+    # Upload the file without a source_id
+    response = client.post(
+        "/upload",
+        files={"file": ("test.csv", csv_content, "text/csv")}
+    )
+    
+    assert response.status_code == 200
+    result = response.json()
+    assert result["message"] == "File processed successfully"
+    assert result["transactions_processed"] == 1

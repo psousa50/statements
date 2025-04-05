@@ -1,12 +1,12 @@
-from typing import List
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from typing import List, Optional
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Query
 from sqlalchemy.orm import Session
 import pandas as pd
 import io
 from datetime import datetime
 
 from ..db import get_db
-from ..models import Transaction
+from ..models import Transaction, Source
 from ..schemas import FileUploadResponse, Transaction as TransactionSchema
 from ..services.categorizer import TransactionCategorizer
 
@@ -57,32 +57,71 @@ def map_columns(df):
     
     return df
 
+def parse_date(date_str):
+    try:
+        return datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        raise ValueError("Invalid date format")
+
 @router.post("/", response_model=FileUploadResponse)
 async def upload_file(
     file: UploadFile = File(...),
+    source_id: Optional[int] = Query(None),
     db: Session = Depends(get_db)
 ):
     # Read file content
     file_content = await file.read()
     
-    # Detect file format
-    file_format = detect_file_format(file_content, file.filename)
+    # Determine file type and parse accordingly
+    if file.filename.endswith('.csv'):
+        df = pd.read_csv(io.StringIO(file_content.decode('utf-8')))
+    elif file.filename.endswith(('.xls', '.xlsx')):
+        df = pd.read_excel(io.BytesIO(file_content))
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported file format. Please upload a CSV or Excel file.")
     
-    # Parse file
-    df = parse_file(file_content, file_format)
+    # Validate required columns
+    required_columns = ['date', 'description', 'amount']
+    if not all(col in df.columns for col in required_columns):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Missing required columns. File must contain: {', '.join(required_columns)}"
+        )
     
-    # Map columns
-    df = map_columns(df)
+    # Get default source if source_id is not provided
+    if source_id is None:
+        default_source = db.query(Source).filter(Source.name == "unknown").first()
+        if default_source is None:
+            # Create default source if it doesn't exist
+            default_source = Source(name="unknown", description="Default source for transactions with unknown origin")
+            db.add(default_source)
+            db.commit()
+            db.refresh(default_source)
+        source_id = default_source.id
+    else:
+        # Verify that the source exists
+        source = db.query(Source).filter(Source.id == source_id).first()
+        if source is None:
+            raise HTTPException(status_code=404, detail=f"Source with ID {source_id} not found")
     
-    # Create transactions
+    # Process transactions
     transactions = []
     for _, row in df.iterrows():
+        # Parse date
+        try:
+            transaction_date = parse_date(row['date'])
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid date format: {row['date']}")
+        
+        # Create transaction object
         transaction = Transaction(
-            date=row['date'],
+            date=transaction_date,
             description=row['description'],
             amount=float(row['amount']),
-            currency=row.get('currency', 'EUR')
+            currency=row.get('currency', 'EUR'),
+            source_id=source_id
         )
+        
         db.add(transaction)
         transactions.append(transaction)
     

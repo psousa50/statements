@@ -18,11 +18,27 @@ class Category(CategoryBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class SourceBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class SourceCreate(SourceBase):
+    pass
+
+
+class Source(SourceBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class TransactionBase(BaseModel):
     date: date
     description: str
     amount: float
     currency: str = "EUR"
+    source_id: int
 
 
 class TransactionCreate(TransactionBase):
@@ -33,6 +49,7 @@ class Transaction(TransactionBase):
     id: int
     category_id: Optional[int] = None
     category: Optional[Category] = None
+    source: Optional[Source] = None
     
     model_config = ConfigDict(from_attributes=True)
 
