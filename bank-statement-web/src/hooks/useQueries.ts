@@ -46,7 +46,7 @@ export const useCreateCategory = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (category: { category_name: string; description?: string }) => 
+    mutationFn: (category: { category_name: string; parent_category_id?: number | null }) => 
       categoriesApi.create(category),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });

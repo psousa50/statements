@@ -41,7 +41,7 @@ export const categoriesApi = {
     return response.data;
   },
   
-  create: async (category: { category_name: string; description?: string }): Promise<Category> => {
+  create: async (category: { category_name: string; parent_category_id?: number | null }): Promise<Category> => {
     const response = await api.post('/categories', category);
     return response.data;
   },
