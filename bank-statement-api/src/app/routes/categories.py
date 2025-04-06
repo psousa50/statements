@@ -90,8 +90,7 @@ class CategoryRouter:
                 
                 # Process subcategories if present
                 if len(row) > 1 and row[1].strip():
-                    # Handle compact format with // separator
-                    subcategories = row[1].split("//")
+                    subcategories = row[1].split("|")
                     
                     for sub_name in subcategories:
                         sub_name = sub_name.strip()
@@ -117,5 +116,5 @@ class CategoryRouter:
             return {"message": f"Successfully imported {len(categories_created)} categories"}
             
         except Exception as e:
-            db.rollback()
+            self.categories_repository.rollback()
             raise HTTPException(status_code=400, detail=f"Error importing categories: {str(e)}")
