@@ -12,7 +12,7 @@ router = APIRouter(
     tags=["transactions"],
 )
 
-@router.get("/", response_model=List[TransactionSchema])
+@router.get("", response_model=List[TransactionSchema])
 def get_transactions(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 import csv
@@ -8,123 +8,124 @@ from ..db import get_db
 from ..models import Category
 from ..schemas import Category as CategorySchema, CategoryCreate
 
-router = APIRouter(
-    prefix="/categories",
-    tags=["categories"],
-)
+# Callback type for category changes
+CategoryChangeCallback = Callable[[str, List[Category]], None]
 
-@router.get("/", response_model=List[CategorySchema])
-def get_categories(db: Session = Depends(get_db)):
-    categories = db.query(Category).all()
-    return categories
-
-@router.get("/{category_id}", response_model=CategorySchema)
-def get_category(category_id: int, db: Session = Depends(get_db)):
-    category = db.query(Category).filter(Category.id == category_id).first()
-    if category is None:
-        raise HTTPException(status_code=404, detail="Category not found")
-    return category
-
-@router.post("/", response_model=CategorySchema)
-def create_category(category: CategoryCreate, db: Session = Depends(get_db)):
-    db_category = db.query(Category).filter(Category.category_name == category.category_name).first()
-    if db_category:
-        raise HTTPException(status_code=400, detail="Category already exists")
-    
-    db_category = Category(**category.model_dump())
-    db.add(db_category)
-    db.commit()
-    db.refresh(db_category)
-    return db_category
-
-@router.post("/import", status_code=201)
-def import_categories_from_csv(
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
-):
-    """
-    Import categories from a CSV file.
-    
-    The CSV should have two columns:
-    - category: The main category name
-    - sub_categories: Subcategories separated by pipe (|) characters
-    """
-    if not file.filename.endswith('.csv'):
-        raise HTTPException(status_code=400, detail="Only CSV files are supported")
-    
-    # Read the CSV file
-    contents = file.file.read().decode('utf-8')
-    csv_reader = csv.DictReader(io.StringIO(contents))
-    
-    # Process the categories
-    result = {
-        "categories_created": 0,
-        "subcategories_created": 0,
-        "errors": []
-    }
-    
-    # First pass: Create all main categories
-    main_categories = {}
-    for row in csv_reader:
-        if 'category' not in row or not row['category']:
-            result["errors"].append(f"Missing category in row: {row}")
-            continue
+class CategoryRouter:
+    def __init__(self, on_change_callback: Optional[CategoryChangeCallback] = None):
+        self.router = APIRouter(
+            prefix="/categories",
+            tags=["categories"],
+        )
+        self.on_change_callback = on_change_callback
         
-        category_name = row['category'].strip()
-        
-        # Check if category already exists
-        db_category = db.query(Category).filter(Category.category_name == category_name).first()
-        if not db_category:
-            # Create new category
-            db_category = Category(category_name=category_name, parent_category_id=None)
-            db.add(db_category)
-            db.flush()  # Get the ID without committing
-            result["categories_created"] += 1
-        
-        main_categories[category_name] = db_category.id
+        # Register routes with trailing slashes removed
+        self.router.add_api_route("", self.get_categories, methods=["GET"], response_model=List[CategorySchema])
+        self.router.add_api_route("/{category_id}", self.get_category, methods=["GET"], response_model=CategorySchema)
+        self.router.add_api_route("", self.create_category, methods=["POST"], response_model=CategorySchema)
+        self.router.add_api_route("/import", self.import_categories_from_csv, methods=["POST"], status_code=201)
     
-    # Reset file pointer to beginning for second pass
-    file.file.seek(0)
-    contents = file.file.read().decode('utf-8')
-    csv_reader = csv.DictReader(io.StringIO(contents))
+    def _notify_change(self, action: str, categories: List[Category]):
+        """Notify the callback about a category change"""
+        if self.on_change_callback:
+            self.on_change_callback(action, categories)
     
-    # Second pass: Create subcategories
-    for row in csv_reader:
-        if 'category' not in row or 'sub_categories' not in row:
-            continue
+    async def get_categories(self, db: Session = Depends(get_db)):
+        categories = db.query(Category).all()
+        return categories
+    
+    async def get_category(self, category_id: int, db: Session = Depends(get_db)):
+        category = db.query(Category).filter(Category.id == category_id).first()
+        if category is None:
+            raise HTTPException(status_code=404, detail="Category not found")
+        return category
+    
+    async def create_category(self, category: CategoryCreate, db: Session = Depends(get_db)):
+        db_category = db.query(Category).filter(Category.category_name == category.category_name).first()
+        if db_category:
+            raise HTTPException(status_code=400, detail="Category already exists")
         
-        category_name = row['category'].strip()
-        if category_name not in main_categories:
-            continue
+        # Create main category
+        new_category = Category(
+            category_name=category.category_name,
+            parent_category_id=category.parent_category_id
+        )
         
-        parent_id = main_categories[category_name]
+        db.add(new_category)
+        db.commit()
+        db.refresh(new_category)
         
-        # Process subcategories
-        if row['sub_categories']:
-            subcategories = row['sub_categories'].split('|')
-            for subcategory_name in subcategories:
-                subcategory_name = subcategory_name.strip()
-                if not subcategory_name:
-                    continue
+        # Notify about the change
+        self._notify_change("create", [new_category])
+        
+        return new_category
+    
+    async def import_categories_from_csv(self, file: UploadFile = File(...), db: Session = Depends(get_db)):
+        """Import categories from a CSV file"""
+        content = await file.read()
+        
+        # Parse CSV
+        categories_created = []
+        try:
+            csv_text = content.decode('utf-8')
+            csv_reader = csv.reader(io.StringIO(csv_text))
+            
+            # Skip header row if present
+            header = next(csv_reader, None)
+            if not header or 'category' not in header[0].lower():
+                # If no header or doesn't look like a header, reset to start
+                csv_reader = csv.reader(io.StringIO(csv_text))
+            
+            for row in csv_reader:
+                if not row or not row[0].strip():
+                    continue  # Skip empty rows
                 
-                # Check if subcategory already exists
-                db_subcategory = db.query(Category).filter(
-                    Category.category_name == subcategory_name
-                ).first()
+                main_category_name = row[0].strip()
                 
-                if not db_subcategory:
-                    # Create new subcategory
-                    db_subcategory = Category(
-                        category_name=subcategory_name,
-                        parent_category_id=parent_id
+                # Check if main category exists
+                main_category = db.query(Category).filter(Category.category_name == main_category_name).first()
+                
+                if not main_category:
+                    # Create main category
+                    main_category = Category(
+                        category_name=main_category_name
                     )
-                    db.add(db_subcategory)
-                    result["subcategories_created"] += 1
-                elif db_subcategory.parent_category_id != parent_id:
-                    # Update parent if different
-                    db_subcategory.parent_category_id = parent_id
-    
-    # Commit all changes
-    db.commit()
-    
-    return result
+                    db.add(main_category)
+                    db.flush()  # Get ID
+                    categories_created.append(main_category)
+                
+                # Process subcategories if present
+                if len(row) > 1 and row[1].strip():
+                    # Handle compact format with // separator
+                    subcategories = row[1].split("//")
+                    
+                    for sub_name in subcategories:
+                        sub_name = sub_name.strip()
+                        if not sub_name:
+                            continue
+                            
+                        # Check if subcategory exists
+                        sub = db.query(Category).filter(
+                            Category.category_name == sub_name,
+                            Category.parent_category_id == main_category.id
+                        ).first()
+                        
+                        if not sub:
+                            # Create subcategory
+                            sub = Category(
+                                category_name=sub_name,
+                                parent_category_id=main_category.id
+                            )
+                            db.add(sub)
+            
+            db.commit()
+            
+            # Notify about the change
+            if categories_created:
+                self._notify_change("import", categories_created)
+            
+            return {"message": f"Successfully imported {len(categories_created)} categories"}
+            
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=f"Error importing categories: {str(e)}")

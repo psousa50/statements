@@ -2,9 +2,9 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from src.app.db import get_db
-from src.app.models import Source
-from src.app.schemas import Source as SourceSchema, SourceCreate
+from ..db import get_db
+from ..models import Source
+from ..schemas import Source as SourceSchema, SourceCreate
 
 router = APIRouter(
     prefix="/sources",
@@ -12,7 +12,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=List[SourceSchema])
+@router.get("", response_model=List[SourceSchema])
 def get_sources(
     skip: int = 0,
     limit: int = 100,
@@ -39,7 +39,7 @@ def get_source(
     return source
 
 
-@router.post("/", response_model=SourceSchema)
+@router.post("", response_model=SourceSchema)
 def create_source(
     source: SourceCreate,
     db: Session = Depends(get_db)
@@ -53,11 +53,12 @@ def create_source(
         raise HTTPException(status_code=400, detail="Source with this name already exists")
     
     # Create new source
-    db_source = Source(**source.model_dump())
-    db.add(db_source)
+    new_source = Source(**source.model_dump())
+    db.add(new_source)
     db.commit()
-    db.refresh(db_source)
-    return db_source
+    db.refresh(new_source)
+    
+    return new_source
 
 
 @router.put("/{source_id}", response_model=SourceSchema)
@@ -69,6 +70,7 @@ def update_source(
     """
     Update an existing source
     """
+    # Get the source to update
     db_source = db.query(Source).filter(Source.id == source_id).first()
     if db_source is None:
         raise HTTPException(status_code=404, detail="Source not found")
@@ -84,10 +86,11 @@ def update_source(
     
     db.commit()
     db.refresh(db_source)
+    
     return db_source
 
 
-@router.delete("/{source_id}", response_model=SourceSchema)
+@router.delete("/{source_id}", status_code=204)
 def delete_source(
     source_id: int,
     db: Session = Depends(get_db)
@@ -95,21 +98,21 @@ def delete_source(
     """
     Delete a source
     """
-    # Don't allow deleting the default 'unknown' source
+    # Get the source to delete
     db_source = db.query(Source).filter(Source.id == source_id).first()
     if db_source is None:
         raise HTTPException(status_code=404, detail="Source not found")
     
+    # Check if source is the default "unknown" source
     if db_source.name == "unknown":
         raise HTTPException(status_code=400, detail="Cannot delete the default 'unknown' source")
     
-    # Check if any transactions are using this source
+    # Check if source has transactions
     if db_source.transactions:
-        raise HTTPException(
-            status_code=400, 
-            detail="Cannot delete source that is used by transactions. Update transactions to use a different source first."
-        )
+        raise HTTPException(status_code=400, detail="Cannot delete a source that has transactions")
     
+    # Delete source
     db.delete(db_source)
     db.commit()
-    return db_source
+    
+    return None
