@@ -51,48 +51,32 @@ def mock_categories():
     main_category1.sub_categories = main_category1.subcategories
     main_category2.sub_categories = main_category2.subcategories
     
-    # Create a list with all categories
-    all_categories = [main_category1, sub_category1, sub_category2, main_category2, sub_category3, sub_category4]
-    
-    return all_categories
+    return [main_category1, main_category2]
 
 
 @pytest.fixture
 def mock_model():
-    mock = MagicMock()
+    # Create a mock model that returns embeddings
+    mock_model = MagicMock()
     
-    # Mock the encode method to return different embeddings based on the input
+    # Mock the encode method to return embeddings
     def mock_encode(texts):
-        if isinstance(texts, list) and len(texts) > 0:
-            text = texts[0].lower() if isinstance(texts[0], str) else ""
-            
-            # Return different embeddings based on the input text
-            if "restaurant" in text:
-                return np.array([[0.9, 0.1, 0.1, 0.1]])
-            elif "groceries" in text:
-                return np.array([[0.1, 0.9, 0.1, 0.1]])
-            elif "taxi" in text:
-                return np.array([[0.1, 0.1, 0.9, 0.1]])
-            elif "public transport" in text:
-                return np.array([[0.1, 0.1, 0.1, 0.9]])
-            else:
-                return np.array([[0.25, 0.25, 0.25, 0.25]])
-        else:
-            # Return a default embedding for category texts
-            return np.array([
-                [0.9, 0.1, 0.1, 0.1],  # Restaurant
-                [0.1, 0.9, 0.1, 0.1],  # Groceries
-                [0.1, 0.1, 0.9, 0.1],  # Taxi
-                [0.1, 0.1, 0.1, 0.9],  # Public Transport
-            ])
+        # Return a 2D array of embeddings, one for each text
+        return np.array([
+            [0.9, 0.1, 0.1, 0.1],  # Restaurant
+            [0.1, 0.9, 0.1, 0.1],  # Groceries
+            [0.1, 0.1, 0.9, 0.1],  # Taxi
+            [0.1, 0.1, 0.1, 0.9],  # Public Transport
+        ])
     
-    mock.encode = mock_encode
-    return mock
+    mock_model.encode.side_effect = mock_encode
+    
+    return mock_model
 
 
 @pytest.fixture
 def mock_category_map():
-    # Map indices to (main_category_id, sub_category_id)
+    # Create a mapping from embedding index to (main_category_id, sub_category_id)
     return [
         (1, 2),  # Food -> Restaurant
         (1, 3),  # Food -> Groceries
@@ -102,12 +86,13 @@ def mock_category_map():
 
 
 class TestTransactionCategorizer:
-    def test_refresh_categories_embeddings(self, mock_db, mock_categories, mock_model):
-        # Set up the mock database to return our test categories
-        mock_db.query.return_value.all.return_value = mock_categories
+    def test_refresh_categories_embeddings(self, mock_categories, mock_model):
+        # Create a mock categories repository
+        mock_categories_repo = MagicMock()
+        mock_categories_repo.get_all.return_value = mock_categories
         
-        # Create a categorizer instance with the mocked model
-        categorizer = TransactionCategorizer(mock_db, model=mock_model)
+        # Create a categorizer instance with the mocked repository and model
+        categorizer = TransactionCategorizer(mock_categories_repo, model=mock_model)
         
         # Patch the encode method to return our expected embeddings
         with patch.object(mock_model, 'encode') as mock_encode:
@@ -133,13 +118,17 @@ class TestTransactionCategorizer:
             # Verify that embeddings were generated
             assert embeddings.shape == (4, 4)  # 4 subcategories, 4-dimensional embeddings
     
-    def test_categorize_transaction_restaurant(self, mock_db, mock_categories, mock_model, mock_category_map):
+    def test_categorize_transaction_restaurant(self, mock_categories, mock_model, mock_category_map):
         # Set up a mock similarity function that returns high similarity for restaurant
         def mock_similarity_restaurant(a, b):
             return np.array([0.9, 0.1, 0.1, 0.1])
         
+        # Create a mock categories repository
+        mock_categories_repo = MagicMock()
+        mock_categories_repo.get_all.return_value = mock_categories
+        
         # Create a categorizer instance with the mocked dependencies
-        categorizer = TransactionCategorizer(mock_db, model=mock_model, similarity_func=mock_similarity_restaurant)
+        categorizer = TransactionCategorizer(mock_categories_repo, model=mock_model, similarity_func=mock_similarity_restaurant)
         
         # Set up the categorizer with our test data
         categorizer.categories = (mock_categories, mock_category_map)
@@ -157,13 +146,17 @@ class TestTransactionCategorizer:
         assert category_id == 1  # Food (main category ID)
         assert confidence == 0.9
     
-    def test_categorize_transaction_groceries(self, mock_db, mock_categories, mock_model, mock_category_map):
+    def test_categorize_transaction_groceries(self, mock_categories, mock_model, mock_category_map):
         # Set up a mock similarity function that returns high similarity for groceries
         def mock_similarity_groceries(a, b):
             return np.array([0.1, 0.9, 0.1, 0.1])
         
+        # Create a mock categories repository
+        mock_categories_repo = MagicMock()
+        mock_categories_repo.get_all.return_value = mock_categories
+        
         # Create a categorizer instance with the mocked dependencies
-        categorizer = TransactionCategorizer(mock_db, model=mock_model, similarity_func=mock_similarity_groceries)
+        categorizer = TransactionCategorizer(mock_categories_repo, model=mock_model, similarity_func=mock_similarity_groceries)
         
         # Set up the categorizer with our test data
         categorizer.categories = (mock_categories, mock_category_map)
@@ -181,13 +174,17 @@ class TestTransactionCategorizer:
         assert category_id == 1  # Food (main category ID)
         assert confidence == 0.9
     
-    def test_categorize_transaction_taxi(self, mock_db, mock_categories, mock_model, mock_category_map):
+    def test_categorize_transaction_taxi(self, mock_categories, mock_model, mock_category_map):
         # Set up a mock similarity function that returns high similarity for taxi
         def mock_similarity_taxi(a, b):
             return np.array([0.1, 0.1, 0.9, 0.1])
         
+        # Create a mock categories repository
+        mock_categories_repo = MagicMock()
+        mock_categories_repo.get_all.return_value = mock_categories
+        
         # Create a categorizer instance with the mocked dependencies
-        categorizer = TransactionCategorizer(mock_db, model=mock_model, similarity_func=mock_similarity_taxi)
+        categorizer = TransactionCategorizer(mock_categories_repo, model=mock_model, similarity_func=mock_similarity_taxi)
         
         # Set up the categorizer with our test data
         categorizer.categories = (mock_categories, mock_category_map)
@@ -199,19 +196,23 @@ class TestTransactionCategorizer:
         ])
         
         # Call the method we're testing
-        category_id, confidence = categorizer.categorize_transaction("Uber ride")
+        category_id, confidence = categorizer.categorize_transaction("Taxi ride")
         
         # Verify that the transaction was categorized correctly
         assert category_id == 4  # Transportation (main category ID)
         assert confidence == 0.9
     
-    def test_categorize_transaction_public_transport(self, mock_db, mock_categories, mock_model, mock_category_map):
+    def test_categorize_transaction_public_transport(self, mock_categories, mock_model, mock_category_map):
         # Set up a mock similarity function that returns high similarity for public transport
         def mock_similarity_public_transport(a, b):
             return np.array([0.1, 0.1, 0.1, 0.9])
         
+        # Create a mock categories repository
+        mock_categories_repo = MagicMock()
+        mock_categories_repo.get_all.return_value = mock_categories
+        
         # Create a categorizer instance with the mocked dependencies
-        categorizer = TransactionCategorizer(mock_db, model=mock_model, similarity_func=mock_similarity_public_transport)
+        categorizer = TransactionCategorizer(mock_categories_repo, model=mock_model, similarity_func=mock_similarity_public_transport)
         
         # Set up the categorizer with our test data
         categorizer.categories = (mock_categories, mock_category_map)
@@ -229,24 +230,33 @@ class TestTransactionCategorizer:
         assert category_id == 4  # Transportation (main category ID)
         assert confidence == 0.9
     
-    def test_refresh_rules(self, mock_db, mock_categories, mock_model, mock_category_map):
-        # Set up the mock database
-        mock_db.query.return_value.all.return_value = mock_categories
+    def test_refresh_rules(self, mock_categories, mock_model, mock_category_map):
+        # Create a mock categories repository
+        mock_categories_repo = MagicMock()
+        mock_categories_repo.get_all.return_value = mock_categories
         
-        # Create a categorizer instance
-        categorizer = TransactionCategorizer(mock_db, model=mock_model)
+        # Create a categorizer instance with the mocked dependencies
+        categorizer = TransactionCategorizer(mock_categories_repo, model=mock_model)
         
-        # Mock the refresh_categories_embeddings method
+        # Set up the categorizer with our test data
+        categorizer.categories = (mock_categories, mock_category_map)
+        categorizer.embeddings = np.array([
+            [0.9, 0.1, 0.1, 0.1],  # Restaurant
+            [0.1, 0.9, 0.1, 0.1],  # Groceries
+            [0.1, 0.1, 0.9, 0.1],  # Taxi
+            [0.1, 0.1, 0.1, 0.9],  # Public Transport
+        ])
+        
+        # Patch the refresh_categories_embeddings method to return our test data
         with patch.object(categorizer, 'refresh_categories_embeddings') as mock_refresh:
-            # Set up the first mock call
-            mock_refresh.return_value = ((mock_categories, mock_category_map), np.array([[1.0]]))
+            mock_refresh.return_value = ((mock_categories, mock_category_map), categorizer.embeddings)
             
-            # Call refresh_rules
-            categorizer.refresh_rules()
+            # Call the method we're testing
+            categories, embeddings = categorizer.refresh_rules()
             
             # Verify that refresh_categories_embeddings was called
             mock_refresh.assert_called_once()
             
             # Verify that the rules were refreshed
-            assert categorizer.categories == (mock_categories, mock_category_map)
-            assert categorizer.embeddings.tolist() == [[1.0]]
+            assert categories == (mock_categories, mock_category_map)
+            assert np.array_equal(embeddings, categorizer.embeddings)

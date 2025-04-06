@@ -45,15 +45,10 @@ class CategoryRouter:
     async def create_category(self, category: CategoryCreate):
         db_category = self.categories_repository.get_by_name(category.category_name)
         if db_category:
-            raise HTTPException(status_code=400, detail="Category already exists")
+            raise HTTPException(status_code=409, detail=f"Category {category.category_name} already exists")
         
-        # Create main category
-        new_category = Category(
-            category_name=category.category_name,
-            parent_category_id=category.parent_category_id
-        )
-        
-        self.categories_repository.create(new_category)
+        # Create the category using the repository
+        new_category = self.categories_repository.create(category)
         
         # Notify about the change
         self._notify_change("create", [new_category])

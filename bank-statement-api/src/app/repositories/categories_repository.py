@@ -17,10 +17,14 @@ class CategoriesRepository:
         return self.db.query(Category).filter(Category.category_name == category_name).first()
     
     def create(self, category: CategoryCreate, autocommit: bool = True) -> Category:
-        db_category = Category(category_name=category.category_name)
+        db_category = Category(
+            category_name=category.category_name,
+            parent_category_id=category.parent_category_id
+        )
         self.db.add(db_category)
         if autocommit:
             self.db.commit()
+            self.db.refresh(db_category)
         return db_category
     
     def update(self, category: Category, autocommit: bool = True) -> Category:
