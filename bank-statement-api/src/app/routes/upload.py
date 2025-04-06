@@ -1,26 +1,30 @@
-from typing import List, Optional, Callable, Tuple
+from typing import Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 import pandas as pd
 import io
 import re
 from datetime import datetime
 
-from ..db import get_db
-from ..models import Transaction, Source, Category
+from ..models import Transaction, Source
 from ..schemas import Transaction as TransactionSchema, FileUploadResponse
 from ..services.categorizer import TransactionCategorizer
+from ..repositories.transactions_repository import TransactionsRepository
+from ..repositories.sources_repository import SourcesRepository
 
-class UploadRouter:
-    def __init__(self, get_categorizer: Callable):
-        self.get_categorizer = get_categorizer
+class TransactionUploadRouter:
+    def __init__(self, 
+                 transactions_repository: TransactionsRepository, 
+                 sources_repository: SourcesRepository, 
+                 categorizer: TransactionCategorizer):
+        self.transactions_repository = transactions_repository
+        self.sources_repository = sources_repository
+        self.categorizer = categorizer
         self.router = APIRouter(
             prefix="/upload",
             tags=["upload"],
         )
         
-        # Register routes
         self.router.add_api_route("", self.upload_file, methods=["POST"], response_model=FileUploadResponse)
     
     def detect_file_format(self, file_content, filename):
@@ -49,51 +53,84 @@ class UploadRouter:
         
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
-            raise HTTPException(status_code=400, detail=f"Missing required columns: {', '.join(missing_columns)}")
-        
-        try:
-            df['date'] = pd.to_datetime(df['date']).dt.date
-        except Exception:
-            raise HTTPException(status_code=400, detail="Error parsing date column")
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Missing required columns: {', '.join(missing_columns)}"
+            )
         
         return df
 
-    def parse_date(self, date_str):
-        try:
-            return datetime.strptime(date_str, '%Y-%m-%d').date()
-        except ValueError:
-            raise ValueError("Invalid date format")
-
     def normalize_description(self, description):
-        if not description:
+        if pd.isna(description):
             return ""
-        normalized = description.lower()
-        normalized = re.sub(r'[^\w\s]', '', normalized)
-        normalized = re.sub(r'\s+', ' ', normalized).strip()
-        return normalized
+        
+        description = str(description).lower()
+        
+        # Remove special characters and extra spaces
+        description = re.sub(r'[^\w\s]', ' ', description)
+        description = re.sub(r'\s+', ' ', description).strip()
+        
+        return description
 
-    def process_transactions(self, df, source_id, db: Session):
+    def process_transactions(self, df, source_id):
         transactions = []
         skipped_count = 0
         
         for _, row in df.iterrows():
             try:
-                # Parse date
-                transaction_date = self.parse_date(str(row['date']))
+                # Extract and validate date
+                date_str = row['date']
+                if pd.isna(date_str):
+                    continue
                 
-                # Get amount
-                amount = float(row['amount'])
+                # Try different date formats
+                transaction_date = None
+                date_formats = ['%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y', '%d/%m/%Y', '%Y/%m/%d']
                 
-                # Normalize description
-                description = str(row['description'])
+                if isinstance(date_str, str):
+                    for date_format in date_formats:
+                        try:
+                            transaction_date = datetime.strptime(date_str, date_format).date()
+                            break
+                        except ValueError:
+                            continue
+                elif isinstance(date_str, datetime):
+                    transaction_date = date_str.date()
+                
+                if transaction_date is None:
+                    continue
+                
+                # Extract and validate description
+                description = row['description']
+                if pd.isna(description):
+                    continue
+                description = str(description)
                 normalized_description = self.normalize_description(description)
                 
-                # Check for duplicates using the normalized_description field
-                existing_transaction = db.query(Transaction).filter(
+                # Extract and validate amount
+                amount = row['amount']
+                if pd.isna(amount):
+                    continue
+                
+                # Convert amount to float
+                try:
+                    amount = float(amount)
+                except (ValueError, TypeError):
+                    # Try to handle amount with currency symbols or commas
+                    amount_str = str(amount).replace(',', '.').strip()
+                    # Extract only digits and decimal point
+                    amount_str = re.sub(r'[^\d.-]', '', amount_str)
+                    try:
+                        amount = float(amount_str)
+                    except ValueError:
+                        continue
+                
+                # Check for duplicate transaction
+                existing_transaction = self.transactions_repository.get_by_source_id(source_id).filter(
                     Transaction.date == transaction_date,
+                    Transaction.description == description,
                     Transaction.amount == amount,
-                    Transaction.source_id == source_id,
-                    Transaction.normalized_description == normalized_description
+                    Transaction.source_id == source_id
                 ).first()
                 
                 if existing_transaction:
@@ -113,10 +150,9 @@ class UploadRouter:
                 if 'currency' in row and pd.notna(row['currency']):
                     new_transaction.currency = str(row['currency'])
                 
-                # Categorize transaction using the injected categorizer
+                # Categorize transaction using the categorizer
                 try:
-                    categorizer = self.get_categorizer(db)
-                    category_id, confidence = categorizer.categorize_transaction(description)
+                    category_id, confidence = self.categorizer.categorize_transaction(description)
                     if category_id is not None:
                         new_transaction.category_id = category_id
                 except Exception as e:
@@ -135,7 +171,6 @@ class UploadRouter:
         self,
         file: UploadFile = File(...),
         source_id: Optional[int] = Query(None),
-        db: Session = Depends(get_db)
     ):
         # Debug info
         print(f"Received source_id: {source_id}, type: {type(source_id)}")
@@ -155,27 +190,20 @@ class UploadRouter:
                 detail=f"Missing required columns. File must contain: {', '.join(required_columns)}"
             )
         
-        # Get default source if source_id is not provided
         if source_id is None:
-            default_source = db.query(Source).filter(Source.name == "unknown").first()
+            default_source = self.sources_repository.get_by_name("unknown")
             if default_source is None:
-                # Create default source if it doesn't exist
                 default_source = Source(name="unknown", description="Default source for transactions with unknown origin")
-                db.add(default_source)
-                db.commit()
-                db.refresh(default_source)
+                self.sources_repository.create(default_source)
             source_id = default_source.id
         
-        # Process transactions
-        transactions, skipped_count = self.process_transactions(df, source_id, db)
+        transactions, skipped_count = self.process_transactions(df, source_id)
         
-        # Save transactions to database
         for transaction in transactions:
-            db.add(transaction)
+            self.transactions_repository.create(transaction, auto_commit=False)
         
-        db.commit()
+        self.transactions_repository.commit()
         
-        # Convert to schema
         transaction_schemas = [TransactionSchema.model_validate(t, from_attributes=True) for t in transactions]
         
         return FileUploadResponse(

@@ -1,47 +1,48 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
 
-from .routes import categories, transactions, sources
 from .routes.categories import CategoryRouter
-from .routes.upload import UploadRouter
+from .routes.sources import SourceRouter
+from .routes.transactions import TransactionRouter
+from .routes.upload import TransactionUploadRouter
 from .db import engine, get_db
 from . import models
 from .services.categorizer import TransactionCategorizer
+from .repositories.categories_repository import CategoriesRepository
+from .repositories.sources_repository import SourcesRepository
+from .repositories.transactions_repository import TransactionsRepository
 
 models.Base.metadata.create_all(bind=engine)
 
-# Create a dependency for the categorizer
-def get_categorizer(db: Session = Depends(get_db)):
-    return TransactionCategorizer(db)
-
-# Create a function to handle category changes
 def on_category_change(categorizer: TransactionCategorizer, action: str, changed_categories: list[models.Category]):
     categorizer.refresh_rules()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: initialize services and routers
+    db = next(get_db())
+    categories_repository = CategoriesRepository(db)
+    sources_repository = SourcesRepository(db)
+    transactions_repository = TransactionsRepository(db)
     
-    # Create the upload router with dependency injection
-    upload_router = UploadRouter(get_categorizer)
+    categorizer = TransactionCategorizer(categories_repository)
     
-    # Create the category router with a callback that uses the categorizer
-    category_router = CategoryRouter(
-        on_change_callback=lambda action, categories: on_category_change(get_categorizer(next(get_db())), action, categories)
+    upload_router = TransactionUploadRouter(
+        transactions_repository =transactions_repository, 
+        sources_repository =sources_repository,
+        categorizer =categorizer
     )
+    category_router = CategoryRouter(categories_repository, on_change_callback=lambda action, categories: on_category_change(categorizer, action, categories))
+    source_router = SourceRouter(sources_repository)
+    transaction_router = TransactionRouter(transactions_repository)
     
-    # Include all routers
     app.include_router(category_router.router)
-    app.include_router(transactions.router)
+    app.include_router(transaction_router.router)
     app.include_router(upload_router.router)
-    app.include_router(sources.router)
+    app.include_router(source_router.router)
     
     yield
-    
-    # Shutdown: cleanup resources if needed
-    # No cleanup needed for now
 
 app = FastAPI(
     title="Bank Statement API",

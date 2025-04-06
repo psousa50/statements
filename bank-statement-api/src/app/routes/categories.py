@@ -1,5 +1,5 @@
 from typing import List, Callable, Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 import csv
 import io
@@ -7,16 +7,18 @@ import io
 from ..db import get_db
 from ..models import Category
 from ..schemas import Category as CategorySchema, CategoryCreate
+from ..repositories.categories_repository import CategoriesRepository
 
 # Callback type for category changes
 CategoryChangeCallback = Callable[[str, List[Category]], None]
 
 class CategoryRouter:
-    def __init__(self, on_change_callback: Optional[CategoryChangeCallback] = None):
+    def __init__(self, categories_repository: CategoriesRepository, on_change_callback: Optional[CategoryChangeCallback] = None):
         self.router = APIRouter(
             prefix="/categories",
             tags=["categories"],
         )
+        self.categories_repository = categories_repository
         self.on_change_callback = on_change_callback
         
         # Register routes with trailing slashes removed
@@ -30,18 +32,18 @@ class CategoryRouter:
         if self.on_change_callback:
             self.on_change_callback(action, categories)
     
-    async def get_categories(self, db: Session = Depends(get_db)):
-        categories = db.query(Category).all()
+    async def get_categories(self):
+        categories = self.categories_repository.get_all()
         return categories
     
-    async def get_category(self, category_id: int, db: Session = Depends(get_db)):
-        category = db.query(Category).filter(Category.id == category_id).first()
+    async def get_category(self, category_id: int):
+        category = self.categories_repository.get_by_id(category_id)
         if category is None:
             raise HTTPException(status_code=404, detail="Category not found")
         return category
     
-    async def create_category(self, category: CategoryCreate, db: Session = Depends(get_db)):
-        db_category = db.query(Category).filter(Category.category_name == category.category_name).first()
+    async def create_category(self, category: CategoryCreate):
+        db_category = self.categories_repository.get_by_name(category.category_name)
         if db_category:
             raise HTTPException(status_code=400, detail="Category already exists")
         
@@ -51,16 +53,14 @@ class CategoryRouter:
             parent_category_id=category.parent_category_id
         )
         
-        db.add(new_category)
-        db.commit()
-        db.refresh(new_category)
+        self.categories_repository.create(new_category)
         
         # Notify about the change
         self._notify_change("create", [new_category])
         
         return new_category
     
-    async def import_categories_from_csv(self, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    async def import_categories_from_csv(self, file: UploadFile = File(...)):
         """Import categories from a CSV file"""
         content = await file.read()
         
@@ -83,15 +83,14 @@ class CategoryRouter:
                 main_category_name = row[0].strip()
                 
                 # Check if main category exists
-                main_category = db.query(Category).filter(Category.category_name == main_category_name).first()
+                main_category = self.categories_repository.get_by_name(main_category_name)
                 
                 if not main_category:
                     # Create main category
                     main_category = Category(
                         category_name=main_category_name
                     )
-                    db.add(main_category)
-                    db.flush()  # Get ID
+                    self.categories_repository.create(main_category, autocommit=False)
                     categories_created.append(main_category)
                 
                 # Process subcategories if present
@@ -105,10 +104,7 @@ class CategoryRouter:
                             continue
                             
                         # Check if subcategory exists
-                        sub = db.query(Category).filter(
-                            Category.category_name == sub_name,
-                            Category.parent_category_id == main_category.id
-                        ).first()
+                        sub = self.categories_repository.get_by_name(sub_name)
                         
                         if not sub:
                             # Create subcategory
@@ -116,11 +112,10 @@ class CategoryRouter:
                                 category_name=sub_name,
                                 parent_category_id=main_category.id
                             )
-                            db.add(sub)
+                            self.categories_repository.create(sub, autocommit=False)
+
+            self.categories_repository.commit()
             
-            db.commit()
-            
-            # Notify about the change
             if categories_created:
                 self._notify_change("import", categories_created)
             

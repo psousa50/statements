@@ -19,7 +19,9 @@ dependencies = [
     "sqlalchemy>=1.4.23",
     "alembic>=1.7.3",
     "httpx>=0.23.0",
-    "sentence-transformers>=2.6.1"
+    "sentence-transformers>=4.0.2",
+    "transformers>=4.51.0",
+    "accelerate>=1.6.0"
 ]
 
 [tool.setuptools]

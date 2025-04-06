@@ -7,17 +7,17 @@ from ..models import Category
 
 from sentence_transformers import SentenceTransformer    
 
+from ..repositories.categories_repository import CategoriesRepository
+
 class TransactionCategorizer:
-    def __init__(self, db: Session, model=None, similarity_func=None):
-        self.db = db
-        
-        # Initialize the model only if it's provided or if SentenceTransformer is available
-        self.model = model or SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')            
+    def __init__(self, categories_repository: CategoriesRepository, model=None, similarity_func=None):
+        self.categories_repository = categories_repository        
+        self.model = model or SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
         self.similarity_func = similarity_func or cosine_similarity
         self.categories, self.embeddings = self.refresh_categories_embeddings()
     
     def refresh_categories_embeddings(self) -> Tuple[Tuple[List[Category], List[Tuple[int, int]]], np.ndarray]:
-        categories = self.db.query(Category).all()
+        categories = self.categories_repository.get_all()
         
         # If there are no categories, return empty lists to avoid errors
         if not categories:
