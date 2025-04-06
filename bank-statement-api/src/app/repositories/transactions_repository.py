@@ -13,14 +13,22 @@ class TransactionsRepository:
     def get_by_id(self, transaction_id: int) -> Optional[Transaction]:
         return self.db.query(Transaction).filter(Transaction.id == transaction_id).first()
 
-    def create(self, transaction: TransactionCreate) -> Transaction:
+    def get_by_source_id(self, source_id: int):
+        return self.db.query(Transaction).filter(Transaction.source_id == source_id)
+
+    def get_by_ids(self, transaction_ids: List[int]) -> List[Transaction]:
+        return self.db.query(Transaction).filter(Transaction.id.in_(transaction_ids)).all()
+
+    def create(self, transaction: TransactionCreate, auto_commit: bool = True) -> Transaction:
         db_transaction = Transaction(
+            date=transaction.date,
             description=transaction.description,
             amount=transaction.amount,
             source_id=transaction.source_id
         )
         self.db.add(db_transaction)
-        self.db.commit()
+        if auto_commit:
+            self.db.commit()
         return db_transaction
     
     def update(self, transaction: Transaction) -> Transaction:

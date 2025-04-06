@@ -1,16 +1,16 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, File, HTTPException, UploadFile, Query
 import pandas as pd
 import io
 import re
 from datetime import datetime
 
 from ..models import Transaction, Source
-from ..schemas import Transaction as TransactionSchema, FileUploadResponse
+from ..schemas import Transaction as TransactionSchema, FileUploadResponse, TransactionCreate
 from ..services.categorizer import TransactionCategorizer
 from ..repositories.transactions_repository import TransactionsRepository
 from ..repositories.sources_repository import SourcesRepository
+
 
 class TransactionUploadRouter:
     def __init__(self, 
@@ -126,16 +126,20 @@ class TransactionUploadRouter:
                         continue
                 
                 # Check for duplicate transaction
-                existing_transaction = self.transactions_repository.get_by_source_id(source_id).filter(
-                    Transaction.date == transaction_date,
-                    Transaction.description == description,
-                    Transaction.amount == amount,
-                    Transaction.source_id == source_id
-                ).first()
-                
-                if existing_transaction:
-                    skipped_count += 1
-                    continue
+                try:
+                    existing_transaction = self.transactions_repository.get_by_source_id(source_id).filter(
+                        Transaction.date == transaction_date,
+                        Transaction.description == description,
+                        Transaction.amount == amount,
+                        Transaction.source_id == source_id
+                    ).first()
+                    
+                    if existing_transaction:
+                        skipped_count += 1
+                        continue
+                except Exception as e:
+                    print(f"Error checking for duplicate transaction: {str(e)}")
+                    # Continue without duplicate check if it fails
                 
                 # Create new transaction
                 new_transaction = Transaction(
@@ -180,7 +184,29 @@ class TransactionUploadRouter:
         
         # Determine file type and parse accordingly
         file_format = self.detect_file_format(file_content, file.filename)
+        print(f"File format detected: {file_format}")
+        
         df = self.parse_file(file_content, file_format)
+        print(f"DataFrame shape: {df.shape}")
+        print(f"DataFrame columns: {df.columns.tolist()}")
+        
+        # Check if columns need to be normalized
+        column_mapping = {}
+        for col in df.columns:
+            col_lower = col.lower().strip()
+            if col_lower in ['date', 'data', 'transaction date', 'transaction_date']:
+                column_mapping[col] = 'date'
+            elif col_lower in ['description', 'desc', 'details', 'transaction', 'memo']:
+                column_mapping[col] = 'description'
+            elif col_lower in ['amount', 'value', 'sum', 'total']:
+                column_mapping[col] = 'amount'
+            elif col_lower in ['currency', 'curr']:
+                column_mapping[col] = 'currency'
+        
+        # Rename columns if needed
+        if column_mapping:
+            df = df.rename(columns=column_mapping)
+            print(f"Renamed columns to: {df.columns.tolist()}")
         
         # Validate required columns
         required_columns = ['date', 'description', 'amount']
@@ -197,14 +223,28 @@ class TransactionUploadRouter:
                 self.sources_repository.create(default_source)
             source_id = default_source.id
         
+        print(f"Using source_id: {source_id}")
         transactions, skipped_count = self.process_transactions(df, source_id)
+        print(f"Processed {len(transactions)} transactions, skipped {skipped_count} duplicates")
         
+        transaction_ids = []
         for transaction in transactions:
-            self.transactions_repository.create(transaction, auto_commit=False)
+            print(f"Creating transaction: {transaction.date}, {transaction.description}, {transaction.amount}")
+            transaction_create = TransactionCreate(
+                date=transaction.date,
+                description=transaction.description,
+                amount=transaction.amount,
+                source_id=source_id
+            )
+            db_transaction = self.transactions_repository.create(transaction_create, auto_commit=False)
+            transaction_ids.append(db_transaction.id)
         
         self.transactions_repository.commit()
         
-        transaction_schemas = [TransactionSchema.model_validate(t, from_attributes=True) for t in transactions]
+        # Fetch the transactions with their IDs
+        db_transactions = self.transactions_repository.get_by_ids(transaction_ids)
+        
+        transaction_schemas = [TransactionSchema.model_validate(t, from_attributes=True) for t in db_transactions]
         
         return FileUploadResponse(
             message="File processed successfully",
