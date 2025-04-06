@@ -20,6 +20,7 @@ class SourcesRepository:
         db_source = Source(name=source.name, description=source.description)
         self.db.add(db_source)
         self.db.commit()
+        self.db.refresh(db_source)
         return db_source
     
     def update(self, source: Source) -> Source:

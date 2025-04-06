@@ -53,9 +53,8 @@ class SourceRouter:
         if db_source:
             raise HTTPException(status_code=400, detail="Source with this name already exists")
         
-        # Create new source
-        new_source = Source(**source.model_dump())
-        self.source_repository.create(new_source)
+        # Create the source using the repository
+        new_source = self.source_repository.create(source)
         
         # Notify about the change
         self._notify_change("create", [new_source])
