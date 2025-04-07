@@ -15,12 +15,21 @@ import { Transaction } from '../types';
 // Colors for the charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#8DD1E1'];
 
+// Chart types for maximization
+enum ChartType {
+  NONE = 'none',
+  CATEGORY = 'category',
+  MONTHLY = 'monthly'
+}
+
 const ChartsPage: React.FC = () => {
   // State for filters
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
   const [sourceId, setSourceId] = useState<number | undefined>(undefined);
+  // State for maximized chart
+  const [maximizedChart, setMaximizedChart] = useState<ChartType>(ChartType.NONE);
 
   // Fetch data
   const { data: transactions, isLoading: isLoadingTransactions } = useTransactions({
@@ -111,6 +120,27 @@ const ChartsPage: React.FC = () => {
     setSourceId(undefined);
   };
 
+  // Toggle maximized state for a chart
+  const toggleMaximize = (chartType: ChartType) => {
+    setMaximizedChart(maximizedChart === chartType ? ChartType.NONE : chartType);
+  };
+
+  // Get column width based on maximized state
+  const getColWidth = (chartType: ChartType) => {
+    if (maximizedChart === ChartType.NONE) {
+      return 6; // Default is half width (6 out of 12 columns)
+    }
+    return maximizedChart === chartType ? 12 : 0; // Full width if maximized, hidden if another chart is maximized
+  };
+
+  // Get chart height based on maximized state
+  const getChartHeight = (chartType: ChartType) => {
+    if (chartType === ChartType.CATEGORY) {
+      return maximizedChart === chartType ? 700 : 400; // Increased height for pie chart
+    }
+    return maximizedChart === chartType ? 600 : 300; // Default for other charts
+  };
+
   return (
     <Container>
       <h1 className="mb-4">Financial Charts</h1>
@@ -189,133 +219,157 @@ const ChartsPage: React.FC = () => {
       {/* Charts */}
       <Row>
         {/* Pie Chart - Expenses by Category */}
-        <Col md={6}>
-          <Card className="mb-4">
-            <Card.Body>
-              <h5>Expenses by Category</h5>
-              {isLoadingTransactions || isLoadingCategories ? (
-                <div className="text-center p-5">Loading...</div>
-              ) : categoryData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={categoryData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={true}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {categoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => [`€${value.toFixed(2)}`, 'Amount']}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-center p-5">No data available</div>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
+        {(maximizedChart === ChartType.NONE || maximizedChart === ChartType.CATEGORY) && (
+          <Col md={getColWidth(ChartType.CATEGORY)}>
+            <Card className="mb-4">
+              <Card.Body>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5>Expenses by Category</h5>
+                  <Button 
+                    variant="outline-secondary" 
+                    size="sm" 
+                    onClick={() => toggleMaximize(ChartType.CATEGORY)}
+                  >
+                    {maximizedChart === ChartType.CATEGORY ? 'Minimize' : 'Maximize'}
+                  </Button>
+                </div>
+                {isLoadingTransactions || isLoadingCategories ? (
+                  <div className="text-center p-5">Loading...</div>
+                ) : categoryData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={getChartHeight(ChartType.CATEGORY)}>
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={true}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={maximizedChart === ChartType.CATEGORY ? 200 : 120}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {categoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: number) => [`€${value.toFixed(2)}`, 'Amount']}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center p-5">No data available</div>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        )}
         
         {/* Bar Chart - Monthly Income/Expenses */}
-        <Col md={6}>
-          <Card className="mb-4">
-            <Card.Body>
-              <h5>Monthly Income & Expenses</h5>
-              {isLoadingTransactions ? (
-                <div className="text-center p-5">Loading...</div>
-              ) : monthlyData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart
-                    data={monthlyData}
-                    margin={{
-                      top: 20,
-                      right: 30,
-                      left: 20,
-                      bottom: 5,
-                    }}
+        {(maximizedChart === ChartType.NONE || maximizedChart === ChartType.MONTHLY) && (
+          <Col md={getColWidth(ChartType.MONTHLY)}>
+            <Card className="mb-4">
+              <Card.Body>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5>Monthly Income & Expenses</h5>
+                  <Button 
+                    variant="outline-secondary" 
+                    size="sm" 
+                    onClick={() => toggleMaximize(ChartType.MONTHLY)}
                   >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip formatter={(value: number) => [`€${value.toFixed(2)}`, '']} />
-                    <Legend />
-                    <Bar dataKey="income" name="Income" fill="#82ca9d" />
-                    <Bar dataKey="expenses" name="Expenses" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-center p-5">No data available</div>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
+                    {maximizedChart === ChartType.MONTHLY ? 'Minimize' : 'Maximize'}
+                  </Button>
+                </div>
+                {isLoadingTransactions ? (
+                  <div className="text-center p-5">Loading...</div>
+                ) : monthlyData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={getChartHeight(ChartType.MONTHLY)}>
+                    <BarChart
+                      data={monthlyData}
+                      margin={{
+                        top: 20,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip formatter={(value: number) => [`€${value.toFixed(2)}`, '']} />
+                      <Legend />
+                      <Bar dataKey="income" name="Income" fill="#82ca9d" />
+                      <Bar dataKey="expenses" name="Expenses" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center p-5">No data available</div>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        )}
       </Row>
       
-      {/* Summary Statistics */}
-      <Row>
-        <Col>
-          <Card className="mb-4">
-            <Card.Body>
-              <h5>Summary Statistics</h5>
-              {isLoadingTransactions ? (
-                <div className="text-center p-3">Loading...</div>
-              ) : transactions ? (
-                <Row>
-                  <Col md={3}>
-                    <div className="text-center">
-                      <h6>Total Income</h6>
-                      <h4 className="text-success">
-                        €{transactions
-                          .filter(t => t.amount > 0)
-                          .reduce((sum, t) => sum + t.amount, 0)
-                          .toFixed(2)}
-                      </h4>
-                    </div>
-                  </Col>
-                  <Col md={3}>
-                    <div className="text-center">
-                      <h6>Total Expenses</h6>
-                      <h4 className="text-danger">
-                        €{Math.abs(transactions
-                          .filter(t => t.amount < 0)
-                          .reduce((sum, t) => sum + t.amount, 0))
-                          .toFixed(2)}
-                      </h4>
-                    </div>
-                  </Col>
-                  <Col md={3}>
-                    <div className="text-center">
-                      <h6>Balance</h6>
-                      <h4 className={transactions.reduce((sum, t) => sum + t.amount, 0) >= 0 ? 'text-success' : 'text-danger'}>
-                        €{transactions
-                          .reduce((sum, t) => sum + t.amount, 0)
-                          .toFixed(2)}
-                      </h4>
-                    </div>
-                  </Col>
-                  <Col md={3}>
-                    <div className="text-center">
-                      <h6>Transaction Count</h6>
-                      <h4>{transactions.length}</h4>
-                    </div>
-                  </Col>
-                </Row>
-              ) : (
-                <div className="text-center p-3">No data available</div>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+      {/* Summary Statistics - Only show when no chart is maximized */}
+      {maximizedChart === ChartType.NONE && (
+        <Row>
+          <Col>
+            <Card className="mb-4">
+              <Card.Body>
+                <h5>Summary Statistics</h5>
+                {isLoadingTransactions ? (
+                  <div className="text-center p-3">Loading...</div>
+                ) : transactions ? (
+                  <Row>
+                    <Col md={3}>
+                      <div className="text-center">
+                        <h6>Total Income</h6>
+                        <h4 className="text-success">
+                          €{transactions
+                            .filter(t => t.amount > 0)
+                            .reduce((sum, t) => sum + t.amount, 0)
+                            .toFixed(2)}
+                        </h4>
+                      </div>
+                    </Col>
+                    <Col md={3}>
+                      <div className="text-center">
+                        <h6>Total Expenses</h6>
+                        <h4 className="text-danger">
+                          €{Math.abs(transactions
+                            .filter(t => t.amount < 0)
+                            .reduce((sum, t) => sum + t.amount, 0))
+                            .toFixed(2)}
+                        </h4>
+                      </div>
+                    </Col>
+                    <Col md={3}>
+                      <div className="text-center">
+                        <h6>Balance</h6>
+                        <h4 className={transactions.reduce((sum, t) => sum + t.amount, 0) >= 0 ? 'text-success' : 'text-danger'}>
+                          €{transactions
+                            .reduce((sum, t) => sum + t.amount, 0)
+                            .toFixed(2)}
+                        </h4>
+                      </div>
+                    </Col>
+                    <Col md={3}>
+                      <div className="text-center">
+                        <h6>Transaction Count</h6>
+                        <h4>{transactions.length}</h4>
+                      </div>
+                    </Col>
+                  </Row>
+                ) : (
+                  <div className="text-center p-3">No data available</div>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      )}
     </Container>
   );
 };
