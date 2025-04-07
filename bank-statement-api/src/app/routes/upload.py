@@ -85,7 +85,7 @@ class TransactionUploadRouter:
                 
                 # Try different date formats
                 transaction_date = None
-                date_formats = ['%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y', '%d/%m/%Y', '%Y/%m/%d']
+                date_formats = ['%Y-%m-%d %H:%M:%S', '%d-%m-%Y', '%m/%d/%Y', '%d/%m/%Y', '%Y/%m/%d']
                 
                 if isinstance(date_str, str):
                     for date_format in date_formats:
