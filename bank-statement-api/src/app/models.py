@@ -11,11 +11,18 @@ class Category(Base):
     category_name = Column(String, unique=True, index=True)
     parent_category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
 
-    transactions = relationship("Transaction", back_populates="category")
-    subcategories = relationship("Category", 
-                              backref="parent_category",
-                              remote_side=[id])
+    parent_category = relationship(
+        "Category",
+        remote_side=[id],
+        back_populates="subcategories"
+    )
 
+    subcategories = relationship(
+        "Category",
+        back_populates="parent_category"
+    )
+
+    transactions = relationship("Transaction", back_populates="category")
 
 class Source(Base):
     __tablename__ = "sources"

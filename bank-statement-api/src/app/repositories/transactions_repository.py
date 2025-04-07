@@ -24,7 +24,9 @@ class TransactionsRepository:
             date=transaction.date,
             description=transaction.description,
             amount=transaction.amount,
-            source_id=transaction.source_id
+            currency=transaction.currency,
+            source_id=transaction.source_id,
+            category_id=transaction.category_id
         )
         self.db.add(db_transaction)
         if auto_commit:

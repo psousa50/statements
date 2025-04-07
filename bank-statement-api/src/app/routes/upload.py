@@ -147,6 +147,7 @@ class TransactionUploadRouter:
                     description=description,
                     normalized_description=normalized_description,
                     amount=amount,
+                    currency="EUR",
                     source_id=source_id
                 )
                 
@@ -157,6 +158,7 @@ class TransactionUploadRouter:
                 # Categorize transaction using the categorizer
                 try:
                     category_id, confidence = self.categorizer.categorize_transaction(description)
+                    print(f"Categorization category ID: {category_id} with confidence: {confidence}")
                     if category_id is not None:
                         new_transaction.category_id = category_id
                 except Exception as e:
@@ -234,7 +236,8 @@ class TransactionUploadRouter:
                 date=transaction.date,
                 description=transaction.description,
                 amount=transaction.amount,
-                source_id=source_id
+                source_id=source_id,
+                category_id=transaction.category_id,
             )
             db_transaction = self.transactions_repository.create(transaction_create, auto_commit=False)
             transaction_ids.append(db_transaction.id)

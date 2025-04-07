@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsApi, categoriesApi, sourcesApi, uploadApi } from '../api/api';
-import type { Transaction, Category, Source, FileUploadResponse } from '../types';
+import type { FileUploadResponse } from '../types';
 
 // Transaction queries
 export const useTransactions = (params?: {
