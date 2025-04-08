@@ -14,17 +14,7 @@ class TransactionCategorizationService:
         self.transactions_repository = transactions_repository
         self.categorizer = categorizer
 
-    def categorize_pending_transactions(self, batch_size: int = 100) -> int:
-        """
-        Categorize a batch of pending transactions
-        
-        Args:
-            batch_size: Maximum number of transactions to process in one batch
-            
-        Returns:
-            Number of transactions successfully categorized
-        """
-        # Get pending transactions
+    def categorize_pending_transactions(self, batch_size: int = 10) -> int:
         pending_transactions = self.transactions_repository.get_uncategorized_transactions(batch_size)
         
         if not pending_transactions:
@@ -32,16 +22,13 @@ class TransactionCategorizationService:
             
         categorized_count = 0
         
-        # Process each transaction
         for transaction in pending_transactions:
             try:
-                # Use the categorizer to determine the category
                 category_id, confidence = self.categorizer.categorize_transaction(
                     transaction.description
                 )
                 
                 if category_id is not None:
-                    # Update the transaction with the category and mark as categorized
                     self.transactions_repository.update_transaction_category(
                         transaction.id, 
                         category_id, 
@@ -49,12 +36,16 @@ class TransactionCategorizationService:
                     )
                     categorized_count += 1
                 else:
-                    # If categorization failed, mark as failed
-                    transaction.categorization_status = "failed"
-                    self.transactions_repository.update(transaction)
-            except Exception:
-                # If an error occurred, mark as failed
-                transaction.categorization_status = "failed"
-                self.transactions_repository.update(transaction)
+                    self.transactions_repository.update_transaction_category(
+                        transaction.id, 
+                        None, 
+                        "failed"
+                    )
+            except Exception as e:
+                self.transactions_repository.update_transaction_category(
+                    transaction.id, 
+                    None, 
+                    "failed"
+                )
                 
         return categorized_count

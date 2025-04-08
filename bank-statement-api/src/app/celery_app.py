@@ -1,25 +1,23 @@
 from celery import Celery
 
+REDIS_URL = "redis://localhost:6379/0"
+
 celery_app = Celery(
     "bank_statement_api",
-    broker="redis://localhost:6379/0",
-    backend="redis://localhost:6379/0",
-    include=["app.tasks.categorization"]
+    broker=REDIS_URL,
+    backend=REDIS_URL,
+    include=["app.tasks.categorization"],
 )
 
-celery_app.conf.update(
-    task_serializer="json",
-    accept_content=["json"],
-    result_serializer="json",
-    timezone="UTC",
-    enable_utc=True,
-)
+celery_app.conf.task_serializer = "json"
+celery_app.conf.result_serializer = "json"
+celery_app.conf.accept_content = ["json"]
+celery_app.conf.result_expires = 3600
 
-# Configure periodic tasks
 celery_app.conf.beat_schedule = {
     "categorize-transactions-every-15-minutes": {
         "task": "src.app.tasks.categorization.categorize_pending_transactions",
-        "schedule": 60 * 15,  # Every 15 minutes
-        "args": (100,),  # Process 100 transactions at a time
+        "schedule": 60 * 15,
+        "args": (10,),
     },
 }
