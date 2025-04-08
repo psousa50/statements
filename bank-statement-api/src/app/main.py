@@ -15,6 +15,7 @@ from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
 from src.app.services.categorizers.embedding import TransactionCategorizer, EmbeddingTransactionCategorizer
+from src.app.services.categorizers.gemini import GeminiTransactionCategorizer
 from .services.transaction_categorization_service import (
     TransactionCategorizationService,
 )
@@ -32,6 +33,8 @@ class App:
         transactions_repository: Optional[TransactionsRepository] = None,
         categorizer: Optional[TransactionCategorizer] = None,
     ):
+        print("Initializing app...")
+
         self.app = FastAPI(
             title="Bank Statement API",
             description="API for processing and categorizing bank statements",
@@ -57,7 +60,7 @@ class App:
             transactions_repository or TransactionsRepository(db)
         )
 
-        self.categorizer = categorizer or EmbeddingTransactionCategorizer(
+        self.categorizer = categorizer or GeminiTransactionCategorizer(
             self.categories_repository
         )
 
@@ -103,12 +106,14 @@ class App:
 
         self.setup_categorization_factory(db)
 
+        print("App initialized.")
+
     def setup_categorization_factory(self, db: Session):
 
         def service_factory() -> TransactionCategorizationService:
             transactionCategorizationService = TransactionCategorizationService(
                 TransactionsRepository(db),
-                EmbeddingTransactionCategorizer(CategoriesRepository(db)),
+                GeminiTransactionCategorizer(CategoriesRepository(db)),
             )
             return transactionCategorizationService
 
@@ -122,8 +127,4 @@ def create_default_app():
 
 
 # Only create the app when this module is run directly, not when imported
-if __name__ == "__main__":
-    app = create_default_app()
-else:
-    # For imports (like in tests), provide a function to create the app
-    app = None
+app = create_default_app()
