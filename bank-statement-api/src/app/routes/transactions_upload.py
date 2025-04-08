@@ -14,7 +14,7 @@ from ..repositories.transactions_repository import (
 from ..schemas import FileUploadResponse
 from ..schemas import Transaction as TransactionSchema
 from ..schemas import TransactionCreate
-from ..services.transaction_categorizer import TransactionCategorizer
+from src.app.services.categorizers.embedding import TransactionCategorizer
 
 
 class TransactionUploader:

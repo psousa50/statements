@@ -1,9 +1,8 @@
 from fastapi import APIRouter
-from typing import Optional
 
 from ..repositories.categories_repository import CategoriesRepository
 from ..repositories.transactions_repository import TransactionsRepository
-from ..services.transaction_categorizer import TransactionCategorizer
+from src.app.services.categorizers.embedding import TransactionCategorizer
 from ..services.transaction_categorization_service import (
     TransactionCategorizationService,
 )
@@ -13,8 +12,9 @@ from ..tasks.categorization import manually_trigger_categorization
 class CategorizationRouter:
     def __init__(
         self,
-        transactions_repository: Optional[TransactionsRepository] = None,
-        categories_repository: Optional[CategoriesRepository] = None,
+        transactions_repository: TransactionsRepository,
+        categories_repository: CategoriesRepository,
+        categorizer: TransactionCategorizer,
     ):
         self.router = APIRouter(
             prefix="/categorization",
@@ -38,9 +38,9 @@ class CategorizationRouter:
             methods=["POST"],
         )
         
-        # Initialize repositories if provided
         self.transactions_repository = transactions_repository
         self.categories_repository = categories_repository
+        self.categorizer = categorizer
         
     async def trigger_categorization(self, batch_size: int = 10):
         task = manually_trigger_categorization(batch_size)
@@ -60,9 +60,8 @@ class CategorizationRouter:
         return response
     
     async def process_categorization_now(self, batch_size: int = 10):
-        categorizer = TransactionCategorizer(self.categories_repository)
         categorization_service = TransactionCategorizationService(
-            self.transactions_repository, categorizer
+            self.transactions_repository, self.categorizer
         )
         
         categorized_count = categorization_service.categorize_pending_transactions(
@@ -73,6 +72,3 @@ class CategorizationRouter:
             "message": "Categorization completed",
             "categorized_count": categorized_count,
         }
-
-
-router = CategorizationRouter().router

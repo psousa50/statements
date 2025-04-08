@@ -1,4 +1,5 @@
 import os
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
@@ -6,8 +7,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from ..models import Category
-from ..repositories.categories_repository import CategoriesRepository
+from src.app.repositories.categories_repository import CategoriesRepository
 
 
 @dataclass
@@ -17,7 +17,17 @@ class Subcategory:
     subcategory_name: str
 
 
-class TransactionCategorizer:
+class TransactionCategorizer(ABC):
+    @abstractmethod
+    def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
+        pass
+    
+    @abstractmethod
+    def refresh_rules(self):
+        pass
+
+
+class EmbeddingTransactionCategorizer(TransactionCategorizer):
     def __init__(
         self,
         categories_repository: CategoriesRepository,
@@ -37,11 +47,11 @@ class TransactionCategorizer:
 
     def refresh_categories_embeddings(
         self,
-    ) -> Tuple[Tuple[List[Category], List[Tuple[int, int]]], np.ndarray]:
+    ) -> Tuple[List[Subcategory], np.ndarray]:
         categories = self.categories_repository.get_all()
 
         if not categories:
-            return (categories, []), np.array([])
+            return [], np.array([])
 
         expanded_categories = [
             Subcategory(sub_cat.id, cat.category_name, sub_cat.category_name)
@@ -79,6 +89,7 @@ class TransactionCategorizer:
             return None, 0.0
 
     def refresh_rules(self):
-        """Refresh the categorization rules by updating the categories and embeddings"""
         self.expanded_categories, self.embeddings = self.refresh_categories_embeddings()
         return self.expanded_categories, self.embeddings
+
+

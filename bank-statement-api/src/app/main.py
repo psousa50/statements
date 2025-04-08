@@ -10,11 +10,11 @@ from .repositories.categories_repository import CategoriesRepository
 from .repositories.sources_repository import SourcesRepository
 from .repositories.transactions_repository import TransactionsRepository
 from .routes.categories import CategoryRouter
-from .routes.categorization import router as categorization_router
+from .routes.categorization import CategorizationRouter
 from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
-from .services.transaction_categorizer import TransactionCategorizer
+from src.app.services.categorizers.embedding import TransactionCategorizer, EmbeddingTransactionCategorizer
 from .services.transaction_categorization_service import (
     TransactionCategorizationService,
 )
@@ -57,7 +57,7 @@ class App:
             transactions_repository or TransactionsRepository(db)
         )
 
-        self.categorizer = categorizer or TransactionCategorizer(
+        self.categorizer = categorizer or EmbeddingTransactionCategorizer(
             self.categories_repository
         )
 
@@ -77,11 +77,16 @@ class App:
             self.transactions_repository,
             transaction_uploader=transaction_uploader,
         )
+        categorization_router = CategorizationRouter(
+            self.transactions_repository,
+            self.categories_repository,
+            self.categorizer,
+        )
 
         self.app.include_router(category_router.router)
         self.app.include_router(source_router.router)
         self.app.include_router(transaction_router.router)
-        self.app.include_router(categorization_router)
+        self.app.include_router(categorization_router.router)
 
         @self.app.get("/")
         def read_root():
@@ -103,7 +108,7 @@ class App:
         def service_factory() -> TransactionCategorizationService:
             transactionCategorizationService = TransactionCategorizationService(
                 TransactionsRepository(db),
-                TransactionCategorizer(CategoriesRepository(db)),
+                EmbeddingTransactionCategorizer(CategoriesRepository(db)),
             )
             return transactionCategorizationService
 

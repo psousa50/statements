@@ -1,5 +1,5 @@
 from ..repositories.transactions_repository import TransactionsRepository
-from .transaction_categorizer import TransactionCategorizer
+from src.app.services.categorizers.embedding import TransactionCategorizer
 
 
 class TransactionCategorizationService:
