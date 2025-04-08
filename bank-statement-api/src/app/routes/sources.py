@@ -1,9 +1,12 @@
-from typing import List, Optional, Callable
+from typing import Callable, List, Optional
+
 from fastapi import APIRouter, HTTPException
 
 from ..models import Source
-from ..schemas import Source as SourceSchema, SourceCreate
 from ..repositories.sources_repository import SourcesRepository
+from ..schemas import Source as SourceSchema
+from ..schemas import SourceCreate
+
 
 class SourceRouter:
     def __init__(self, source_repository: SourcesRepository, on_change_callback: Optional[Callable[[str, List[Source]], None]] = None):

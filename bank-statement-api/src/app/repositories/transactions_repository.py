@@ -1,10 +1,12 @@
+from dataclasses import dataclass
+from datetime import date
 from typing import List, Optional
+
 from sqlalchemy.orm import Session
+
 from ..models import Transaction
 from ..schemas import TransactionCreate
 
-from dataclasses import dataclass
-from datetime import date
 
 @dataclass
 class TransactionsFilter:

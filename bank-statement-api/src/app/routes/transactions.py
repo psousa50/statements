@@ -1,13 +1,15 @@
-from typing import List, Optional, Callable
 from datetime import date
-from fastapi import APIRouter, HTTPException
-from fastapi import File, UploadFile, Query
+from typing import Callable, List, Optional
+
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
 from ..models import Transaction
-from ..schemas import Transaction as TransactionSchema
-from ..repositories.transactions_repository import TransactionsRepository, TransactionsFilter
-from ..schemas import FileUploadResponse
+from ..repositories.transactions_repository import (TransactionsFilter,
+                                                    TransactionsRepository)
 from ..routes.transactions_upload import TransactionUploader
+from ..schemas import FileUploadResponse
+from ..schemas import Transaction as TransactionSchema
+
 
 class TransactionRouter:
     def __init__(self, transactions_repository: TransactionsRepository, transaction_uploader: TransactionUploader, on_change_callback: Optional[Callable[[str, List[Transaction]], None]] = None):

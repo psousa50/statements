@@ -1,11 +1,13 @@
-from typing import List, Callable, Optional
-from fastapi import APIRouter, HTTPException, UploadFile, File
 import csv
 import io
+from typing import Callable, List, Optional
+
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from ..models import Category
-from ..schemas import Category as CategorySchema, CategoryCreate
 from ..repositories.categories_repository import CategoriesRepository
+from ..schemas import Category as CategorySchema
+from ..schemas import CategoryCreate
 
 # Callback type for category changes
 CategoryChangeCallback = Callable[[str, List[Category]], None]

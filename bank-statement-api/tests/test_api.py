@@ -1,16 +1,17 @@
 import uuid
+from unittest.mock import MagicMock
+
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from unittest.mock import MagicMock
-
 from src.app.db import Base
 from src.app.main import App
+from src.app.models import Category, Source
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.repositories.sources_repository import SourcesRepository
-from src.app.models import Category, Source
+
 
 def create_test_db():
     """Create an in-memory SQLite database for testing."""

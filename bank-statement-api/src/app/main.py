@@ -1,15 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from . import models
+from .db import engine, get_db
+from .repositories.categories_repository import CategoriesRepository
+from .repositories.sources_repository import SourcesRepository
+from .repositories.transactions_repository import TransactionsRepository
 from .routes.categories import CategoryRouter
 from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
-from .db import engine, get_db
-from . import models
 from .services.categorizer import TransactionCategorizer
-from .repositories.categories_repository import CategoriesRepository
-from .repositories.sources_repository import SourcesRepository
-from .repositories.transactions_repository import TransactionsRepository
 
 models.Base.metadata.create_all(bind=engine)
 

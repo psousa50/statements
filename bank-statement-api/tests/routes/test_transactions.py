@@ -1,11 +1,13 @@
 from datetime import date
+
 from fastapi.testclient import TestClient
 
-from src.app.repositories.transactions_repository import TransactionsRepository
-from tests.conftest import create_app, db_session, random_source, random_transaction, random_category
-
-from src.app.repositories.sources_repository import SourcesRepository
 from src.app.repositories.categories_repository import CategoriesRepository
+from src.app.repositories.sources_repository import SourcesRepository
+from src.app.repositories.transactions_repository import TransactionsRepository
+from tests.conftest import (create_app, db_session, random_category,
+                            random_source, random_transaction)
+
 
 def test_get_transactions():
     transactions_repository = TransactionsRepository(db_session)

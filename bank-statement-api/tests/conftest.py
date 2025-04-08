@@ -1,5 +1,8 @@
 import uuid
+from datetime import date
+from decimal import Decimal
 from unittest.mock import MagicMock
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -8,8 +11,7 @@ from src.app.db import Base
 from src.app.main import App
 from src.app.models import Category, Source
 from src.app.schemas import TransactionCreate
-from decimal import Decimal
-from datetime import date
+
 
 def create_test_db():
     """Create an in-memory SQLite database for testing."""

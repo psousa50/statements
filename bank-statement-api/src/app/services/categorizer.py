@@ -1,14 +1,13 @@
-from typing import List, Tuple, Optional
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
+
 import numpy as np
+from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from ..models import Category
-
-from sentence_transformers import SentenceTransformer    
-
 from ..repositories.categories_repository import CategoriesRepository
 
-from dataclasses import dataclass
 
 @dataclass
 class Subcategory:
