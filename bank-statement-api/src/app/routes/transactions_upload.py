@@ -1,4 +1,3 @@
-import io
 import re
 from datetime import datetime
 from typing import Optional
@@ -28,30 +27,6 @@ class TransactionUploader:
         self.transactions_repository = transactions_repository
         self.sources_repository = sources_repository
         self.categorizer = categorizer
-
-    def detect_file_format(self, filename):
-        if filename.endswith(".csv"):
-            return "csv"
-        elif filename.endswith((".xls", ".xlsx")):
-            return "excel"
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Unsupported file format. Please upload CSV or Excel files.",
-            )
-
-    def parse_file(self, file_content, file_format):
-        try:
-            if file_format == "csv":
-                df = pd.read_csv(io.BytesIO(file_content))
-            elif file_format == "excel":
-                df = pd.read_excel(io.BytesIO(file_content))
-            else:
-                raise HTTPException(status_code=400, detail="Unsupported file format")
-
-            return df
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Error parsing file: {str(e)}")
 
     def map_columns(self, df):
         required_columns = ["date", "description", "amount"]
@@ -139,7 +114,7 @@ class TransactionUploader:
                     )
                     existing_transaction = self.transactions_repository.get_all(
                         filter
-                    ).first()
+                    )
 
                     if existing_transaction:
                         skipped_count += 1
@@ -180,18 +155,9 @@ class TransactionUploader:
 
     async def upload_file(
         self,
-        file: UploadFile = File(...),
+        df: pd.DataFrame,
         source_id: Optional[int] = Query(None),
     ):
-
-        file_content = await file.read()
-
-        file_format = self.detect_file_format(file_content, file.filename)
-        print(f"File format detected: {file_format}")
-
-        df = self.parse_file(file_content, file_format)
-        print(f"DataFrame shape: {df.shape}")
-        print(f"DataFrame columns: {df.columns.tolist()}")
 
         column_mapping = {}
         for col in df.columns:

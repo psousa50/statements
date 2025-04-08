@@ -1,3 +1,5 @@
+import pandas as pd
+import io
 from datetime import date
 from typing import Callable, List, Optional
 
@@ -109,4 +111,34 @@ class TransactionRouter:
         file: UploadFile = File(...),
         source_id: Optional[int] = Query(None),
     ):
-        return await self.transaction_uploader.upload_file(file, source_id)
+        file_content = await file.read()
+        file_format = self.detect_file_format(file.filename)
+        df = self.parse_file(file_content, file_format)
+
+        return await self.transaction_uploader.upload_file(df, source_id)
+
+    def detect_file_format(self, filename):
+        if filename.endswith(".csv"):
+            return "csv"
+        elif filename.endswith((".xls", ".xlsx")):
+            return "excel"
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Unsupported file format. Please upload CSV or Excel files.",
+            )
+
+    def parse_file(self, file_content, file_format):
+        try:
+            if file_format == "csv":
+                df = pd.read_csv(io.BytesIO(file_content))
+            elif file_format == "excel":
+                df = pd.read_excel(io.BytesIO(file_content))
+            else:
+                raise HTTPException(status_code=400, detail="Unsupported file format")
+
+            return df
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error parsing file: {str(e)}")
+
+

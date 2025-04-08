@@ -80,7 +80,7 @@ export const uploadApi = {
     formData.append('file', file);
     
     // Build the URL with query parameter if sourceId exists
-    const url = sourceId ? `/upload/?source_id=${sourceId}` : '/upload/';
+    const url = sourceId ? `/transactions/upload/?source_id=${sourceId}` : '/transactions/upload/';
     console.log('Upload URL with query param:', url);
     
     const response = await api.post(url, formData, {

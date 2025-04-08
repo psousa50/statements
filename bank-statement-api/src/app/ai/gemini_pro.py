@@ -24,15 +24,6 @@ class GeminiPro:
 
         self.model = genai.GenerativeModel(
             model_name=self.model_name,
-            generation_config={
-                "temperature": self.temperature,
-            },
-            safety_settings={
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-            },
         )
 
     async def generate(self, prompt: str) -> str:
