@@ -1,12 +1,11 @@
 from typing import List, Optional, Callable
 from datetime import date
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, Query
 
 from ..db import get_db
 from ..models import Transaction
 from ..schemas import Transaction as TransactionSchema
-from ..repositories.transactions_repository import TransactionsRepository
+from ..repositories.transactions_repository import TransactionsRepository, TransactionsFilter
 
 class TransactionRouter:
     def __init__(self, transactions_repository: TransactionsRepository, on_change_callback: Optional[Callable[[str, List[Transaction]], None]] = None):
@@ -35,29 +34,11 @@ class TransactionRouter:
         search: Optional[str] = None,
         skip: int = 0,
         limit: int = 100,
-        db: Session = Depends(get_db)
     ):
-        query = db.query(Transaction)
+        filter = TransactionsFilter(start_date=start_date, end_date=end_date, category_id=category_id, source_id=source_id, search=search)
+        transactions = self.transaction_repository.get_all(filter, skip=skip, limit=limit)
+        return [TransactionSchema.from_orm(t) for t in transactions]
         
-        # Apply filters
-        if start_date:
-            query = query.filter(Transaction.date >= start_date)
-        if end_date:
-            query = query.filter(Transaction.date <= end_date)
-        if category_id:
-            query = query.filter(Transaction.category_id == category_id)
-        if source_id:
-            query = query.filter(Transaction.source_id == source_id)
-        if search:
-            query = query.filter(Transaction.description.ilike(f"%{search}%"))
-        
-        # Order by date (most recent first)
-        query = query.order_by(Transaction.date.desc())
-        
-        # Apply pagination
-        transactions = query.offset(skip).limit(limit).all()
-        
-        return transactions
     
     async def get_transaction(
         self,
