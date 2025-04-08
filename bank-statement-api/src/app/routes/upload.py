@@ -127,12 +127,13 @@ class TransactionUploadRouter:
                 
                 # Check for duplicate transaction
                 try:
-                    existing_transaction = self.transactions_repository.get_by_source_id(source_id).filter(
-                        Transaction.date == transaction_date,
-                        Transaction.description == description,
-                        Transaction.amount == amount,
-                        Transaction.source_id == source_id
-                    ).first()
+                    filter = TransactionsFilter(
+                        start_date=transaction_date,
+                        end_date=transaction_date,
+                        source_id=source_id,
+                        search=description
+                    )
+                    existing_transaction = self.transactions_repository.get_all(filter).first()
                     
                     if existing_transaction:
                         skipped_count += 1
