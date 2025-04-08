@@ -1,9 +1,11 @@
+import pytest
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from src.app.services.transaction_categorizer import TransactionCategorizer
 
 
+@pytest.mark.integration
 class TestTransactionCategorizer:
 
     def test_categorize_transaction(self):
