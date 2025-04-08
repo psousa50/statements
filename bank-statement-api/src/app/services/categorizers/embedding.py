@@ -19,7 +19,7 @@ class Subcategory:
 
 class TransactionCategorizer(ABC):
     @abstractmethod
-    def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
+    async def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
         pass
     
     @abstractmethod
@@ -68,7 +68,7 @@ class EmbeddingTransactionCategorizer(TransactionCategorizer):
 
         return expanded_categories, embeddings
 
-    def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
+    async def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
         try:
             transaction_embedding = self.model.encode([description.lower()])
             similarities = self.similarity_func(transaction_embedding, self.embeddings)
@@ -91,5 +91,3 @@ class EmbeddingTransactionCategorizer(TransactionCategorizer):
     def refresh_rules(self):
         self.expanded_categories, self.embeddings = self.refresh_categories_embeddings()
         return self.expanded_categories, self.embeddings
-
-

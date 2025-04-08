@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-import inspect
 
 from ..repositories.categories_repository import CategoriesRepository
 from ..repositories.transactions_repository import TransactionsRepository
@@ -42,7 +41,6 @@ class CategorizationRouter:
         self.transactions_repository = transactions_repository
         self.categories_repository = categories_repository
         self.categorizer = categorizer
-        self.is_async_categorizer = inspect.iscoroutinefunction(categorizer.categorize_transaction)
         
     async def trigger_categorization(self, batch_size: int = 10):
         task = manually_trigger_categorization(batch_size)
@@ -66,14 +64,9 @@ class CategorizationRouter:
             self.transactions_repository, self.categorizer
         )
         
-        if self.is_async_categorizer:
-            categorized_count = await categorization_service.categorize_pending_transactions_async(
-                batch_size
-            )
-        else:
-            categorized_count = categorization_service.categorize_pending_transactions(
-                batch_size
-            )
+        categorized_count = await categorization_service.categorize_pending_transactions(
+            batch_size
+        )
         
         return {
             "message": "Categorization completed",
