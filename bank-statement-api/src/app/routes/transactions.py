@@ -36,7 +36,7 @@ class TransactionRouter:
     ):
         filter = TransactionsFilter(start_date=start_date, end_date=end_date, category_id=category_id, source_id=source_id, search=search)
         transactions = self.transaction_repository.get_all(filter, skip=skip, limit=limit)
-        return [TransactionSchema.from_orm(t) for t in transactions]
+        return transactions
         
     
     async def get_transaction(
