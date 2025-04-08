@@ -129,22 +129,11 @@ class TransactionUploader:
                     amount=amount,
                     currency="EUR",
                     source_id=source_id,
+                    categorization_status="pending",
                 )
 
                 if "currency" in row and pd.notna(row["currency"]):
                     new_transaction.currency = str(row["currency"])
-
-                try:
-                    category_id, confidence = self.categorizer.categorize_transaction(
-                        description
-                    )
-                    print(
-                        f"Categorization category ID: {category_id} with confidence: {confidence}"
-                    )
-                    if category_id is not None:
-                        new_transaction.category_id = category_id
-                except Exception as e:
-                    print(f"Error categorizing transaction: {str(e)}")
 
                 transactions.append(new_transaction)
 
@@ -204,7 +193,8 @@ class TransactionUploader:
                 description=transaction.description,
                 amount=transaction.amount,
                 source_id=source_id,
-                category_id=transaction.category_id,
+                category_id=None,
+                categorization_status="pending",
             )
             db_transaction = self.transactions_repository.create(
                 transaction_create, auto_commit=False

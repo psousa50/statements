@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
+import os
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -23,9 +24,14 @@ class TransactionCategorizer:
         model=None,
         similarity_func=None,
     ):
+        # Force CPU usage to avoid MPS issues
+        os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+        os.environ["TOKENIZERS_PARALLELISM"] = "false"
+        
         self.categories_repository = categories_repository
         self.model = model or SentenceTransformer(
-            "paraphrase-multilingual-MiniLM-L12-v2"
+            "paraphrase-multilingual-MiniLM-L12-v2", 
+            device="cpu"  # Force CPU usage
         )
         self.similarity_func = similarity_func or cosine_similarity
         self.expanded_categories, self.embeddings = self.refresh_categories_embeddings()

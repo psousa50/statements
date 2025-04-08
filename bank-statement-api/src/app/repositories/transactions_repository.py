@@ -15,6 +15,7 @@ class TransactionsFilter:
     category_id: Optional[int] = None
     source_id: Optional[int] = None
     search: Optional[str] = None
+    categorization_status: Optional[str] = None
 
 
 class TransactionsRepository:
@@ -36,6 +37,8 @@ class TransactionsRepository:
             query = query.filter(Transaction.source_id == filter.source_id)
         if filter.search:
             query = query.filter(Transaction.description.ilike(f"%{filter.search}%"))
+        if filter.categorization_status:
+            query = query.filter(Transaction.categorization_status == filter.categorization_status)
 
         query = query.order_by(Transaction.date.desc())
 
@@ -81,3 +84,20 @@ class TransactionsRepository:
 
     def commit(self) -> None:
         self.db.commit()
+
+    def get_uncategorized_transactions(self, batch_size: int = 100) -> List[Transaction]:
+        return (
+            self.db.query(Transaction)
+            .filter(Transaction.categorization_status == "pending")
+            .limit(batch_size)
+            .all()
+        )
+
+    def update_transaction_category(self, transaction_id: int, category_id: int, status: str = "categorized") -> Transaction:
+        transaction = self.get_by_id(transaction_id)
+        if transaction:
+            transaction.category_id = category_id
+            transaction.categorization_status = status
+            self.db.add(transaction)
+            self.db.commit()
+        return transaction

@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -44,6 +44,7 @@ class TransactionBase(BaseModel):
 
 class TransactionCreate(TransactionBase):
     category_id: Optional[int] = None
+    categorization_status: Literal["pending", "categorized", "failed"] = "pending"
 
 
 class Transaction(TransactionBase):
@@ -51,6 +52,7 @@ class Transaction(TransactionBase):
     category_id: Optional[int] = None
     category: Optional[Category] = None
     source: Optional[Source] = None
+    categorization_status: Literal["pending", "categorized", "failed"] = "pending"
 
     model_config = ConfigDict(from_attributes=True)
 

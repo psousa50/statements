@@ -7,6 +7,7 @@ from .repositories.categories_repository import CategoriesRepository
 from .repositories.sources_repository import SourcesRepository
 from .repositories.transactions_repository import TransactionsRepository
 from .routes.categories import CategoryRouter
+from .routes.categorization import router as categorization_router
 from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
@@ -81,6 +82,7 @@ class App:
         self.app.include_router(category_router.router)
         self.app.include_router(source_router.router)
         self.app.include_router(transaction_router.router)
+        self.app.include_router(categorization_router)
 
         @self.app.get("/")
         def read_root():
@@ -91,6 +93,7 @@ class App:
                     {"path": "/categories", "methods": ["GET", "POST"]},
                     {"path": "/transactions", "methods": ["GET", "POST"]},
                     {"path": "/sources", "methods": ["GET", "POST", "PUT", "DELETE"]},
+                    {"path": "/categorization", "methods": ["POST", "GET"]},
                 ],
             }
 
