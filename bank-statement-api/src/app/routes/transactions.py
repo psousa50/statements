@@ -1,8 +1,7 @@
 from typing import List, Optional, Callable
 from datetime import date
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 
-from ..db import get_db
 from ..models import Transaction
 from ..schemas import Transaction as TransactionSchema
 from ..repositories.transactions_repository import TransactionsRepository, TransactionsFilter
