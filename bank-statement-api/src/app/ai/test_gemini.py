@@ -1,16 +1,16 @@
-
 import asyncio
 import os
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
 from gemini_pro import GeminiPro
+
 
 async def main():
     load_dotenv()
-    
+
     api_key = os.environ.get("GOOGLE_API_KEY")
     gemini = GeminiPro(api_key=api_key)
-    
+
     prompt = """From the list of Categories and SubCategories, choose which one best matches the following transaction descriptions.
     Assign a score from 1 to 5 on your confidence of the match, where 1 is low confidence and 5 is high confidence.
 
@@ -106,16 +106,17 @@ async def main():
         "Esplanada Cafe": {"category": "Food & Dining: Dining Out", "confidence": 5}
     }    
     """
-    
+
     print("\n=== Testing Single Prompt Generation ===")
     print(f"Prompt: {prompt}")
-    
+
     try:
         response = await gemini.generate(prompt)
         print("\nResponse:")
         print(response)
     except Exception as e:
         print(f"Error: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

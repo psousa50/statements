@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from src.app.services.categorizer import TransactionCategorizer
+from src.app.services.transaction_categorizer import TransactionCategorizer
 
 
 class TestTransactionCategorizer:

@@ -1,4 +1,5 @@
 from typing import Optional
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -13,8 +14,10 @@ from .routes.categorization import router as categorization_router
 from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
-from .services.categorizer import TransactionCategorizer
-from .services.transaction_categorization_service import TransactionCategorizationService
+from .services.transaction_categorizer import TransactionCategorizer
+from .services.transaction_categorization_service import (
+    TransactionCategorizationService,
+)
 from .tasks.categorization import register_service_factory
 
 models.Base.metadata.create_all(bind=engine)
@@ -98,9 +101,9 @@ class App:
     def setup_categorization_factory(self, db: Session):
 
         def service_factory() -> TransactionCategorizationService:
-            transactionCategorizationService =  TransactionCategorizationService(
+            transactionCategorizationService = TransactionCategorizationService(
                 TransactionsRepository(db),
-                TransactionCategorizer(CategoriesRepository(db))
+                TransactionCategorizer(CategoriesRepository(db)),
             )
             return transactionCategorizationService
 
@@ -111,6 +114,7 @@ class App:
 def create_default_app():
     app_instance = App()
     return app_instance.app
+
 
 # Only create the app when this module is run directly, not when imported
 if __name__ == "__main__":

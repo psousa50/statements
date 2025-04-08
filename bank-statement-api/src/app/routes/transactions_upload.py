@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 import pandas as pd
-from fastapi import File, HTTPException, Query, UploadFile
+from fastapi import HTTPException, Query
 
 from ..models import Source, Transaction
 from ..repositories.sources_repository import SourcesRepository
@@ -14,7 +14,7 @@ from ..repositories.transactions_repository import (
 from ..schemas import FileUploadResponse
 from ..schemas import Transaction as TransactionSchema
 from ..schemas import TransactionCreate
-from ..services.categorizer import TransactionCategorizer
+from ..services.transaction_categorizer import TransactionCategorizer
 
 
 class TransactionUploader:
@@ -112,9 +112,7 @@ class TransactionUploader:
                         source_id=source_id,
                         search=description,
                     )
-                    existing_transaction = self.transactions_repository.get_all(
-                        filter
-                    )
+                    existing_transaction = self.transactions_repository.get_all(filter)
 
                     if existing_transaction:
                         skipped_count += 1

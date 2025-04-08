@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, ForeignKey, Integer, Numeric, String, Enum
+from sqlalchemy import Column, Date, Enum, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import relationship
 
 from .db import Base
@@ -41,7 +41,11 @@ class Transaction(Base):
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     currency = Column(String, default="EUR")
     source_id = Column(Integer, ForeignKey("sources.id"), nullable=False, index=True)
-    categorization_status = Column(Enum("pending", "categorized", "failed", name="categorization_status"), default="pending", index=True)
+    categorization_status = Column(
+        Enum("pending", "categorized", "failed", name="categorization_status"),
+        default="pending",
+        index=True,
+    )
 
     category = relationship("Category", back_populates="transactions")
     source = relationship("Source", back_populates="transactions")

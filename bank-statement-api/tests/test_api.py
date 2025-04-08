@@ -52,8 +52,7 @@ def test_create_category():
     categories_repository = CategoriesRepository(db_session)
 
     app_instance = create_app(
-        db_session=db_session, 
-        categories_repository=categories_repository
+        db_session=db_session, categories_repository=categories_repository
     )
 
     client = TestClient(app_instance.app)

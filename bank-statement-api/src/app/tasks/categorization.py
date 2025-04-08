@@ -1,18 +1,20 @@
 from typing import Callable
 
 from ..celery_app import celery_app
-from ..repositories.transactions_repository import TransactionsRepository
-from ..services.categorizer import TransactionCategorizer
-from ..services.transaction_categorization_service import TransactionCategorizationService
+from ..services.transaction_categorization_service import (
+    TransactionCategorizationService,
+)
 
 
 class CategorizationTaskFactory:
     def __init__(self):
         self._service_factory = None
-        
-    def register_service_factory(self, factory: Callable[[], TransactionCategorizationService]):
+
+    def register_service_factory(
+        self, factory: Callable[[], TransactionCategorizationService]
+    ):
         self._service_factory = factory
-        
+
     def get_service(self) -> TransactionCategorizationService:
         return self._service_factory()
 
