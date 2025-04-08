@@ -24,7 +24,7 @@ class TestTransactionCategorizer:
         categories_repository.get_all.return_value = [food, restaurant, groceries]
 
         categorizer = TransactionCategorizer(
-            categories_repository=categories_repository
+            categories_repository=categories_repository,
         )
 
         category_id, confidence = categorizer.categorize_transaction(

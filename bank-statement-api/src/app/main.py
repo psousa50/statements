@@ -96,17 +96,25 @@ class App:
         self.setup_categorization_factory(db)
 
     def setup_categorization_factory(self, db: Session):
-        transactionCategorizationService =  TransactionCategorizationService(
-            TransactionsRepository(db),
-            TransactionCategorizer(CategoriesRepository(db))
-        )
 
         def service_factory() -> TransactionCategorizationService:
+            transactionCategorizationService =  TransactionCategorizationService(
+                TransactionsRepository(db),
+                TransactionCategorizer(CategoriesRepository(db))
+            )
             return transactionCategorizationService
 
         register_service_factory(service_factory)
 
 
 # Create the default app instance
-app_instance = App()
-app = app_instance.app
+def create_default_app():
+    app_instance = App()
+    return app_instance.app
+
+# Only create the app when this module is run directly, not when imported
+if __name__ == "__main__":
+    app = create_default_app()
+else:
+    # For imports (like in tests), provide a function to create the app
+    app = None
