@@ -53,7 +53,7 @@ class TransactionCategorizer:
                 return main_category_id, float(confidence)
             else:
                 return None, 0.0
-        except Exception as e:
+        except Exception:
             return None, 0.0
     
     def refresh_rules(self):

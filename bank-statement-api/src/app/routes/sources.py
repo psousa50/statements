@@ -1,7 +1,6 @@
 from typing import List, Optional, Callable
 from fastapi import APIRouter, HTTPException
 
-from ..db import get_db
 from ..models import Source
 from ..schemas import Source as SourceSchema, SourceCreate
 from ..repositories.sources_repository import SourcesRepository

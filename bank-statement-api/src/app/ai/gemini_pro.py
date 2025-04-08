@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Optional
 
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold

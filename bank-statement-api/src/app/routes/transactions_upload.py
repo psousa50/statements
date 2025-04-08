@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, File, HTTPException, UploadFile, Query
+from fastapi import File, HTTPException, UploadFile, Query
 import pandas as pd
 import io
 import re
@@ -8,11 +8,11 @@ from datetime import datetime
 from ..models import Transaction, Source
 from ..schemas import Transaction as TransactionSchema, FileUploadResponse, TransactionCreate
 from ..services.categorizer import TransactionCategorizer
-from ..repositories.transactions_repository import TransactionsRepository
+from ..repositories.transactions_repository import TransactionsRepository, TransactionsFilter
 from ..repositories.sources_repository import SourcesRepository
 
 
-class TransactionUploadRouter:
+class TransactionUploader:
     def __init__(self, 
                  transactions_repository: TransactionsRepository, 
                  sources_repository: SourcesRepository, 
@@ -20,14 +20,8 @@ class TransactionUploadRouter:
         self.transactions_repository = transactions_repository
         self.sources_repository = sources_repository
         self.categorizer = categorizer
-        self.router = APIRouter(
-            prefix="/upload",
-            tags=["upload"],
-        )
-        
-        self.router.add_api_route("", self.upload_file, methods=["POST"], response_model=FileUploadResponse)
     
-    def detect_file_format(self, file_content, filename):
+    def detect_file_format(self, filename):
         if filename.endswith('.csv'):
             return 'csv'
         elif filename.endswith(('.xls', '.xlsx')):
@@ -66,7 +60,6 @@ class TransactionUploadRouter:
         
         description = str(description).lower()
         
-        # Remove special characters and extra spaces
         description = re.sub(r'[^\w\s]', ' ', description)
         description = re.sub(r'\s+', ' ', description).strip()
         
@@ -78,12 +71,10 @@ class TransactionUploadRouter:
         
         for _, row in df.iterrows():
             try:
-                # Extract and validate date
                 date_str = row['date']
                 if pd.isna(date_str):
                     continue
                 
-                # Try different date formats
                 transaction_date = None
                 date_formats = ['%Y-%m-%d %H:%M:%S', '%d-%m-%Y', '%m/%d/%Y', '%d/%m/%Y', '%Y/%m/%d']
                 
@@ -100,32 +91,26 @@ class TransactionUploadRouter:
                 if transaction_date is None:
                     continue
                 
-                # Extract and validate description
                 description = row['description']
                 if pd.isna(description):
                     continue
                 description = str(description)
                 normalized_description = self.normalize_description(description)
                 
-                # Extract and validate amount
                 amount = row['amount']
                 if pd.isna(amount):
                     continue
                 
-                # Convert amount to float
                 try:
                     amount = float(amount)
                 except (ValueError, TypeError):
-                    # Try to handle amount with currency symbols or commas
                     amount_str = str(amount).replace(',', '.').strip()
-                    # Extract only digits and decimal point
                     amount_str = re.sub(r'[^\d.-]', '', amount_str)
                     try:
                         amount = float(amount_str)
                     except ValueError:
                         continue
                 
-                # Check for duplicate transaction
                 try:
                     filter = TransactionsFilter(
                         start_date=transaction_date,
@@ -140,9 +125,7 @@ class TransactionUploadRouter:
                         continue
                 except Exception as e:
                     print(f"Error checking for duplicate transaction: {str(e)}")
-                    # Continue without duplicate check if it fails
                 
-                # Create new transaction
                 new_transaction = Transaction(
                     date=transaction_date,
                     description=description,
@@ -152,11 +135,9 @@ class TransactionUploadRouter:
                     source_id=source_id
                 )
                 
-                # Add currency if available
                 if 'currency' in row and pd.notna(row['currency']):
                     new_transaction.currency = str(row['currency'])
                 
-                # Categorize transaction using the categorizer
                 try:
                     category_id, confidence = self.categorizer.categorize_transaction(description)
                     print(f"Categorization category ID: {category_id} with confidence: {confidence}")
@@ -164,12 +145,10 @@ class TransactionUploadRouter:
                         new_transaction.category_id = category_id
                 except Exception as e:
                     print(f"Error categorizing transaction: {str(e)}")
-                    # Continue without categorization if it fails
                 
                 transactions.append(new_transaction)
                 
             except Exception as e:
-                # Log the error but continue processing other rows
                 print(f"Error processing row: {row}. Error: {str(e)}")
         
         return transactions, skipped_count
@@ -179,13 +158,9 @@ class TransactionUploadRouter:
         file: UploadFile = File(...),
         source_id: Optional[int] = Query(None),
     ):
-        # Debug info
-        print(f"Received source_id: {source_id}, type: {type(source_id)}")
         
-        # Read file content
         file_content = await file.read()
         
-        # Determine file type and parse accordingly
         file_format = self.detect_file_format(file_content, file.filename)
         print(f"File format detected: {file_format}")
         
@@ -193,7 +168,6 @@ class TransactionUploadRouter:
         print(f"DataFrame shape: {df.shape}")
         print(f"DataFrame columns: {df.columns.tolist()}")
         
-        # Check if columns need to be normalized
         column_mapping = {}
         for col in df.columns:
             col_lower = col.lower().strip()
@@ -206,12 +180,10 @@ class TransactionUploadRouter:
             elif col_lower in ['currency', 'curr']:
                 column_mapping[col] = 'currency'
         
-        # Rename columns if needed
         if column_mapping:
             df = df.rename(columns=column_mapping)
             print(f"Renamed columns to: {df.columns.tolist()}")
         
-        # Validate required columns
         required_columns = ['date', 'description', 'amount']
         if not all(col in df.columns for col in required_columns):
             raise HTTPException(
@@ -226,13 +198,11 @@ class TransactionUploadRouter:
                 self.sources_repository.create(default_source)
             source_id = default_source.id
         
-        print(f"Using source_id: {source_id}")
         transactions, skipped_count = self.process_transactions(df, source_id)
         print(f"Processed {len(transactions)} transactions, skipped {skipped_count} duplicates")
         
         transaction_ids = []
         for transaction in transactions:
-            print(f"Creating transaction: {transaction.date}, {transaction.description}, {transaction.amount}")
             transaction_create = TransactionCreate(
                 date=transaction.date,
                 description=transaction.description,
@@ -245,7 +215,6 @@ class TransactionUploadRouter:
         
         self.transactions_repository.commit()
         
-        # Fetch the transactions with their IDs
         db_transactions = self.transactions_repository.get_by_ids(transaction_ids)
         
         transaction_schemas = [TransactionSchema.model_validate(t, from_attributes=True) for t in db_transactions]

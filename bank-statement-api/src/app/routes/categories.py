@@ -1,10 +1,8 @@
 from typing import List, Callable, Optional
 from fastapi import APIRouter, HTTPException, UploadFile, File
-from sqlalchemy.orm import Session
 import csv
 import io
 
-from ..db import get_db
 from ..models import Category
 from ..schemas import Category as CategorySchema, CategoryCreate
 from ..repositories.categories_repository import CategoriesRepository

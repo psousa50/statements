@@ -55,7 +55,7 @@ def test_get_transactions_with_filters():
     
     client = TestClient(app_instance.app)
     
-    response = client.get(f"/transactions?start_date=2023-01-01&end_date=2023-01-31")
+    response = client.get("/transactions?start_date=2023-01-01&end_date=2023-01-31")
     assert response.status_code == 200
     transactions = response.json()
     assert any(t["description"] == transaction1.description for t in transactions)
@@ -67,7 +67,7 @@ def test_get_transactions_with_filters():
     assert any(t["description"] == transaction1.description for t in transactions)
     assert any(t["description"] == transaction2.description for t in transactions)
     
-    response = client.get(f"/transactions?search=Filtered")
+    response = client.get("/transactions?search=Filtered")
     assert response.status_code == 200
     transactions = response.json()
     assert any(t["description"] == transaction1.description for t in transactions)

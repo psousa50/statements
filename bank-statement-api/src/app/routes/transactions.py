@@ -1,24 +1,28 @@
 from typing import List, Optional, Callable
 from datetime import date
 from fastapi import APIRouter, HTTPException
+from fastapi import File, UploadFile, Query
 
 from ..models import Transaction
 from ..schemas import Transaction as TransactionSchema
 from ..repositories.transactions_repository import TransactionsRepository, TransactionsFilter
+from ..schemas import FileUploadResponse
+from ..routes.transactions_upload import TransactionUploader
 
 class TransactionRouter:
-    def __init__(self, transactions_repository: TransactionsRepository, on_change_callback: Optional[Callable[[str, List[Transaction]], None]] = None):
+    def __init__(self, transactions_repository: TransactionsRepository, transaction_uploader: TransactionUploader, on_change_callback: Optional[Callable[[str, List[Transaction]], None]] = None):
         self.router = APIRouter(
             prefix="/transactions",
             tags=["transactions"],
         )
         self.transaction_repository = transactions_repository
+        self.transaction_uploader = transaction_uploader
         self.on_change_callback = on_change_callback
         
-        # Register routes with trailing slashes removed
         self.router.add_api_route("", self.get_transactions, methods=["GET"], response_model=List[TransactionSchema])
         self.router.add_api_route("/{transaction_id}", self.get_transaction, methods=["GET"], response_model=TransactionSchema)
         self.router.add_api_route("/{transaction_id}/categorize", self.categorize_transaction, methods=["PUT"], response_model=TransactionSchema)
+        self.router.add_api_route("/upload", self.upload_file, methods=["POST"], response_model=FileUploadResponse)
     
     def _notify_change(self, action: str, transactions: List[Transaction]):
         if self.on_change_callback:
@@ -60,7 +64,13 @@ class TransactionRouter:
         transaction.category_id = category_id
         self.transaction_repository.update(transaction)
         
-        # Notify about the change
         self._notify_change("update", [transaction])
         
         return transaction
+
+    async def upload_file(
+        self,
+        file: UploadFile = File(...),
+        source_id: Optional[int] = Query(None),
+    ):
+        return await self.transaction_uploader.upload_file(file, source_id)
