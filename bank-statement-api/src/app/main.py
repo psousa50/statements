@@ -1,5 +1,7 @@
+from typing import Optional
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 
 from . import models
 from .db import engine, get_db
@@ -12,6 +14,8 @@ from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
 from .services.categorizer import TransactionCategorizer
+from .services.transaction_categorization_service import TransactionCategorizationService
+from .tasks.categorization import register_service_factory
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -19,11 +23,11 @@ models.Base.metadata.create_all(bind=engine)
 class App:
     def __init__(
         self,
-        db_session=None,
-        categories_repository=None,
-        sources_repository=None,
-        transactions_repository=None,
-        categorizer=None,
+        db_session: Optional[Session] = None,
+        categories_repository: Optional[CategoriesRepository] = None,
+        sources_repository: Optional[SourcesRepository] = None,
+        transactions_repository: Optional[TransactionsRepository] = None,
+        categorizer: Optional[TransactionCategorizer] = None,
     ):
         self.app = FastAPI(
             title="Bank Statement API",
@@ -43,14 +47,6 @@ class App:
             db = next(get_db())
         else:
             db = db_session
-
-            def override_get_db():
-                try:
-                    yield db
-                finally:
-                    pass
-
-            self.app.dependency_overrides[get_db] = override_get_db
 
         self.categories_repository = categories_repository or CategoriesRepository(db)
         self.sources_repository = sources_repository or SourcesRepository(db)
@@ -96,6 +92,19 @@ class App:
                     {"path": "/categorization", "methods": ["POST", "GET"]},
                 ],
             }
+
+        self.setup_categorization_factory(db)
+
+    def setup_categorization_factory(self, db: Session):
+        transactionCategorizationService =  TransactionCategorizationService(
+            TransactionsRepository(db),
+            TransactionCategorizer(CategoriesRepository(db))
+        )
+
+        def service_factory() -> TransactionCategorizationService:
+            return transactionCategorizationService
+
+        register_service_factory(service_factory)
 
 
 # Create the default app instance
