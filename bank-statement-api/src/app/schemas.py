@@ -15,7 +15,7 @@ class CategoryCreate(CategoryBase):
 
 class Category(CategoryBase):
     id: int
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -51,7 +51,7 @@ class Transaction(TransactionBase):
     category_id: Optional[int] = None
     category: Optional[Category] = None
     source: Optional[Source] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 

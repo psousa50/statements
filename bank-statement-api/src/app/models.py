@@ -12,17 +12,13 @@ class Category(Base):
     parent_category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
 
     parent_category = relationship(
-        "Category",
-        remote_side=[id],
-        back_populates="subcategories"
+        "Category", remote_side=[id], back_populates="subcategories"
     )
 
-    subcategories = relationship(
-        "Category",
-        back_populates="parent_category"
-    )
+    subcategories = relationship("Category", back_populates="parent_category")
 
     transactions = relationship("Transaction", back_populates="category")
+
 
 class Source(Base):
     __tablename__ = "sources"
@@ -45,6 +41,6 @@ class Transaction(Base):
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     currency = Column(String, default="EUR")
     source_id = Column(Integer, ForeignKey("sources.id"), nullable=False, index=True)
-    
+
     category = relationship("Category", back_populates="transactions")
     source = relationship("Source", back_populates="transactions")
