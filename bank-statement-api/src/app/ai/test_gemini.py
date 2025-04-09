@@ -2,14 +2,14 @@ import asyncio
 import os
 
 from dotenv import load_dotenv
-from gemini_pro import GeminiPro
+from gemini_ai import GeminiAI
 
 
 async def main():
     load_dotenv()
 
     api_key = os.environ.get("GOOGLE_API_KEY")
-    gemini = GeminiPro(api_key=api_key)
+    gemini = GeminiAI(api_key=api_key)
 
     prompt = """From the list of Categories and SubCategories, choose which one best matches the following transaction descriptions.
     Assign a score from 1 to 5 on your confidence of the match, where 1 is low confidence and 5 is high confidence.

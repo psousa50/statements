@@ -45,7 +45,7 @@ class EmbeddingTransactionCategorizer(TransactionCategorizer):
         categories = self.categories_repository.get_all()
 
         if not categories:
-            return [], np.array([])
+            raise ValueError("Categories not loaded")
 
         expanded_categories = [
             Subcategory(sub_cat.id, cat.category_name, sub_cat.category_name)

@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 import google.generativeai as genai
 
 
-class GeminiPro:
+class GeminiAI:
     def __init__(
         self,
         api_key: Optional[str] = None,

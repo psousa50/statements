@@ -1,7 +1,8 @@
 import json
-from typing import List, Optional
+from dataclasses import dataclass
+from typing import List
 
-from src.app.ai.gemini_ai import GeminiAI
+from src.app.ai.groq_ai import GroqAI
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.transaction_categorizer import (
     CategorizableTransaction,
@@ -10,15 +11,20 @@ from src.app.services.categorizers.transaction_categorizer import (
 )
 
 
-class GeminiTransactionCategorizer(TransactionCategorizer):
+@dataclass
+class Subcategory:
+    category_id: int
+    category_name: str
+    subcategory_name: str
+
+
+class GroqTransactionCategorizer(TransactionCategorizer):
     def __init__(
         self,
         categories_repository: CategoriesRepository,
-        api_key: Optional[str] = None,
-        model_name: str = "gemini-2.5-pro-exp-03-25",
     ):
         self.categories_repository = categories_repository
-        self.gemini = GeminiAI(api_key=api_key, model_name=model_name)
+        self.groq = GroqAI()
         self.categories = categories_repository.get_all()
         self.refresh_rules()
 
@@ -30,11 +36,14 @@ class GeminiTransactionCategorizer(TransactionCategorizer):
 
         try:
             prompt = self._create_categorization_prompt(transactions)
-            response = await self.gemini.generate(prompt)
+            response = await self.groq.generate(prompt)
 
             # Parse the response to extract category_id and confidence
             try:
+                print(f"Response: {response}")
                 results = json.loads(response)
+                for result in results:
+                    print(f"Result: {result}")
                 categorized_results = []
                 for i, result in enumerate(results):
                     category_id = result.get("category_id")
@@ -62,10 +71,10 @@ class GeminiTransactionCategorizer(TransactionCategorizer):
                         ]
 
             except Exception as e:
-                print(f"Error: {e}")
+                print(f"Error parsing Groq response: {e}")
                 raise e
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error with Groq generation: {e}")
             raise e
 
     def refresh_rules(self):
@@ -75,29 +84,23 @@ class GeminiTransactionCategorizer(TransactionCategorizer):
     def _create_categorization_prompt(
         self, transactions: List[CategorizableTransaction]
     ) -> str:
-        categories_info = []
+        expanded_categories = [
+            Subcategory(sub_cat.id, cat.category_name, sub_cat.category_name)
+            for cat in self.categories
+            if cat.subcategories is not None
+            for sub_cat in cat.subcategories
+        ]
 
-        for category in self.categories:
-            category_info = {
-                "id": category.id,
-                "name": category.category_name,
-            }
-
-            if category.subcategories:
-                subcategories = [
-                    {"id": sub.id, "name": sub.category_name}
-                    for sub in category.subcategories
-                ]
-                category_info["subcategories"] = subcategories
-
-            categories_info.append(category_info)
+        categories_info = [
+            f"{{id: {cat.category_id}, name: {cat.subcategory_name}}}"
+            for cat in expanded_categories
+        ]
 
         prompt = f"""
 You are a bank transaction categorization assistant. Your task is to categorize the following transaction description into one of the provided categories.
 
 Transactions: 
 {json.dumps([t.normalized_description for t in transactions], indent=2)}
-
 
 Available Categories:
 {json.dumps(categories_info, indent=2)}
