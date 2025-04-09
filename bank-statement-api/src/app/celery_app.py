@@ -15,9 +15,9 @@ celery_app.conf.accept_content = ["json"]
 celery_app.conf.result_expires = 3600
 
 celery_app.conf.beat_schedule = {
-    "categorize-transactions-every-15-minutes": {
+    "categorize-transactions-every-1-minute": {
         "task": "src.app.tasks.categorization.categorize_pending_transactions",
-        "schedule": 60 * 15,
+        "schedule": 60 * 1,
         "args": (10,),
     },
 }
