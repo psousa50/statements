@@ -11,11 +11,11 @@ class GeminiTransactionCategorizer(TransactionCategorizer):
         self,
         categories_repository: CategoriesRepository,
         api_key: Optional[str] = None,
-        model_name: str = "gemini-pro",
+        model_name: str = "gemini-2.5-pro-exp-03-25",
     ):
         self.categories_repository = categories_repository
         self.gemini = GeminiPro(api_key=api_key, model_name=model_name)
-        self.categories = []
+        self.categories = categories_repository.get_all()
         self.refresh_rules()
 
     async def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
@@ -41,7 +41,8 @@ class GeminiTransactionCategorizer(TransactionCategorizer):
                         return category.id, 0.7
                         
             return None, 0.0
-        except Exception:
+        except Exception as e:
+            print(f"Error: {e}")
             return None, 0.0
 
     def refresh_rules(self):

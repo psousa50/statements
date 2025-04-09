@@ -12,8 +12,6 @@ class TransactionCategorizationService:
         self.categorizer = categorizer
 
     async def categorize_pending_transactions(self, batch_size: int = 10) -> int:
-        print(f"Using {self.categorizer.__class__.__name__} to categorize transactions.")
-        
         pending_transactions = (
             self.transactions_repository.get_uncategorized_transactions(batch_size)
         )
@@ -29,8 +27,6 @@ class TransactionCategorizationService:
                     transaction.description
                 )
 
-                print(f"Categorized {transaction.description} as {category_id} with confidence {confidence}")
-
                 if category_id is not None:
                     self.transactions_repository.update_transaction_category(
                         transaction.id, category_id, "categorized"
@@ -41,7 +37,6 @@ class TransactionCategorizationService:
                         transaction.id, None, "failed"
                     )
             except Exception as e:
-                print(f"Error categorizing transaction: {e}")
                 self.transactions_repository.update_transaction_category(
                     transaction.id, None, "failed"
                 )

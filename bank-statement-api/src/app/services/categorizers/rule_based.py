@@ -11,7 +11,7 @@ class RuleBasedTransactionCategorizer(TransactionCategorizer):
         self.rules = []
         self.refresh_rules()
 
-    def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
+    async def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
         description = description.lower()
 
         for pattern, category_id, confidence in self.rules:
@@ -28,7 +28,6 @@ class RuleBasedTransactionCategorizer(TransactionCategorizer):
         for category in categories:
             if category.subcategories:
                 for subcategory in category.subcategories:
-                    # Create a rule based on the category name
                     pattern = r"\b" + re.escape(subcategory.category_name.lower()) + r"\b"
                     self.rules.append((pattern, subcategory.id, 1.0))
 

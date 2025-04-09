@@ -33,8 +33,6 @@ class App:
         transactions_repository: Optional[TransactionsRepository] = None,
         categorizer: Optional[TransactionCategorizer] = None,
     ):
-        print("Initializing app...")
-
         self.app = FastAPI(
             title="Bank Statement API",
             description="API for processing and categorizing bank statements",
@@ -105,8 +103,6 @@ class App:
             }
 
         self.setup_categorization_factory(db)
-
-        print("App initialized.")
 
     def setup_categorization_factory(self, db: Session):
 
