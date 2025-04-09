@@ -9,16 +9,20 @@ from src.app.services.categorizers.transaction_categorizer import (
     TransactionCategorizer,
 )
 
+@dataclass
+class Subcategory:
+    category_id: int
+    category_name: str
+    subcategory_name: str
+
 
 class GeminiTransactionCategorizer(TransactionCategorizer):
     def __init__(
         self,
         categories_repository: CategoriesRepository,
-        api_key: Optional[str] = None,
-        model_name: str = "gemini-2.5-pro-exp-03-25",
     ):
         self.categories_repository = categories_repository
-        self.gemini = GeminiAI(api_key=api_key, model_name=model_name)
+        self.gemini = GeminiAI()
         self.categories = categories_repository.get_all()
         self.refresh_rules()
 
@@ -75,29 +79,27 @@ class GeminiTransactionCategorizer(TransactionCategorizer):
     def _create_categorization_prompt(
         self, transactions: List[CategorizableTransaction]
     ) -> str:
-        categories_info = []
+        expanded_categories = [
+            Subcategory(sub_cat.id, cat.category_name, sub_cat.category_name)
+            for cat in self.categories
+            if cat.subcategories is not None
+            for sub_cat in cat.subcategories
+        ]
 
-        for category in self.categories:
-            category_info = {
-                "id": category.id,
-                "name": category.category_name,
-            }
+        categories_info = [
+            f"{{id: {cat.category_id}, name: {cat.subcategory_name}}}"
+            for cat in expanded_categories
+        ]
 
-            if category.subcategories:
-                subcategories = [
-                    {"id": sub.id, "name": sub.category_name}
-                    for sub in category.subcategories
-                ]
-                category_info["subcategories"] = subcategories
-
-            categories_info.append(category_info)
+        transaction_descriptions = [
+            f"{{transaction_id: {t.id}, description: {t.description}, normalized_description: {t.normalized_description}}}" for t in transactions
+        ]
 
         prompt = f"""
 You are a bank transaction categorization assistant. Your task is to categorize the following transaction description into one of the provided categories.
 
 Transactions: 
-{json.dumps([t.normalized_description for t in transactions], indent=2)}
-
+{'\n'.join(transaction_descriptions)}
 
 Available Categories:
 {json.dumps(categories_info, indent=2)}
@@ -106,10 +108,12 @@ Analyze the transaction description and determine the most appropriate category 
 Return your answer as a JSON object with the following format:
 [
     {{
+        "transaction_id": <id of the transaction>,
         "category_id": <id of the selected category or subcategory>,
         "confidence": <a number between 0 and 1 indicating your confidence in this categorization>
     }},
     {{
+        "transaction_id": <id of the transaction>,
         "category_id": <id of the selected category or subcategory>,
         "confidence": <a number between 0 and 1 indicating your confidence in this categorization>
     }}
@@ -117,5 +121,4 @@ Return your answer as a JSON object with the following format:
 
 Only return the JSON object, nothing else.
 """
-        print(prompt)
         return prompt

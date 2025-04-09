@@ -193,6 +193,7 @@ class TransactionUploader:
                 source_id=source_id,
                 category_id=None,
                 categorization_status="pending",
+                normalized_description=transaction.normalized_description,
             )
             db_transaction = self.transactions_repository.create(
                 transaction_create, auto_commit=False

@@ -10,7 +10,6 @@ from src.app.services.categorizers.transaction_categorizer import (
     TransactionCategorizer,
 )
 
-
 @dataclass
 class Subcategory:
     category_id: int
@@ -40,10 +39,7 @@ class GroqTransactionCategorizer(TransactionCategorizer):
 
             # Parse the response to extract category_id and confidence
             try:
-                print(f"Response: {response}")
                 results = json.loads(response)
-                for result in results:
-                    print(f"Result: {result}")
                 categorized_results = []
                 for i, result in enumerate(results):
                     category_id = result.get("category_id")
@@ -96,11 +92,15 @@ class GroqTransactionCategorizer(TransactionCategorizer):
             for cat in expanded_categories
         ]
 
+        transaction_descriptions = [
+            f"{{transaction_id: {t.id}, description: {t.description}, normalized_description: {t.normalized_description}}}" for t in transactions
+        ]
+
         prompt = f"""
 You are a bank transaction categorization assistant. Your task is to categorize the following transaction description into one of the provided categories.
 
 Transactions: 
-{json.dumps([t.normalized_description for t in transactions], indent=2)}
+{'\n'.join(transaction_descriptions)}
 
 Available Categories:
 {json.dumps(categories_info, indent=2)}
@@ -109,10 +109,12 @@ Analyze the transaction description and determine the most appropriate category 
 Return your answer as a JSON object with the following format:
 [
     {{
+        "transaction_id": <id of the transaction>,
         "category_id": <id of the selected category or subcategory>,
         "confidence": <a number between 0 and 1 indicating your confidence in this categorization>
     }},
     {{
+        "transaction_id": <id of the transaction>,
         "category_id": <id of the selected category or subcategory>,
         "confidence": <a number between 0 and 1 indicating your confidence in this categorization>
     }}
@@ -120,5 +122,4 @@ Return your answer as a JSON object with the following format:
 
 Only return the JSON object, nothing else.
 """
-        print(prompt)
         return prompt

@@ -69,6 +69,8 @@ class TransactionsRepository:
             currency=transaction.currency,
             source_id=transaction.source_id,
             category_id=transaction.category_id,
+            normalized_description=transaction.normalized_description,
+            categorization_status=transaction.categorization_status,            
         )
         self.db.add(db_transaction)
         if auto_commit:

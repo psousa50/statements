@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from src.app.services.categorizers.gemini import GeminiTransactionCategorizer
+from src.app.services.categorizers.groq import GroqTransactionCategorizer
 
 from . import models
 from .db import engine, get_db
@@ -59,7 +59,7 @@ class App:
             transactions_repository or TransactionsRepository(db)
         )
 
-        self.categorizer = categorizer or GeminiTransactionCategorizer(
+        self.categorizer = categorizer or GroqTransactionCategorizer(
             self.categories_repository
         )
 
