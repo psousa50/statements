@@ -1,12 +1,19 @@
-from typing import Optional, Dict
+from typing import Dict, List, Optional
 
 from src.app.repositories.categories_repository import CategoriesRepository
-from src.app.services.categorizers.transaction_categorizer import TransactionCategorizer
-from src.app.services.categorizers.transaction_categorizer import CategorizableTransaction, CategorizationResult
-from typing import List
+from src.app.services.categorizers.transaction_categorizer import (
+    CategorizableTransaction,
+    CategorizationResult,
+    TransactionCategorizer,
+)
+
 
 class KeywordTransactionCategorizer(TransactionCategorizer):
-    def __init__(self, categories_repository: CategoriesRepository, keywords_map: Optional[Dict[str, int]] = None):
+    def __init__(
+        self,
+        categories_repository: CategoriesRepository,
+        keywords_map: Optional[Dict[str, int]] = None,
+    ):
         self.categories_repository = categories_repository
         self.keywords_map = keywords_map or {}
         if not keywords_map:
@@ -16,14 +23,22 @@ class KeywordTransactionCategorizer(TransactionCategorizer):
         """Add a keyword mapping to a category"""
         self.keywords_map[keyword.lower()] = category_id
 
-    def categorize_transaction(self, transactions: List[CategorizableTransaction]) -> List[CategorizationResult]:
+    def categorize_transaction(
+        self, transactions: List[CategorizableTransaction]
+    ) -> List[CategorizationResult]:
         results = []
         for transaction in transactions:
             description = transaction.description.lower()
 
             for word in description.split():
                 if word in self.keywords_map:
-                    results.append(CategorizationResult(id=transaction.id, category_id=self.keywords_map[word], confidence=1.0))
+                    results.append(
+                        CategorizationResult(
+                            id=transaction.id,
+                            category_id=self.keywords_map[word],
+                            confidence=1.0,
+                        )
+                    )
                     break
 
         return results

@@ -1,5 +1,5 @@
-from typing import Callable
 import asyncio
+from typing import Callable
 
 from ..celery_app import celery_app
 from ..services.transaction_categorization_service import (

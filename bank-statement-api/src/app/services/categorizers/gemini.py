@@ -1,9 +1,13 @@
-from typing import List, Optional
 import json
+from typing import List, Optional
 
 from src.app.ai.gemini_pro import GeminiPro
-from src.app.services.categorizers.transaction_categorizer import CategorizableTransaction, CategorizationResult, TransactionCategorizer
 from src.app.repositories.categories_repository import CategoriesRepository
+from src.app.services.categorizers.transaction_categorizer import (
+    CategorizableTransaction,
+    CategorizationResult,
+    TransactionCategorizer,
+)
 
 
 class GeminiTransactionCategorizer(TransactionCategorizer):
@@ -18,14 +22,16 @@ class GeminiTransactionCategorizer(TransactionCategorizer):
         self.categories = categories_repository.get_all()
         self.refresh_rules()
 
-    async def categorize_transaction(self, transactions: List[CategorizableTransaction]) -> List[CategorizationResult]:
+    async def categorize_transaction(
+        self, transactions: List[CategorizableTransaction]
+    ) -> List[CategorizationResult]:
         if not self.categories:
             raise ValueError("Categories not loaded")
 
         try:
             prompt = self._create_categorization_prompt(transactions)
             response = await self.gemini.generate(prompt)
-            
+
             # Parse the response to extract category_id and confidence
             try:
                 results = json.loads(response)
@@ -34,14 +40,27 @@ class GeminiTransactionCategorizer(TransactionCategorizer):
                     category_id = result.get("category_id")
                     confidence = result.get("confidence", 0.0)
                     if category_id is not None:
-                        categorized_results.append(CategorizationResult(id=transactions[i].id, category_id=category_id, confidence=confidence))
+                        categorized_results.append(
+                            CategorizationResult(
+                                id=transactions[i].id,
+                                category_id=category_id,
+                                confidence=confidence,
+                            )
+                        )
                 return categorized_results
             except json.JSONDecodeError:
                 # If response isn't valid JSON, try to extract just the category ID
                 for category in self.categories:
                     if str(category.id) in response:
-                        return [CategorizationResult(id=transaction.id, category_id=category.id, confidence=0.7) for transaction in transactions]
-                
+                        return [
+                            CategorizationResult(
+                                id=transaction.id,
+                                category_id=category.id,
+                                confidence=0.7,
+                            )
+                            for transaction in transactions
+                        ]
+
             except Exception as e:
                 print(f"Error: {e}")
                 raise e
@@ -52,25 +71,27 @@ class GeminiTransactionCategorizer(TransactionCategorizer):
     def refresh_rules(self):
         self.categories = self.categories_repository.get_all()
         return self.categories
-    
-    def _create_categorization_prompt(self, transactions: List[CategorizableTransaction]) -> str:
+
+    def _create_categorization_prompt(
+        self, transactions: List[CategorizableTransaction]
+    ) -> str:
         categories_info = []
-        
+
         for category in self.categories:
             category_info = {
                 "id": category.id,
                 "name": category.category_name,
             }
-            
+
             if category.subcategories:
                 subcategories = [
                     {"id": sub.id, "name": sub.category_name}
                     for sub in category.subcategories
                 ]
                 category_info["subcategories"] = subcategories
-                
+
             categories_info.append(category_info)
-            
+
         prompt = f"""
 You are a bank transaction categorization assistant. Your task is to categorize the following transaction description into one of the provided categories.
 

@@ -7,7 +7,11 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from src.app.repositories.categories_repository import CategoriesRepository
-from src.app.services.categorizers.transaction_categorizer import CategorizableTransaction, CategorizationResult, TransactionCategorizer
+from src.app.services.categorizers.transaction_categorizer import (
+    CategorizableTransaction,
+    CategorizationResult,
+    TransactionCategorizer,
+)
 
 
 @dataclass
@@ -58,9 +62,13 @@ class EmbeddingTransactionCategorizer(TransactionCategorizer):
 
         return expanded_categories, embeddings
 
-    async def categorize_transaction(self, transactions: List[CategorizableTransaction]) -> List[CategorizationResult]:
+    async def categorize_transaction(
+        self, transactions: List[CategorizableTransaction]
+    ) -> List[CategorizationResult]:
         try:
-            transaction_embeddings = self.model.encode([transaction.normalized_description for transaction in transactions])
+            transaction_embeddings = self.model.encode(
+                [transaction.normalized_description for transaction in transactions]
+            )
             similarities = self.similarity_func(transaction_embeddings, self.embeddings)
 
             results = []
@@ -75,13 +83,27 @@ class EmbeddingTransactionCategorizer(TransactionCategorizer):
                 if best_idx < len(self.expanded_categories):
                     main_category_id = self.expanded_categories[best_idx].category_id
                     results.append(
-                        CategorizationResult(id=transactions[i].id, category_id=main_category_id, confidence=confidence))
+                        CategorizationResult(
+                            id=transactions[i].id,
+                            category_id=main_category_id,
+                            confidence=confidence,
+                        )
+                    )
                 else:
-                    results.append(CategorizationResult(id=transactions[i].id, category_id=None, confidence=0.0))
+                    results.append(
+                        CategorizationResult(
+                            id=transactions[i].id, category_id=None, confidence=0.0
+                        )
+                    )
 
             return results
         except Exception:
-            return [CategorizationResult(id=transaction.id, category_id=None, confidence=0.0) for transaction in transactions]
+            return [
+                CategorizationResult(
+                    id=transaction.id, category_id=None, confidence=0.0
+                )
+                for transaction in transactions
+            ]
 
     def refresh_rules(self):
         self.expanded_categories, self.embeddings = self.refresh_categories_embeddings()

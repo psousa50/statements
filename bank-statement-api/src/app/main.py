@@ -4,6 +4,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
+from src.app.services.categorizers.gemini import GeminiTransactionCategorizer
+
 from . import models
 from .db import engine, get_db
 from .repositories.categories_repository import CategoriesRepository
@@ -15,7 +17,6 @@ from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
 from .services.categorizers.transaction_categorizer import TransactionCategorizer
-from src.app.services.categorizers.gemini import GeminiTransactionCategorizer
 from .services.transaction_categorization_service import (
     TransactionCategorizationService,
 )

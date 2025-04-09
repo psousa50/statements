@@ -20,7 +20,7 @@ class CategorizationRouter:
             prefix="/categorization",
             tags=["categorization"],
         )
-        
+
         # Register routes
         self.router.add_api_route(
             "/trigger",
@@ -37,15 +37,15 @@ class CategorizationRouter:
             self.process_categorization_now,
             methods=["POST"],
         )
-        
+
         self.transactions_repository = transactions_repository
         self.categories_repository = categories_repository
         self.categorizer = categorizer
-        
+
     async def trigger_categorization(self, batch_size: int = 10):
         task = manually_trigger_categorization(batch_size)
         return {"message": "Categorization process triggered", "task_id": task.id}
-    
+
     async def get_categorization_status(self, task_id: str):
         from ..celery_app import celery_app
 
@@ -58,16 +58,16 @@ class CategorizationRouter:
         else:
             response["result"] = task.result
         return response
-    
+
     async def process_categorization_now(self, batch_size: int = 10):
         categorization_service = TransactionCategorizationService(
             self.transactions_repository, self.categorizer
         )
-        
-        categorized_count = await categorization_service.categorize_pending_transactions(
-            batch_size
+
+        categorized_count = (
+            await categorization_service.categorize_pending_transactions(batch_size)
         )
-        
+
         return {
             "message": "Categorization completed",
             "categorized_count": categorized_count,

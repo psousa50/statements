@@ -1,8 +1,12 @@
 import pytest
+
+from src.app.db import get_db
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.gemini import GeminiTransactionCategorizer
-from src.app.services.categorizers.transaction_categorizer import CategorizableTransaction
-from src.app.db import get_db
+from src.app.services.categorizers.transaction_categorizer import (
+    CategorizableTransaction,
+)
+
 
 @pytest.mark.asyncio
 @pytest.mark.skip
@@ -35,7 +39,11 @@ async def test_gemini():
 
     transactions = []
     for i, description in enumerate(descriptions):
-        transactions.append(CategorizableTransaction(id=i, description=description, normalized_description=description))
+        transactions.append(
+            CategorizableTransaction(
+                id=i, description=description, normalized_description=description
+            )
+        )
 
     results = await categorizer.categorize_transaction(transactions)
     for i, result in enumerate(results):
