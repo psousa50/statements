@@ -1,6 +1,6 @@
+import numpy as np
 import pandas as pd
 import pytest
-import numpy as np
 
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 
@@ -95,7 +95,7 @@ class TestColumnNormalizer:
             "balance": "",
         }
         assert column_map == expected_map
-        
+
     def test_normalize_with_separate_debit_credit_columns(self):
         data = {
             "Date": ["2023-01-01", "2023-01-02", "2023-01-03"],
@@ -105,7 +105,7 @@ class TestColumnNormalizer:
             "Balance": [1000.00, 950.00, 450.00],
         }
         df = pd.DataFrame(data)
-        
+
         normalizer = ColumnNormalizer()
         column_map = normalizer.normalize_columns(df)
 

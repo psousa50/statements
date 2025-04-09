@@ -10,17 +10,8 @@ class FileType(Enum):
     UNKNOWN = auto()
 
 
-class FileProcessor:
+class FileTypeDetector:
     def detect_file_type(self, file_path: str) -> FileType:
-        """
-        Detects the file type based on the file extension.
-
-        Args:
-            file_path: Path to the file
-
-        Returns:
-            FileType: The detected file type
-        """
         extension = Path(file_path).suffix.lower().lstrip(".")
 
         if extension == "csv":

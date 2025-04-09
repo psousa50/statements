@@ -1,10 +1,13 @@
-from src.app.services.file_processing.file_processor import FileProcessor, FileType
+from src.app.services.file_processing.file_type_detector import (
+    FileType,
+    FileTypeDetector,
+)
 
 
 class TestFileProcessor:
     def test_detect_file_type(self):
         # Arrange
-        file_processor = FileProcessor()
+        file_processor = FileTypeDetector()
 
         # Act & Assert
         assert file_processor.detect_file_type("test.csv") == FileType.CSV
@@ -15,7 +18,7 @@ class TestFileProcessor:
 
     def test_detect_file_type_case_insensitive(self):
         # Arrange
-        file_processor = FileProcessor()
+        file_processor = FileTypeDetector()
 
         # Act & Assert
         assert file_processor.detect_file_type("TEST.CSV") == FileType.CSV
@@ -24,7 +27,7 @@ class TestFileProcessor:
 
     def test_detect_file_type_with_path(self):
         # Arrange
-        file_processor = FileProcessor()
+        file_processor = FileTypeDetector()
 
         # Act & Assert
         assert file_processor.detect_file_type("/path/to/test.csv") == FileType.CSV
