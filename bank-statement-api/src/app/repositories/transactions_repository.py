@@ -109,3 +109,16 @@ class TransactionsRepository:
             self.db.add(transaction)
             self.db.commit()
         return transaction
+
+    def get_transactions_by_normalized_description(
+        self, normalized_description: str, limit: int = 100
+    ) -> List[Transaction]:
+        return (
+            self.db.query(Transaction)
+            .filter(Transaction.normalized_description == normalized_description)
+            .filter(Transaction.categorization_status == "categorized")
+            .filter(Transaction.category_id != None)
+            .order_by(Transaction.date.desc())
+            .limit(limit)
+            .all()
+        )

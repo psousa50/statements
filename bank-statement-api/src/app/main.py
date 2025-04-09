@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
+from src.app.services.categorizers.existing_transactions_categorizer import ExistingTransactionsCategorizer
 from src.app.services.categorizers.groq import GroqTransactionCategorizer
 
 from . import models
@@ -55,8 +56,13 @@ class App:
             transactions_repository or TransactionsRepository(db)
         )
 
-        self.categorizer = categorizer or GroqTransactionCategorizer(
+        groq_categorizer = categorizer or GroqTransactionCategorizer(
             self.categories_repository
+        )
+        
+        self.categorizer = ExistingTransactionsCategorizer(
+            transactions_repository=self.transactions_repository,
+            fallback_categorizer=groq_categorizer
         )
 
         def on_category_change(action, categories):
