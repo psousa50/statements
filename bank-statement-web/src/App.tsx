@@ -6,6 +6,7 @@ import './App.css';
 
 import Navigation from './components/Navigation';
 import HomePage from './pages/HomePage';
+import UserHomePage from './pages/UserHomePage';
 import UploadPage from './pages/UploadPage';
 import TransactionsPage from './pages/TransactionsPage';
 import CategoriesPage from './pages/CategoriesPage';
@@ -28,14 +29,17 @@ function App() {
       <BrowserRouter>
         <div className="App">
           <Navigation />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/upload" element={<UploadPage />} />
-            <Route path="/transactions" element={<TransactionsPage />} />
-            <Route path="/charts" element={<ChartsPage />} />
-            <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/sources" element={<SourcesPage />} />
-          </Routes>
+          <div className="content-container pt-5 mt-4">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/user-home" element={<UserHomePage />} />
+              <Route path="/upload" element={<UploadPage />} />
+              <Route path="/transactions" element={<TransactionsPage />} />
+              <Route path="/charts" element={<ChartsPage />} />
+              <Route path="/categories" element={<CategoriesPage />} />
+              <Route path="/sources" element={<SourcesPage />} />
+            </Routes>
+          </div>
         </div>
       </BrowserRouter>
     </QueryClientProvider>

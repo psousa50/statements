@@ -64,12 +64,6 @@ const TransactionsPage: React.FC = () => {
     }).format(amount);
   };
 
-  const getCategoryName = (categoryId: number | null) => {
-    if (!categoryId || !categories) return 'Uncategorized';
-    const category = categories.find(c => c.id === categoryId);
-    return category ? category.category_name : 'Uncategorized';
-  };
-
   const getSourceName = (sourceId: number) => {
     if (!sources) return 'Unknown';
     const source = sources.find(s => s.id === sourceId);

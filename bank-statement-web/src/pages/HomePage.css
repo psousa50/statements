@@ -1,3 +1,231 @@
+/* Base Styles */
+:root {
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --secondary-color: #6b7280;
+  --light-bg: #f9fafb;
+  --dark-text: #1f2937;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Hero Section */
+.hero-section {
+  padding: 6rem 0;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--dark-text);
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: var(--secondary-color);
+  margin-bottom: 2rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
+.hero-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: var(--card-shadow);
+}
+
+/* Features Section */
+.features-section {
+  padding: 4rem 0;
+  background-color: var(--light-bg);
+  margin-bottom: 4rem;
+}
+
+.section-title {
+  text-align: center;
+  margin-bottom: 3rem;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--dark-text);
+}
+
+.feature-card {
+  padding: 2rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  box-shadow: var(--card-shadow);
+  height: 100%;
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.feature-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary-color);
+}
+
+.feature-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--dark-text);
+}
+
+.feature-description {
+  color: var(--secondary-color);
+}
+
+/* How It Works Section */
+.how-it-works-section {
+  padding: 4rem 0;
+  margin-bottom: 4rem;
+}
+
+.step-card {
+  padding: 2rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  box-shadow: var(--card-shadow);
+  height: 100%;
+  position: relative;
+  padding-left: 4rem;
+}
+
+.step-number {
+  position: absolute;
+  left: 1.5rem;
+  top: 2rem;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+.step-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--dark-text);
+}
+
+.step-description {
+  color: var(--secondary-color);
+}
+
+/* Testimonial Section */
+.testimonial-section {
+  padding: 4rem 0;
+  background-color: var(--light-bg);
+  margin-bottom: 4rem;
+}
+
+.testimonial-card {
+  padding: 2rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  box-shadow: var(--card-shadow);
+  height: 100%;
+}
+
+.testimonial-text {
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  color: var(--dark-text);
+}
+
+.testimonial-author {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Footer */
+.footer {
+  padding: 3rem 0;
+  background-color: var(--dark-text);
+  color: white;
+}
+
+.footer-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.footer-link {
+  color: white;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: var(--primary-color);
+}
+
+.footer-social {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.social-icon {
+  font-size: 1.25rem;
+  color: white;
+  transition: color 0.2s ease;
+}
+
+.social-icon:hover {
+  color: var(--primary-color);
+}
+
+.footer-copyright {
+  color: var(--secondary-color);
+  font-size: 0.875rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+}
+
+/* Existing Styles */
 .home-header {
   padding: 2rem 0;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);

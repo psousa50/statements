@@ -1,0 +1,41 @@
+.border-dashed {
+  border-style: dashed !important;
+  border-width: 2px !important;
+  border-color: #dee2e6 !important;
+}
+
+.card {
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.text-primary {
+  color: #4f46e5 !important;
+}
+
+.bg-success {
+  background-color: #10b981 !important;
+}
+
+.bg-warning {
+  background-color: #f59e0b !important;
+}
+
+.bg-danger {
+  background-color: #ef4444 !important;
+}
+
+.badge {
+  padding: 0.35em 0.65em;
+  font-size: 0.75em;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+}
