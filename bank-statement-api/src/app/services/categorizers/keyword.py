@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.transaction_categorizer import (
-    CategorizableTransaction,
+    CategorisationData,
     CategorizationResult,
     TransactionCategorizer,
 )
@@ -24,7 +24,7 @@ class KeywordTransactionCategorizer(TransactionCategorizer):
         self.keywords_map[keyword.lower()] = category_id
 
     def categorize_transaction(
-        self, transactions: List[CategorizableTransaction]
+        self, transactions: List[CategorisationData]
     ) -> List[CategorizationResult]:
         results = []
         for transaction in transactions:
@@ -34,7 +34,7 @@ class KeywordTransactionCategorizer(TransactionCategorizer):
                 if word in self.keywords_map:
                     results.append(
                         CategorizationResult(
-                            id=transaction.id,
+                            transaction_id=transaction.transaction_id,
                             category_id=self.keywords_map[word],
                             confidence=1.0,
                         )

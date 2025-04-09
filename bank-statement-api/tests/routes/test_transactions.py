@@ -10,7 +10,7 @@ from tests.conftest import (
     db_session,
     random_category,
     random_source,
-    random_transaction,
+    random_transaction_create,
 )
 
 
@@ -19,8 +19,8 @@ def test_get_transactions():
     sources_repository = SourcesRepository(db_session)
 
     source = sources_repository.create(random_source())
-    transaction1 = transactions_repository.create(random_transaction(source.id))
-    transaction2 = transactions_repository.create(random_transaction(source.id))
+    transaction1 = transactions_repository.create(random_transaction_create(source.id))
+    transaction2 = transactions_repository.create(random_transaction_create(source.id))
 
     app_instance = create_app(
         db_session=db_session,
@@ -45,12 +45,12 @@ def test_get_transactions_with_filters():
 
     source = sources_repository.create(random_source())
 
-    transactionCreate1 = random_transaction(source.id)
+    transactionCreate1 = random_transaction_create(source.id)
     transactionCreate1.date = date(2023, 1, 15)
     transactionCreate1.description = "Filtered Transaction Test"
     transaction1 = transactions_repository.create(transactionCreate1)
 
-    transactionCreate2 = random_transaction(source.id)
+    transactionCreate2 = random_transaction_create(source.id)
     transactionCreate2.date = date(2023, 2, 15)
     transaction2 = transactions_repository.create(transactionCreate2)
 
@@ -87,7 +87,7 @@ def test_get_transaction():
 
     source = sources_repository.create(random_source())
 
-    transactionCreate = random_transaction(source.id)
+    transactionCreate = random_transaction_create(source.id)
     transaction = transactions_repository.create(transactionCreate)
 
     app_instance = create_app(
@@ -131,7 +131,7 @@ def test_categorize_transaction():
     category = categories_repository.create(random_category())
     source = sources_repository.create(random_source())
 
-    transactionCreate = random_transaction(source.id)
+    transactionCreate = random_transaction_create(source.id)
     transaction = transactions_repository.create(transactionCreate)
 
     app_instance = create_app(

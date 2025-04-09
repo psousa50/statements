@@ -1,6 +1,6 @@
 from ..repositories.transactions_repository import TransactionsRepository
 from .categorizers.transaction_categorizer import (
-    CategorizableTransaction,
+    CategorisationData,
     TransactionCategorizer,
 )
 
@@ -25,8 +25,8 @@ class TransactionCategorizationService:
         categorized_count = 0
 
         categorized_transactions = [
-            CategorizableTransaction(
-                id=transaction.id,
+            CategorisationData(
+                transaction_id=transaction.id,
                 description=transaction.description,
                 normalized_description=transaction.normalized_description,
             )
@@ -35,15 +35,15 @@ class TransactionCategorizationService:
         results = await self.categorizer.categorize_transaction(
             categorized_transactions
         )
-        for transaction, result in zip(pending_transactions, results):
+        for result in results:
             try:
                 category_id = result.category_id
                 self.transactions_repository.update_transaction_category(
-                    transaction.id, category_id, "categorized"
+                    result.transaction_id, category_id, "categorized"
                 )
                 categorized_count += 1
             except Exception:
                 self.transactions_repository.update_transaction_category(
-                    transaction.id, None, "failed"
+                    result.transaction_id, None, "failed"
                 )
         return categorized_count

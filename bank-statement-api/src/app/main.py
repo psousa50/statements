@@ -4,7 +4,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from src.app.services.categorizers.existing_transactions_categorizer import ExistingTransactionsCategorizer
+from src.app.services.categorizers.existing_transactions_categorizer import (
+    ExistingTransactionsCategorizer,
+)
 from src.app.services.categorizers.groq import GroqTransactionCategorizer
 
 from . import models

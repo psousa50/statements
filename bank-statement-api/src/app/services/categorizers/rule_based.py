@@ -3,7 +3,7 @@ from typing import List
 
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.transaction_categorizer import (
-    CategorizableTransaction,
+    CategorisationData,
     CategorizationResult,
     TransactionCategorizer,
 )
@@ -16,7 +16,7 @@ class RuleBasedTransactionCategorizer(TransactionCategorizer):
         self.refresh_rules()
 
     async def categorize_transaction(
-        self, transactions: List[CategorizableTransaction]
+        self, transactions: List[CategorisationData]
     ) -> List[CategorizationResult]:
         results = []
         for transaction in transactions:
@@ -26,7 +26,7 @@ class RuleBasedTransactionCategorizer(TransactionCategorizer):
                 if re.search(pattern, description):
                     results.append(
                         CategorizationResult(
-                            id=transaction.id,
+                            transaction_id=transaction.transaction_id,
                             category_id=category_id,
                             confidence=confidence,
                         )

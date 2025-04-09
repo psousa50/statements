@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -109,6 +109,35 @@ class TransactionsRepository:
             self.db.add(transaction)
             self.db.commit()
         return transaction
+
+    def get_unique_normalized_descriptions(
+        self, limit: int = 100
+    ) -> List[Tuple[str, int]]:
+        from sqlalchemy import func
+        
+        subquery = (
+            self.db.query(
+                Transaction.normalized_description,
+                Transaction.category_id,
+                func.count().label("count")
+            )
+            .filter(Transaction.categorization_status == "categorized")
+            .filter(Transaction.category_id != None)
+            .group_by(Transaction.normalized_description, Transaction.category_id)
+            .subquery()
+        )
+        
+        query = (
+            self.db.query(
+                subquery.c.normalized_description,
+                subquery.c.category_id
+            )
+            .distinct(subquery.c.normalized_description)
+            .order_by(subquery.c.normalized_description, subquery.c.count.desc())
+            .limit(limit)
+        )
+        
+        return [(result[0], result[1]) for result in query.all()]
 
     def get_transactions_by_normalized_description(
         self, normalized_description: str, limit: int = 100

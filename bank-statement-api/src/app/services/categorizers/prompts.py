@@ -4,7 +4,7 @@ from typing import List
 
 from src.app.models import Category
 from src.app.services.categorizers.transaction_categorizer import (
-    CategorizableTransaction,
+    CategorisationData,
 )
 
 
@@ -16,7 +16,7 @@ class Subcategory:
 
 
 def categorization_prompt(
-    transactions: List[CategorizableTransaction], categories: List[Category]
+    transactions: List[CategorisationData], categories: List[Category]
 ) -> str:
     expanded_categories = [
         Subcategory(sub_cat.id, cat.category_name, sub_cat.category_name)
@@ -31,7 +31,7 @@ def categorization_prompt(
     ]
 
     transaction_descriptions = [
-        f"{{transaction_id: {t.id}, description: {t.description}, normalized_description: {t.normalized_description}}}"
+        t.normalized_description
         for t in transactions
     ]
 
@@ -48,12 +48,12 @@ Analyze the transaction description and determine the most appropriate category 
 Return your answer as a JSON object with the following format:
 [
     {{
-        "transaction_id": <id of the transaction>,
+        "transaction_description": <description of the transaction>,
         "category_id": <id of the selected category or subcategory>,
         "confidence": <a number between 0 and 1 indicating your confidence in this categorization>
     }},
     {{
-        "transaction_id": <id of the transaction>,
+        "transaction_description": <description of the transaction>,
         "category_id": <id of the selected category or subcategory>,
         "confidence": <a number between 0 and 1 indicating your confidence in this categorization>
     }}

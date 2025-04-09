@@ -4,15 +4,15 @@ from typing import List, Optional
 
 
 @dataclass
-class CategorizableTransaction:
-    id: int
+class CategorisationData:
+    transaction_id: int
     description: str
     normalized_description: str
 
 
 @dataclass
 class CategorizationResult:
-    id: int
+    transaction_id: int
     category_id: Optional[int]
     confidence: float
 
@@ -20,7 +20,7 @@ class CategorizationResult:
 class TransactionCategorizer(ABC):
     @abstractmethod
     async def categorize_transaction(
-        self, transactions: List[CategorizableTransaction]
+        self, transactions: List[CategorisationData]
     ) -> List[CategorizationResult]:
         pass
 

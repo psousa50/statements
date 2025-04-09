@@ -1,50 +1,27 @@
 import pytest
 
-from src.app.db import get_db
-from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.gemini import GeminiTransactionCategorizer
-from src.app.services.categorizers.transaction_categorizer import (
-    CategorizableTransaction,
-)
+from src.app.services.categorizers.transaction_categorizer import CategorisationData
+from tests.conftest import create_sample_categories_repository
 
 
-@pytest.mark.asyncio
+@pytest.mark.integration
 @pytest.mark.skip
-async def test_gemini():
-    db = next(get_db())
-    categories_repository = CategoriesRepository(db)
-    categorizer = GeminiTransactionCategorizer(categories_repository)
-
-    descriptions = [
-        "Aerofarma Laboratorios S.A.I.C",
-        "Airbnb",
-        "Alges Com Sabores",
-        "Alipay",
-        "Allegro",
-        "Alvaros",
-        "Alvaros Cafe Unipess",
-        "Amadeu Batista E",
-        "Amazon",
-        "Anca Lolo",
-        "Andor",
-        "Angels' Bar",
-        "Antoniobarb",
-        "Apple",
-        "Apple Pay Top-Up by *0264",
-        "Apple Pay Top-Up by *6660",
-        "Apple Pay Top-Up by *6678",
-        "Apple Pay Top-Up by *6964",
-        "Apribeiro",
-    ]
-
-    transactions = []
-    for i, description in enumerate(descriptions):
-        transactions.append(
-            CategorizableTransaction(
-                id=i, description=description, normalized_description=description
-            )
+class TestGeminiCategorizer:
+    @pytest.mark.asyncio
+    async def test_gemini_categorizer(self):
+        categories_repository = create_sample_categories_repository()
+        categorizer = GeminiTransactionCategorizer(
+            categories_repository=categories_repository,
         )
 
-    results = await categorizer.categorize_transaction(transactions)
-    for i, result in enumerate(results):
-        print(f"{i}: {result}")
+        transactions = [
+            CategorisationData(
+                description="Payment to GROCERIES STORE",
+                normalized_description="Payment to GROCERIES STORE",
+            )
+        ]
+        results = await categorizer.categorize_transaction(transactions)
+
+        assert results[0].category_id is not None
+        assert results[0].confidence > 0.0

@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.transaction_categorizer import (
-    CategorizableTransaction,
+    CategorisationData,
     CategorizationResult,
     TransactionCategorizer,
 )
@@ -63,47 +63,33 @@ class EmbeddingTransactionCategorizer(TransactionCategorizer):
         return expanded_categories, embeddings
 
     async def categorize_transaction(
-        self, transactions: List[CategorizableTransaction]
+        self, transactions: List[CategorisationData]
     ) -> List[CategorizationResult]:
-        try:
-            transaction_embeddings = self.model.encode(
-                [transaction.normalized_description for transaction in transactions]
-            )
-            similarities = self.similarity_func(transaction_embeddings, self.embeddings)
+        unique_normalized_descriptions = list(set(
+            transaction.normalized_description
+            for transaction in transactions
+        ))
 
-            results = []
-            for i, similarity in enumerate(similarities):
-                if similarity.ndim > 1:
-                    best_idx = np.argmax(similarity[0])
-                    confidence = similarity[0][best_idx]
-                else:
-                    best_idx = np.argmax(similarity)
-                    confidence = similarity[best_idx]
-
-                if best_idx < len(self.expanded_categories):
-                    main_category_id = self.expanded_categories[best_idx].category_id
-                    results.append(
-                        CategorizationResult(
-                            id=transactions[i].id,
-                            category_id=main_category_id,
-                            confidence=confidence,
-                        )
-                    )
-                else:
-                    results.append(
-                        CategorizationResult(
-                            id=transactions[i].id, category_id=None, confidence=0.0
-                        )
-                    )
-
-            return results
-        except Exception:
-            return [
+        transaction_embeddings = self.model.encode(unique_normalized_descriptions)
+        similarities = self.similarity_func(transaction_embeddings, self.embeddings)
+        
+        results = []
+        for i, transaction in enumerate(transactions):
+            similarity_idx = unique_normalized_descriptions.index(transaction.normalized_description)
+            similarity = similarities[similarity_idx]
+            best_idx = np.argmax(similarity)
+            confidence = similarity[best_idx]
+            
+            main_category_id = self.expanded_categories[best_idx].category_id
+            results.append(
                 CategorizationResult(
-                    id=transaction.id, category_id=None, confidence=0.0
+                    transaction_id=transaction.transaction_id,
+                    category_id=main_category_id,
+                    confidence=float(confidence),
                 )
-                for transaction in transactions
-            ]
+            )
+
+        return results
 
     def refresh_rules(self):
         self.expanded_categories, self.embeddings = self.refresh_categories_embeddings()
