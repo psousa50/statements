@@ -1,8 +1,11 @@
 import json
 from dataclasses import dataclass
 from typing import List
-from src.app.services.categorizers.transaction_categorizer import CategorizableTransaction
+
 from src.app.models import Category
+from src.app.services.categorizers.transaction_categorizer import \
+    CategorizableTransaction
+
 
 @dataclass
 class Subcategory:

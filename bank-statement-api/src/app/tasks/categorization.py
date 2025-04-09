@@ -1,12 +1,12 @@
 import asyncio
-from typing import Callable
 
 from ..celery_app import celery_app
-from ..services.transaction_categorization_service import TransactionCategorizationService
-from ..repositories.transactions_repository import TransactionsRepository
-from ..repositories.categories_repository import CategoriesRepository
-from ..services.categorizers.groq import GroqTransactionCategorizer
 from ..db import get_db
+from ..repositories.categories_repository import CategoriesRepository
+from ..repositories.transactions_repository import TransactionsRepository
+from ..services.categorizers.groq import GroqTransactionCategorizer
+from ..services.transaction_categorization_service import \
+    TransactionCategorizationService
 
 
 @celery_app.task(name="src.app.tasks.categorization.categorize_pending_transactions")

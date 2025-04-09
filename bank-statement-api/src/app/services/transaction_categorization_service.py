@@ -1,6 +1,7 @@
 from ..repositories.transactions_repository import TransactionsRepository
-from .categorizers.transaction_categorizer import TransactionCategorizer
-from .categorizers.transaction_categorizer import CategorizableTransaction
+from .categorizers.transaction_categorizer import (CategorizableTransaction,
+                                                   TransactionCategorizer)
+
 
 class TransactionCategorizationService:
     def __init__(
@@ -33,7 +34,6 @@ class TransactionCategorizationService:
         for transaction, result in zip(pending_transactions, results):
             try:
                 category_id = result.category_id
-                confidence = result.confidence
                 self.transactions_repository.update_transaction_category(
                     transaction.id, category_id, "categorized"
                 )

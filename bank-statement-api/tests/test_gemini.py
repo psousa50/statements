@@ -3,9 +3,8 @@ import pytest
 from src.app.db import get_db
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.gemini import GeminiTransactionCategorizer
-from src.app.services.categorizers.transaction_categorizer import (
-    CategorizableTransaction,
-)
+from src.app.services.categorizers.transaction_categorizer import \
+    CategorizableTransaction
 
 
 @pytest.mark.asyncio

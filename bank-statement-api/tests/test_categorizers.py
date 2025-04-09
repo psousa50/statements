@@ -3,14 +3,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.app.services.categorizers.embedding import EmbeddingTransactionCategorizer
+from src.app.services.categorizers.embedding import \
+    EmbeddingTransactionCategorizer
 from src.app.services.categorizers.gemini import GeminiTransactionCategorizer
 from src.app.services.categorizers.groq import GroqTransactionCategorizer
 from src.app.services.categorizers.keyword import KeywordTransactionCategorizer
-from src.app.services.categorizers.rule_based import RuleBasedTransactionCategorizer
-from src.app.services.categorizers.transaction_categorizer import (
-    CategorizableTransaction,
-)
+from src.app.services.categorizers.rule_based import \
+    RuleBasedTransactionCategorizer
+from src.app.services.categorizers.transaction_categorizer import \
+    CategorizableTransaction
 
 
 def create_sample_categories_repository():

@@ -6,10 +6,8 @@ import pandas as pd
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
 from ..models import Transaction
-from ..repositories.transactions_repository import (
-    TransactionsFilter,
-    TransactionsRepository,
-)
+from ..repositories.transactions_repository import (TransactionsFilter,
+                                                    TransactionsRepository)
 from ..routes.transactions_upload import TransactionUploader
 from ..schemas import FileUploadResponse
 from ..schemas import Transaction as TransactionSchema
