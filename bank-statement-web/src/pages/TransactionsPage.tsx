@@ -8,6 +8,7 @@ import Card from 'react-bootstrap/Card';
 import Pagination from 'react-bootstrap/Pagination';
 import { useTransactions, useCategories, useSources } from '../hooks/useQueries';
 import { Transaction } from '../types';
+import { TransactionCategoryEditor } from '../components/TransactionCategoryEditor';
 
 const TransactionsPage: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -202,7 +203,11 @@ const TransactionsPage: React.FC = () => {
                     <td className={transaction.amount < 0 ? 'text-danger' : 'text-success'}>
                       {formatAmount(transaction.amount)}
                     </td>
-                    <td>{getCategoryName(transaction.category_id)}</td>
+                    <td>
+                      <TransactionCategoryEditor 
+                        transaction={transaction} 
+                      />
+                    </td>
                     <td>{getSourceName(transaction.source_id)}</td>
                   </tr>
                 ))

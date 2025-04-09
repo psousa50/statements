@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsApi, categoriesApi, sourcesApi, uploadApi } from '../api/api';
-import type { FileUploadResponse } from '../types';
+import type { FileUploadResponse, Transaction } from '../types';
 
 // Transaction queries
 export const useTransactions = (params?: {
@@ -101,6 +101,29 @@ export const useDeleteSource = () => {
     mutationFn: (id: number) => sourcesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sources'] });
+    },
+  });
+};
+
+// Transaction category update
+export const useUpdateTransactionCategory = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ transactionId, categoryId }: { transactionId: number; categoryId: number }) => 
+      transactionsApi.updateCategory(transactionId, categoryId),
+    onSuccess: (updatedTransaction) => {
+      // Invalidate the specific transaction query
+      queryClient.invalidateQueries({ queryKey: ['transaction', updatedTransaction.id] });
+      
+      // Update the transaction in the transactions list cache
+      queryClient.setQueryData(['transactions'], (oldData: any) => {
+        if (!oldData) return undefined;
+        
+        return oldData.map((transaction: Transaction) => 
+          transaction.id === updatedTransaction.id ? updatedTransaction : transaction
+        );
+      });
     },
   });
 };

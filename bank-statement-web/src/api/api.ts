@@ -28,6 +28,13 @@ export const transactionsApi = {
     const response = await api.get(`/transactions/${id}`);
     return response.data;
   },
+  
+  updateCategory: async (transactionId: number, categoryId: number): Promise<Transaction> => {
+    const response = await api.patch(`/transactions/${transactionId}`, {
+      category_id: categoryId
+    });
+    return response.data;
+  },
 };
 
 export const categoriesApi = {
