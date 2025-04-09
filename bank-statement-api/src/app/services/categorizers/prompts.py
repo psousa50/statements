@@ -30,10 +30,7 @@ def categorization_prompt(
         for cat in expanded_categories
     ]
 
-    transaction_descriptions = [
-        t.normalized_description
-        for t in transactions
-    ]
+    transaction_descriptions = [t.normalized_description for t in transactions]
 
     prompt = f"""
 You are a bank transaction categorization assistant. Your task is to categorize the following transaction description into one of the provided categories.

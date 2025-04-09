@@ -65,21 +65,22 @@ class EmbeddingTransactionCategorizer(TransactionCategorizer):
     async def categorize_transaction(
         self, transactions: List[CategorisationData]
     ) -> List[CategorizationResult]:
-        unique_normalized_descriptions = list(set(
-            transaction.normalized_description
-            for transaction in transactions
-        ))
+        unique_normalized_descriptions = list(
+            set(transaction.normalized_description for transaction in transactions)
+        )
 
         transaction_embeddings = self.model.encode(unique_normalized_descriptions)
         similarities = self.similarity_func(transaction_embeddings, self.embeddings)
-        
+
         results = []
         for i, transaction in enumerate(transactions):
-            similarity_idx = unique_normalized_descriptions.index(transaction.normalized_description)
+            similarity_idx = unique_normalized_descriptions.index(
+                transaction.normalized_description
+            )
             similarity = similarities[similarity_idx]
             best_idx = np.argmax(similarity)
             confidence = similarity[best_idx]
-            
+
             main_category_id = self.expanded_categories[best_idx].category_id
             results.append(
                 CategorizationResult(

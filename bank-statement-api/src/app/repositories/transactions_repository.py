@@ -114,29 +114,26 @@ class TransactionsRepository:
         self, limit: int = 100
     ) -> List[Tuple[str, int]]:
         from sqlalchemy import func
-        
+
         subquery = (
             self.db.query(
                 Transaction.normalized_description,
                 Transaction.category_id,
-                func.count().label("count")
+                func.count().label("count"),
             )
             .filter(Transaction.categorization_status == "categorized")
             .filter(Transaction.category_id != None)
             .group_by(Transaction.normalized_description, Transaction.category_id)
             .subquery()
         )
-        
+
         query = (
-            self.db.query(
-                subquery.c.normalized_description,
-                subquery.c.category_id
-            )
+            self.db.query(subquery.c.normalized_description, subquery.c.category_id)
             .distinct(subquery.c.normalized_description)
             .order_by(subquery.c.normalized_description, subquery.c.count.desc())
             .limit(limit)
         )
-        
+
         return [(result[0], result[1]) for result in query.all()]
 
     def get_transactions_by_normalized_description(

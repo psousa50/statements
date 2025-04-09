@@ -41,8 +41,8 @@ async def test_groq():
         transactions.append(
             CategorisationData(
                 transaction_id=i,
-                description=description, 
-                normalized_description=description
+                description=description,
+                normalized_description=description,
             )
         )
 

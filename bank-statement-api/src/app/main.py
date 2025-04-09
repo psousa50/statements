@@ -61,10 +61,10 @@ class App:
         groq_categorizer = categorizer or GroqTransactionCategorizer(
             self.categories_repository
         )
-        
+
         self.categorizer = ExistingTransactionsCategorizer(
             transactions_repository=self.transactions_repository,
-            fallback_categorizer=groq_categorizer
+            fallback_categorizer=groq_categorizer,
         )
 
         def on_category_change(action, categories):

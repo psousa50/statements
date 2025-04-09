@@ -42,8 +42,8 @@ async def test_gemini():
         transactions.append(
             CategorisationData(
                 transaction_id=i,
-                description=description, 
-                normalized_description=description
+                description=description,
+                normalized_description=description,
             )
         )
 

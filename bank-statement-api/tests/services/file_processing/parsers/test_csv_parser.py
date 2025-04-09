@@ -14,7 +14,7 @@ class TestCSVParser:
 2023-01-02,Groceries,-50.00,950.00
 2023-01-03,Rent,-500.00,450.00
 """
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False, mode='w') as f:
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False, mode="w") as f:
             f.write(csv_content)
             temp_file_path = f.name
 
@@ -28,25 +28,25 @@ class TestCSVParser:
             assert len(df) == 3
 
             # Check column names
-            assert set(df.columns) == {'Date', 'Description', 'Amount', 'Balance'}
+            assert set(df.columns) == {"Date", "Description", "Amount", "Balance"}
 
             # Check first row
-            assert df.iloc[0]['Date'] == '2023-01-01'
-            assert df.iloc[0]['Description'] == 'Salary'
-            assert df.iloc[0]['Amount'] == 1000.00
-            assert df.iloc[0]['Balance'] == 1000.00
+            assert df.iloc[0]["Date"] == "2023-01-01"
+            assert df.iloc[0]["Description"] == "Salary"
+            assert df.iloc[0]["Amount"] == 1000.00
+            assert df.iloc[0]["Balance"] == 1000.00
 
             # Check second row
-            assert df.iloc[1]['Date'] == '2023-01-02'
-            assert df.iloc[1]['Description'] == 'Groceries'
-            assert df.iloc[1]['Amount'] == -50.00
-            assert df.iloc[1]['Balance'] == 950.00
+            assert df.iloc[1]["Date"] == "2023-01-02"
+            assert df.iloc[1]["Description"] == "Groceries"
+            assert df.iloc[1]["Amount"] == -50.00
+            assert df.iloc[1]["Balance"] == 950.00
 
             # Check third row
-            assert df.iloc[2]['Date'] == '2023-01-03'
-            assert df.iloc[2]['Description'] == 'Rent'
-            assert df.iloc[2]['Amount'] == -500.00
-            assert df.iloc[2]['Balance'] == 450.00
+            assert df.iloc[2]["Date"] == "2023-01-03"
+            assert df.iloc[2]["Description"] == "Rent"
+            assert df.iloc[2]["Amount"] == -500.00
+            assert df.iloc[2]["Balance"] == 450.00
         finally:
             # Clean up the temporary file
             os.unlink(temp_file_path)
@@ -58,7 +58,7 @@ class TestCSVParser:
 2023-01-02,Groceries,-50.00
 2023-01-03,Rent,-500.00
 """
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False, mode='w') as f:
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False, mode="w") as f:
             f.write(csv_content)
             temp_file_path = f.name
 
@@ -72,10 +72,10 @@ class TestCSVParser:
             assert len(df) == 3
 
             # Check column names
-            assert set(df.columns) == {'Date', 'Description', 'Amount'}
+            assert set(df.columns) == {"Date", "Description", "Amount"}
 
             # Verify that Balance column is not present
-            assert 'Balance' not in df.columns
+            assert "Balance" not in df.columns
         finally:
             # Clean up the temporary file
             os.unlink(temp_file_path)

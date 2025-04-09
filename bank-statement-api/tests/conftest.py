@@ -58,11 +58,12 @@ def random_transaction_create(source_id: int) -> TransactionCreate:
         source_id=source_id,
     )
 
+
 def random_transaction(
-    source_id: int, 
+    source_id: int,
     description: str = f"TestTransaction_{uuid.uuid4().hex[:8]}",
     category_id: int = 1,
-    ) -> Transaction:
+) -> Transaction:
     return Transaction(
         id=uuid.uuid4(),
         date=date.today(),
@@ -72,8 +73,9 @@ def random_transaction(
         source_id=source_id,
         category_id=category_id,
         normalized_description=description.lower(),
-        categorization_status="categorized"
+        categorization_status="categorized",
     )
+
 
 def random_category():
     return Category(category_name=f"TestCategory_{uuid.uuid4().hex[:8]}")
@@ -85,12 +87,16 @@ def random_source():
         description=f"Description for test source {uuid.uuid4().hex[:8]}",
     )
 
-def create_category(id: int, category_name: str, subcategories: list[SimpleNamespace] = []):
+
+def create_category(
+    id: int, category_name: str, subcategories: list[SimpleNamespace] = []
+):
     return SimpleNamespace(
         id=id,
         category_name=category_name,
         subcategories=subcategories,
     )
+
 
 def create_category_tree(
     id: int,
@@ -102,28 +108,29 @@ def create_category_tree(
 ) -> list[SimpleNamespace]:
     # Create subcategories first
     subcategory1 = SimpleNamespace(
-        id=subcategory_id_1, 
-        category_name=subcategory_name_1, 
+        id=subcategory_id_1,
+        category_name=subcategory_name_1,
         parent_category_id=id,
-        subcategories=None
+        subcategories=None,
     )
-    
+
     subcategory2 = SimpleNamespace(
-        id=subcategory_id_2, 
-        category_name=subcategory_name_2, 
+        id=subcategory_id_2,
+        category_name=subcategory_name_2,
         parent_category_id=id,
-        subcategories=None
+        subcategories=None,
     )
-    
+
     # Create root category with subcategories
     root = SimpleNamespace(
         id=id,
         category_name=category_name,
         parent_category_id=None,
-        subcategories=[subcategory1, subcategory2]
+        subcategories=[subcategory1, subcategory2],
     )
-    
+
     return [root, subcategory1, subcategory2]
+
 
 def create_sample_categories_repository():
     restaurant = SimpleNamespace(

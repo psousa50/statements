@@ -45,4 +45,3 @@ def test_keyword_categorizer():
     assert results[1].transaction_id == 200
     assert results[1].category_id == 30
     assert results[1].confidence > 0.0
-
