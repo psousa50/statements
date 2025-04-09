@@ -20,7 +20,6 @@ from .services.categorizers.transaction_categorizer import TransactionCategorize
 from .services.transaction_categorization_service import (
     TransactionCategorizationService,
 )
-from .tasks.categorization import register_service_factory
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -102,19 +101,6 @@ class App:
                     {"path": "/categorization", "methods": ["POST", "GET"]},
                 ],
             }
-
-        self.setup_categorization_factory(db)
-
-    def setup_categorization_factory(self, db: Session):
-
-        def service_factory() -> TransactionCategorizationService:
-            transactionCategorizationService = TransactionCategorizationService(
-                TransactionsRepository(db),
-                GeminiTransactionCategorizer(CategoriesRepository(db)),
-            )
-            return transactionCategorizationService
-
-        register_service_factory(service_factory)
 
 
 # Create the default app instance
