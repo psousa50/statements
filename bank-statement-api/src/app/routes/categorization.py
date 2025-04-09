@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from ..repositories.categories_repository import CategoriesRepository
 from ..repositories.transactions_repository import TransactionsRepository
-from src.app.services.categorizers.embedding import TransactionCategorizer
+from ..services.categorizers.transaction_categorizer import TransactionCategorizer
 from ..services.transaction_categorization_service import (
     TransactionCategorizationService,
 )

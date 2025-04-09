@@ -1,13 +1,13 @@
 import os
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from src.app.repositories.categories_repository import CategoriesRepository
+from src.app.services.categorizers.transaction_categorizer import CategorizableTransaction, CategorizationResult, TransactionCategorizer
 
 
 @dataclass
@@ -15,16 +15,6 @@ class Subcategory:
     category_id: int
     category_name: str
     subcategory_name: str
-
-
-class TransactionCategorizer(ABC):
-    @abstractmethod
-    async def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
-        pass
-    
-    @abstractmethod
-    def refresh_rules(self):
-        pass
 
 
 class EmbeddingTransactionCategorizer(TransactionCategorizer):
@@ -68,25 +58,30 @@ class EmbeddingTransactionCategorizer(TransactionCategorizer):
 
         return expanded_categories, embeddings
 
-    async def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
+    async def categorize_transaction(self, transactions: List[CategorizableTransaction]) -> List[CategorizationResult]:
         try:
-            transaction_embedding = self.model.encode([description.lower()])
-            similarities = self.similarity_func(transaction_embedding, self.embeddings)
+            transaction_embeddings = self.model.encode([transaction.normalized_description for transaction in transactions])
+            similarities = self.similarity_func(transaction_embeddings, self.embeddings)
 
-            if similarities.ndim > 1:
-                best_idx = np.argmax(similarities[0])
-                confidence = similarities[0][best_idx]
-            else:
-                best_idx = np.argmax(similarities)
-                confidence = similarities[best_idx]
+            results = []
+            for i, similarity in enumerate(similarities):
+                if similarity.ndim > 1:
+                    best_idx = np.argmax(similarity[0])
+                    confidence = similarity[0][best_idx]
+                else:
+                    best_idx = np.argmax(similarity)
+                    confidence = similarity[best_idx]
 
-            if best_idx < len(self.expanded_categories):
-                main_category_id = self.expanded_categories[best_idx].category_id
-                return main_category_id, float(confidence)
-            else:
-                return None, 0.0
+                if best_idx < len(self.expanded_categories):
+                    main_category_id = self.expanded_categories[best_idx].category_id
+                    results.append(
+                        CategorizationResult(id=transactions[i].id, category_id=main_category_id, confidence=confidence))
+                else:
+                    results.append(CategorizationResult(id=transactions[i].id, category_id=None, confidence=0.0))
+
+            return results
         except Exception:
-            return None, 0.0
+            return [CategorizationResult(id=transaction.id, category_id=None, confidence=0.0) for transaction in transactions]
 
     def refresh_rules(self):
         self.expanded_categories, self.embeddings = self.refresh_categories_embeddings()

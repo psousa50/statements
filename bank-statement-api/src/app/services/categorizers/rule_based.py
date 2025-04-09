@@ -1,8 +1,9 @@
 import re
-from typing import Tuple, Optional
 
 from src.app.repositories.categories_repository import CategoriesRepository
-from src.app.services.categorizers.embedding import TransactionCategorizer
+from src.app.services.categorizers.transaction_categorizer import TransactionCategorizer
+from src.app.services.categorizers.transaction_categorizer import CategorizableTransaction, CategorizationResult
+from typing import List
 
 
 class RuleBasedTransactionCategorizer(TransactionCategorizer):
@@ -11,14 +12,18 @@ class RuleBasedTransactionCategorizer(TransactionCategorizer):
         self.rules = []
         self.refresh_rules()
 
-    async def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
-        description = description.lower()
+    async def categorize_transaction(self, transactions: List[CategorizableTransaction]) -> List[CategorizationResult]:
+        results = []
+        for transaction in transactions:
+            description = transaction.description.lower()
 
-        for pattern, category_id, confidence in self.rules:
-            if re.search(pattern, description):
-                return category_id, confidence
+            for pattern, category_id, confidence in self.rules:
+                if re.search(pattern, description):
+                    results.append(CategorizationResult(id=transaction.id, category_id=category_id, confidence=confidence))
+                    break
 
-        return None, 0.0
+        return results
+
 
     def refresh_rules(self):
         """Refresh the categorization rules from the database"""

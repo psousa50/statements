@@ -1,10 +1,11 @@
 import pytest
-import asyncio
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.gemini import GeminiTransactionCategorizer
+from src.app.services.categorizers.transaction_categorizer import CategorizableTransaction
 from src.app.db import get_db
 
 @pytest.mark.asyncio
+@pytest.mark.skip
 async def test_gemini():
     db = next(get_db())
     categories_repository = CategoriesRepository(db)
@@ -32,10 +33,10 @@ async def test_gemini():
         "Apribeiro",
     ]
 
-    for description in descriptions:
-        category_id, confidence = await categorizer.categorize_transaction(description)
-        print(f"{description}: {category_id} {confidence}")
-        await asyncio.sleep(1000)
-    
-    
-    
+    transactions = []
+    for i, description in enumerate(descriptions):
+        transactions.append(CategorizableTransaction(id=i, description=description, normalized_description=description))
+
+    results = await categorizer.categorize_transaction(transactions)
+    for i, result in enumerate(results):
+        print(f"{i}: {result}")

@@ -1,5 +1,5 @@
 from ..repositories.transactions_repository import TransactionsRepository
-from src.app.services.categorizers.embedding import TransactionCategorizer
+from .categorizers.transaction_categorizer import TransactionCategorizer
 
 
 class TransactionCategorizationService:
@@ -36,7 +36,7 @@ class TransactionCategorizationService:
                     self.transactions_repository.update_transaction_category(
                         transaction.id, None, "failed"
                     )
-            except Exception as e:
+            except Exception:
                 self.transactions_repository.update_transaction_category(
                     transaction.id, None, "failed"
                 )

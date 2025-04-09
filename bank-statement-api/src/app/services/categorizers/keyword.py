@@ -1,8 +1,9 @@
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict
 
 from src.app.repositories.categories_repository import CategoriesRepository
-from src.app.services.categorizers.embedding import TransactionCategorizer
-
+from src.app.services.categorizers.transaction_categorizer import TransactionCategorizer
+from src.app.services.categorizers.transaction_categorizer import CategorizableTransaction, CategorizationResult
+from typing import List
 
 class KeywordTransactionCategorizer(TransactionCategorizer):
     def __init__(self, categories_repository: CategoriesRepository, keywords_map: Optional[Dict[str, int]] = None):
@@ -15,19 +16,17 @@ class KeywordTransactionCategorizer(TransactionCategorizer):
         """Add a keyword mapping to a category"""
         self.keywords_map[keyword.lower()] = category_id
 
-    def categorize_transaction(self, description: str) -> Tuple[Optional[int], float]:
-        description_words = description.lower().split()
+    def categorize_transaction(self, transactions: List[CategorizableTransaction]) -> List[CategorizationResult]:
+        results = []
+        for transaction in transactions:
+            description = transaction.description.lower()
 
-        for word in description_words:
-            if word in self.keywords_map:
-                return self.keywords_map[word], 1.0
+            for word in description.split():
+                if word in self.keywords_map:
+                    results.append(CategorizationResult(id=transaction.id, category_id=self.keywords_map[word], confidence=1.0))
+                    break
 
-        # Try with partial matching
-        for keyword, category_id in self.keywords_map.items():
-            if keyword in description.lower():
-                return category_id, 0.8
-
-        return None, 0.0
+        return results
 
     def refresh_rules(self):
         """Generate keyword mappings from category names"""

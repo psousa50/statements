@@ -14,7 +14,7 @@ from .routes.categorization import CategorizationRouter
 from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
-from src.app.services.categorizers.embedding import TransactionCategorizer, EmbeddingTransactionCategorizer
+from .services.categorizers.transaction_categorizer import TransactionCategorizer
 from src.app.services.categorizers.gemini import GeminiTransactionCategorizer
 from .services.transaction_categorization_service import (
     TransactionCategorizationService,
