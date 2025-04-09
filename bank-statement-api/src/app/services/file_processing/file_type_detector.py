@@ -1,6 +1,5 @@
 from enum import Enum, auto
 from pathlib import Path
-from typing import Optional
 
 
 class FileType(Enum):
