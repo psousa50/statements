@@ -5,8 +5,13 @@ from fastapi.testclient import TestClient
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.repositories.sources_repository import SourcesRepository
 from src.app.repositories.transactions_repository import TransactionsRepository
-from tests.conftest import (create_app, db_session, random_category,
-                            random_source, random_transaction)
+from tests.conftest import (
+    create_app,
+    db_session,
+    random_category,
+    random_source,
+    random_transaction,
+)
 
 
 def test_get_transactions():

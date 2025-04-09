@@ -2,10 +2,10 @@ from fastapi import APIRouter
 
 from ..repositories.categories_repository import CategoriesRepository
 from ..repositories.transactions_repository import TransactionsRepository
-from ..services.categorizers.transaction_categorizer import \
-    TransactionCategorizer
-from ..services.transaction_categorization_service import \
-    TransactionCategorizationService
+from ..services.categorizers.transaction_categorizer import TransactionCategorizer
+from ..services.transaction_categorization_service import (
+    TransactionCategorizationService,
+)
 from ..tasks.categorization import manually_trigger_categorization
 
 

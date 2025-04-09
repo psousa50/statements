@@ -5,7 +5,10 @@ from src.app.ai.gemini_ai import GeminiAI
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.prompts import categorization_prompt
 from src.app.services.categorizers.transaction_categorizer import (
-    CategorizableTransaction, CategorizationResult, TransactionCategorizer)
+    CategorizableTransaction,
+    CategorizationResult,
+    TransactionCategorizer,
+)
 
 
 class GeminiTransactionCategorizer(TransactionCategorizer):

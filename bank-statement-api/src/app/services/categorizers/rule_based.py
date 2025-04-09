@@ -3,7 +3,10 @@ from typing import List
 
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.transaction_categorizer import (
-    CategorizableTransaction, CategorizationResult, TransactionCategorizer)
+    CategorizableTransaction,
+    CategorizationResult,
+    TransactionCategorizer,
+)
 
 
 class RuleBasedTransactionCategorizer(TransactionCategorizer):

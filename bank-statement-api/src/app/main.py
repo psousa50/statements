@@ -16,8 +16,7 @@ from .routes.categorization import CategorizationRouter
 from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
-from .services.categorizers.transaction_categorizer import \
-    TransactionCategorizer
+from .services.categorizers.transaction_categorizer import TransactionCategorizer
 
 models.Base.metadata.create_all(bind=engine)
 

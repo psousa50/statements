@@ -3,8 +3,9 @@ from dataclasses import dataclass
 from typing import List
 
 from src.app.models import Category
-from src.app.services.categorizers.transaction_categorizer import \
-    CategorizableTransaction
+from src.app.services.categorizers.transaction_categorizer import (
+    CategorizableTransaction,
+)
 
 
 @dataclass
@@ -14,7 +15,9 @@ class Subcategory:
     subcategory_name: str
 
 
-def categorization_prompt(transactions: List[CategorizableTransaction], categories: List[Category]) -> str:
+def categorization_prompt(
+    transactions: List[CategorizableTransaction], categories: List[Category]
+) -> str:
     expanded_categories = [
         Subcategory(sub_cat.id, cat.category_name, sub_cat.category_name)
         for cat in categories
@@ -23,11 +26,13 @@ def categorization_prompt(transactions: List[CategorizableTransaction], categori
     ]
 
     categories_info = [
-        f"{{id: {cat.category_id}, name: {cat.subcategory_name}}}" for cat in expanded_categories
+        f"{{id: {cat.category_id}, name: {cat.subcategory_name}}}"
+        for cat in expanded_categories
     ]
 
     transaction_descriptions = [
-        f"{{transaction_id: {t.id}, description: {t.description}, normalized_description: {t.normalized_description}}}" for t in transactions
+        f"{{transaction_id: {t.id}, description: {t.description}, normalized_description: {t.normalized_description}}}"
+        for t in transactions
     ]
 
     prompt = f"""

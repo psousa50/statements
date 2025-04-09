@@ -7,13 +7,14 @@ from fastapi import HTTPException, Query
 
 from ..models import Source, Transaction
 from ..repositories.sources_repository import SourcesRepository
-from ..repositories.transactions_repository import (TransactionsFilter,
-                                                    TransactionsRepository)
+from ..repositories.transactions_repository import (
+    TransactionsFilter,
+    TransactionsRepository,
+)
 from ..schemas import FileUploadResponse
 from ..schemas import Transaction as TransactionSchema
 from ..schemas import TransactionCreate
-from ..services.categorizers.transaction_categorizer import \
-    TransactionCategorizer
+from ..services.categorizers.transaction_categorizer import TransactionCategorizer
 
 
 class TransactionUploader:

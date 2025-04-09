@@ -1,6 +1,8 @@
 from ..repositories.transactions_repository import TransactionsRepository
-from .categorizers.transaction_categorizer import (CategorizableTransaction,
-                                                   TransactionCategorizer)
+from .categorizers.transaction_categorizer import (
+    CategorizableTransaction,
+    TransactionCategorizer,
+)
 
 
 class TransactionCategorizationService:
@@ -30,7 +32,9 @@ class TransactionCategorizationService:
             )
             for transaction in pending_transactions
         ]
-        results = await self.categorizer.categorize_transaction(categorized_transactions)
+        results = await self.categorizer.categorize_transaction(
+            categorized_transactions
+        )
         for transaction, result in zip(pending_transactions, results):
             try:
                 category_id = result.category_id

@@ -2,7 +2,10 @@ from typing import Dict, List, Optional
 
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.transaction_categorizer import (
-    CategorizableTransaction, CategorizationResult, TransactionCategorizer)
+    CategorizableTransaction,
+    CategorizationResult,
+    TransactionCategorizer,
+)
 
 
 class KeywordTransactionCategorizer(TransactionCategorizer):
