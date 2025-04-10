@@ -1,17 +1,19 @@
 import json
-from typing import Dict
 
 import pandas as pd
 
 from src.app.ai.llm_client import LLMClient
+from src.app.services.file_processing.conversion_model import ConversionModel
 
 
 class ColumnNormalizer:
     def __init__(self, llm_client: LLMClient):
         self.llm_client = llm_client
 
-    def normalize_columns(self, df: pd.DataFrame) -> Dict[str, str]:
+    def normalize_columns(self, df: pd.DataFrame) -> ConversionModel:
         prompt = self.get_prompt(df)
+        with open("prompt.txt", "w") as f:
+            f.write(prompt)
         response = self.llm_client.generate(prompt)
         response = (
             response.strip()
@@ -20,10 +22,14 @@ class ColumnNormalizer:
             .replace("`", "")
             .replace("json", "")
         )
+        with open("response.json", "w") as f:
+            f.write(response)
         return self.parse_response(response)
 
-    def parse_response(self, response: str) -> Dict[str, str]:
-        return json.loads(response)
+    def parse_response(self, response: str) -> ConversionModel:
+        data = json.loads(response)
+        conversion_model: ConversionModel = ConversionModel(**data)
+        return conversion_model
 
     def get_prompt(self, df: pd.DataFrame) -> str:
         return f"""
@@ -34,12 +40,13 @@ From this bank statement excerpt, extract the column map and header information 
     "date": "<column name for date>",
     "description": "<column name for description>",
     "amount": "<column name for amount>",
+    "debit_amount": "<column name for debit amount>",
+    "credit_amount": "<column name for credit amount>",
     "currency": "<column name for currency>",
     "balance": "<column name for balance>"
   }},
-  "header_row": "<0-based index of the header row that contains column names>",
+  "header_row": "<0-based index of the header row>",
   "start_row": "<0-based index of the first row of actual transaction data>"
-
 }}
 
 Guidelines:

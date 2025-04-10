@@ -1,25 +1,38 @@
 from datetime import date, datetime
-from typing import Dict
 
 import numpy as np
 import pandas as pd
 
+from src.app.services.file_processing.conversion_model import ConversionModel
+
 
 class TransactionCleaner:
-    def __init__(self, column_map):
-        self.column_map = column_map
+    def __init__(self, conversion_model: ConversionModel):
+        self.conversion_model = conversion_model
 
     def clean(self, df: pd.DataFrame) -> pd.DataFrame:
+        header_row = self.conversion_model.header_row
+        start_row = self.conversion_model.start_row
+
         result_df = df.copy()
 
-        result_df = self._combine_debit_credit(result_df)
+        if header_row > 0:
+            column_names = df.iloc[header_row-1]
+            result_df.columns = column_names
+            result_df = result_df.iloc[header_row:]
+        else:
+            result_df = result_df.iloc[start_row-1:]
+
+        column_map = self.conversion_model.column_map
 
         rename_dict = {
             col: std_col
-            for col, std_col in self.column_map.items()
-            if std_col and col in df.columns
+            for std_col, col in column_map.items()
+            if col and col in result_df.columns
         }
         result_df = result_df.rename(columns=rename_dict)
+
+        result_df = self._combine_debit_credit(result_df)
 
         for std_col in ["date", "description", "amount", "currency", "balance"]:
             if std_col not in result_df.columns:
@@ -37,46 +50,28 @@ class TransactionCleaner:
         return result_df
 
     def _combine_debit_credit(self, df: pd.DataFrame) -> pd.DataFrame:
-        amount_columns = [
-            col
-            for col, std_col in self.column_map.items()
-            if std_col == "amount" and col in df.columns
-        ]
-
-        if len(amount_columns) <= 1:
+        column_map = self.conversion_model.column_map
+        if "amount" not in column_map or column_map["amount"] != "":
             return df
 
-        debit_patterns = ["debit", "withdrawal", "payments", "out"]
-        credit_patterns = ["credit", "deposit", "incoming", "in"]
+        debit_col = "debit_amount"
+        credit_col = "credit_amount"
 
-        debit_col = None
-        credit_col = None
+        result_df = df.copy()
 
-        for col in amount_columns:
-            col_lower = col.lower()
-            if any(pattern in col_lower for pattern in debit_patterns):
-                debit_col = col
-            elif any(pattern in col_lower for pattern in credit_patterns):
-                credit_col = col
+        result_df["amount"] = 0.0
 
-        if debit_col and credit_col:
-            result_df = df.copy()
+        credit_mask = ~result_df[credit_col].isna() & (result_df[credit_col] != 0)
+        result_df.loc[credit_mask, "amount"] = result_df.loc[
+            credit_mask, credit_col
+        ]
 
-            result_df["amount"] = 0.0
+        debit_mask = ~result_df[debit_col].isna() & (result_df[debit_col] != 0)
+        result_df.loc[debit_mask, "amount"] = -result_df.loc[debit_mask, debit_col]
 
-            credit_mask = ~result_df[credit_col].isna() & (result_df[credit_col] != 0)
-            result_df.loc[credit_mask, "amount"] = result_df.loc[
-                credit_mask, credit_col
-            ]
+        result_df = result_df.drop(columns=[debit_col, credit_col])
 
-            debit_mask = ~result_df[debit_col].isna() & (result_df[debit_col] != 0)
-            result_df.loc[debit_mask, "amount"] = -result_df.loc[debit_mask, debit_col]
-
-            result_df = result_df.drop(columns=[debit_col, credit_col])
-
-            return result_df
-
-        return df
+        return result_df
 
     def _parse_dates(self, date_series: pd.Series) -> pd.Series:
         date_formats = [

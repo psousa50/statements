@@ -1,8 +1,9 @@
 import pytest
 
+from src.app.ai.groq_ai import GroqAI
 from src.app.db import get_db
 from src.app.repositories.categories_repository import CategoriesRepository
-from src.app.services.categorizers.groq import GroqTransactionCategorizer
+from src.app.services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
 from src.app.services.categorizers.transaction_categorizer import (
     CategorisationData,
 )
@@ -12,7 +13,10 @@ from src.app.services.categorizers.transaction_categorizer import (
 async def test_groq():
     db = next(get_db())
     categories_repository = CategoriesRepository(db)
-    categorizer = GroqTransactionCategorizer(categories_repository)
+    categorizer = LLMTransactionCategorizer(
+        categories_repository,
+        GroqAI(),
+    )
 
     descriptions = [
         "Aerofarma Laboratorios S.A.I.C",

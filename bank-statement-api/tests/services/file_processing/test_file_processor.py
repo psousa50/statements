@@ -1,16 +1,21 @@
 import os
 from pathlib import Path
 
+import pandas as pd
+
 from src.app.services.file_processing.file_processor import FileProcessor
 
-# Get the path to the test resources directory
 TEST_RESOURCES_DIR = Path(__file__).parent.parent.parent / "resources"
 
 
 class TestFileProcessor:
-    def test_process_file(self):
-        test_file_path = os.path.join(TEST_RESOURCES_DIR, "Revolut.csv")
+    def test_process_csv_file(self):
+        test_file_path = os.path.join(TEST_RESOURCES_DIR, "sample.csv")
         file_content = open(test_file_path, "rb").read()
         file_processor = FileProcessor()
         df = file_processor.process_file(file_content, test_file_path)
-        print(df.head())
+
+        assert isinstance(df, pd.DataFrame)
+        assert len(df) == 3
+        assert {"date", "description", "amount", "currency", "balance"}.issubset(set(df.columns))
+

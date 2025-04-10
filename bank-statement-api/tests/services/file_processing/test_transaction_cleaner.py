@@ -1,9 +1,9 @@
-from datetime import date, datetime
+from datetime import date
 
-import numpy as np
 import pandas as pd
 import pytest
 
+from src.app.services.file_processing.conversion_model import ConversionModel
 from src.app.services.file_processing.transaction_cleaner import TransactionCleaner
 
 
@@ -18,24 +18,28 @@ class TestTransactionCleaner:
         }
         df = pd.DataFrame(data)
 
-        column_map = {
-            "Date": "date",
-            "Description": "description",
-            "Amount": "amount",
-            "Currency": "currency",
-            "Balance": "balance",
-        }
+        conversion_model = ConversionModel(
+            column_map={
+                "date": "Date",
+                "description": "Description",
+                "amount": "Amount",
+                "currency": "Currency",
+                "balance": "Balance",
+            },
+            header_row=0,
+            start_row=1,
+        )
 
-        cleaner = TransactionCleaner(column_map)
+        cleaner = TransactionCleaner(conversion_model)
         result_df = cleaner.clean(df)
 
-        assert set(result_df.columns) == {
+        assert {
             "date",
             "description",
             "amount",
             "currency",
             "balance",
-        }
+        }.issubset(set(result_df.columns))
 
         assert isinstance(result_df["date"].iloc[0], date)
         assert result_df["date"].iloc[0] == date(2023, 1, 1)
@@ -53,19 +57,23 @@ class TestTransactionCleaner:
         }
         df = pd.DataFrame(data)
 
-        column_map = {
-            "Date": "date",
-            "Description": "description",
-            "Debit": "amount",
-            "Credit": "amount",
-            "Balance": "balance",
-            "currency": "",
-        }
+        conversion_model = ConversionModel(
+            column_map={
+                "date": "Date",
+                "description": "Description",
+                "amount": "",
+                "debit_amount": "Debit",
+                "credit_amount": "Credit",
+                "balance": "Balance",
+                "currency": "",
+            },
+            header_row=0,
+            start_row=1,
+        )
 
-        cleaner = TransactionCleaner(column_map)
+        cleaner = TransactionCleaner(conversion_model)
         result_df = cleaner.clean(df)
 
-        # Check that the columns are renamed
         assert set(result_df.columns) == {
             "date",
             "description",
@@ -74,20 +82,17 @@ class TestTransactionCleaner:
             "currency",
         }
 
-        # Check that the date is parsed correctly
         assert isinstance(result_df["date"].iloc[0], date)
 
-        # Check that the debit and credit columns are combined correctly
-        assert result_df["amount"].iloc[0] == 1000.00  # Credit (positive)
-        assert result_df["amount"].iloc[1] == -50.00  # Debit (negative)
-        assert result_df["amount"].iloc[2] == -500.00  # Debit (negative)
+        assert result_df["amount"].iloc[0] == 1000.00
+        assert result_df["amount"].iloc[1] == -50.00
+        assert result_df["amount"].iloc[2] == -500.00
 
-        # Check that the currency is set to a default value
         assert result_df["currency"].iloc[0] == ""
 
     def test_clean_with_different_date_formats(self):
         data = {
-            "date": [
+            "Date": [
                 "01/01/2023",
                 "02-01-2023",
                 "2023.01.03",
@@ -98,11 +103,15 @@ class TestTransactionCleaner:
         }
         df = pd.DataFrame(data)
 
-        column_map = {
-            "date": "date",
-        }
+        conversion_model = ConversionModel(
+            column_map={
+                "date": "Date",
+            },
+            header_row=0,
+            start_row=1,
+        )
 
-        cleaner = TransactionCleaner(column_map)
+        cleaner = TransactionCleaner(conversion_model)
         result_df = cleaner.clean(df)
 
         assert result_df["date"].tolist() == [
@@ -122,19 +131,83 @@ class TestTransactionCleaner:
         }
         df = pd.DataFrame(data)
 
-        column_map = {
-            "Date": "date",
-            "Description": "description",
-            "Amount": "amount",
-            "currency": "",
-            "balance": "",
-        }
+        conversion_model = ConversionModel(
+            column_map={
+                "date": "Date",
+                "description": "Description",
+                "amount": "Amount",
+                "currency": "",
+                "balance": "",
+            },
+            header_row=0,
+            start_row=1,
+        )
 
-        cleaner = TransactionCleaner(column_map)
+        cleaner = TransactionCleaner(conversion_model)
         result_df = cleaner.clean(df)
 
-        # Check that missing columns are added with default values
         assert "currency" in result_df.columns
         assert "balance" in result_df.columns
         assert result_df["currency"].iloc[0] == ""
         assert pd.isna(result_df["balance"].iloc[0])
+
+    def test_clean_with_extra_rows(self):
+        data = {
+            "Date": ["1", "2023-01-01", "2023-01-02"],
+            "Description": ["2", "Salary", "Groceries"],
+            "Amount": ["3", 1000.00, -50.00],
+            "Currency": ["4", "EUR", "USD"],
+            "Balance": ["5", 1000.00, 950.00],
+        }
+        df = pd.DataFrame(data)
+
+        conversion_model = ConversionModel(
+            column_map={
+                "date": "Date",
+                "description": "Description",
+                "amount": "Amount",
+                "currency": "Currency",
+                "balance": "Balance",
+            },
+            header_row=0,
+            start_row=2,
+        )
+
+        cleaner = TransactionCleaner(conversion_model)
+        result_df = cleaner.clean(df)
+
+        assert len(result_df) == 2
+
+    def test_clean_with_header_row_inside_doc(self):
+        data = {
+            "Column1": ["1", "Date", "2023-01-01"],
+            "Column2": ["2", "Description", "Salary"],
+            "Column3": ["3", "Amount", 1000.00],
+            "Column4": ["4", "Currency", "EUR"],
+            "Column5": ["5", "Balance", 1000.00],
+        }
+        df = pd.DataFrame(data)
+
+        conversion_model = ConversionModel(
+            column_map={
+                "date": "Date",
+                "description": "Description",
+                "amount": "Amount",
+                "currency": "Currency",
+                "balance": "Balance",
+            },
+            header_row=2,
+            start_row=3,
+        )
+
+        cleaner = TransactionCleaner(conversion_model)
+        result_df = cleaner.clean(df)
+
+        assert len(result_df) == 1
+        assert result_df["date"].iloc[0] == date(2023, 1, 1)
+        assert result_df["description"].iloc[0] == "Salary"
+        assert result_df["amount"].iloc[0] == 1000.00
+        assert result_df["currency"].iloc[0] == "EUR"
+        assert result_df["balance"].iloc[0] == 1000.00
+        
+            

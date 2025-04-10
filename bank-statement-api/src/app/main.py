@@ -7,9 +7,10 @@ from sqlalchemy.orm import Session
 from src.app.services.categorizers.existing_transactions_categorizer import (
     ExistingTransactionsCategorizer,
 )
-from src.app.services.categorizers.groq import GroqTransactionCategorizer
+from src.app.services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
 
 from . import models
+from .ai.groq_ai import GroqAI
 from .db import engine, get_db
 from .repositories.categories_repository import CategoriesRepository
 from .repositories.sources_repository import SourcesRepository
@@ -58,8 +59,10 @@ class App:
             transactions_repository or TransactionsRepository(db)
         )
 
-        groq_categorizer = categorizer or GroqTransactionCategorizer(
-            self.categories_repository
+        llm_client = GroqAI()
+        groq_categorizer = categorizer or LLMTransactionCategorizer(
+            self.categories_repository,
+            llm_client
         )
 
         self.categorizer = ExistingTransactionsCategorizer(
