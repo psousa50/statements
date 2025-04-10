@@ -101,7 +101,6 @@ class TransactionUploader:
 
             except Exception as e:
                 print(f"Error processing row: {row}. Error: {str(e)}")
-                
 
         return transactions, skipped_count
 

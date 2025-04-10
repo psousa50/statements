@@ -3,8 +3,10 @@ from typing import Dict, List, Optional
 
 import google.generativeai as genai
 
+from src.app.ai.llm_client import LLMClient
 
-class GeminiAI:
+
+class GeminiAI(LLMClient):
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -25,36 +27,16 @@ class GeminiAI:
             model_name=self.model_name,
         )
 
-    async def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str) -> str:
+        try:
+            response = self.model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            raise Exception(f"Error generating response: {str(e)}")
+
+    async def generate_async(self, prompt: str) -> str:
         try:
             response = await self.model.generate_content_async(prompt)
             return response.text
         except Exception as e:
             raise Exception(f"Error generating response: {str(e)}")
-
-    async def chat(self, messages: List[Dict[str, str]]) -> str:
-        try:
-            chat = self.model.start_chat()
-
-            for message in messages:
-                role = message.get("role", "user")
-                content = message.get("content", "")
-
-                if role == "user":
-                    response = await chat.send_message_async(content)
-                    return response.text
-        except Exception as e:
-            raise Exception(f"Error in chat: {str(e)}")
-        try:
-            chat = self.model.start_chat()
-
-            for message in messages:
-                role = message.get("role", "user")
-                content = message.get("content", "")
-
-                if role == "user":
-                    response = await chat.send_message_async(content)
-
-            return response.text
-        except Exception as e:
-            raise Exception(f"Error in chat: {str(e)}")

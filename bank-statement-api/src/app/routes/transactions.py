@@ -113,13 +113,15 @@ class TransactionRouter:
     ):
         file_content = await file.read()
         filename = file.filename
-        
+
         try:
             file_processor = FileProcessor()
             df = file_processor.process_file(file_content, filename)
-            
+
             result = await self.transaction_uploader.upload_file(df, source_id)
-            
+
             return result
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Error processing file: {str(e)}")
+            raise HTTPException(
+                status_code=400, detail=f"Error processing file: {str(e)}"
+            )

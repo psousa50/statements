@@ -28,7 +28,7 @@ class GeminiTransactionCategorizer(TransactionCategorizer):
             raise ValueError("Categories not loaded")
 
         prompt = categorization_prompt(transactions, self.categories)
-        response = await self.gemini.generate(prompt)
+        response = await self.gemini.generate_async(prompt)
 
         results = json.loads(response)
         categorized_results = []

@@ -111,7 +111,7 @@ async def main():
     print(f"Prompt: {prompt}")
 
     try:
-        response = await gemini.generate(prompt)
+        response = await gemini.generate_async(prompt)
         print("\nResponse:")
         print(response)
     except Exception as e:

@@ -87,7 +87,14 @@ class TestTransactionCleaner:
 
     def test_clean_with_different_date_formats(self):
         data = {
-            "date": ["01/01/2023", "02-01-2023", "2023.01.03", "01/01/2023 10:11:12", "01/01/2023 10:11:12", "01/01/2023 10:11:12"],
+            "date": [
+                "01/01/2023",
+                "02-01-2023",
+                "2023.01.03",
+                "01/01/2023 10:11:12",
+                "01/01/2023 10:11:12",
+                "01/01/2023 10:11:12",
+            ],
         }
         df = pd.DataFrame(data)
 
@@ -98,7 +105,14 @@ class TestTransactionCleaner:
         cleaner = TransactionCleaner(column_map)
         result_df = cleaner.clean(df)
 
-        assert result_df["date"].tolist() == [date(2023, 1, 1), date(2023, 1, 2), date(2023, 1, 3), date(2023, 1, 1), date(2023, 1, 1), date(2023, 1, 1)]
+        assert result_df["date"].tolist() == [
+            date(2023, 1, 1),
+            date(2023, 1, 2),
+            date(2023, 1, 3),
+            date(2023, 1, 1),
+            date(2023, 1, 1),
+            date(2023, 1, 1),
+        ]
 
     def test_clean_with_missing_columns(self):
         data = {

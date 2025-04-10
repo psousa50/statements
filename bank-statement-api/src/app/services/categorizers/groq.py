@@ -36,7 +36,7 @@ class GroqTransactionCategorizer(TransactionCategorizer):
             raise ValueError("Categories not loaded")
 
         prompt = categorization_prompt(transactions, self.categories)
-        response = await self.groq.generate(prompt)
+        response = await self.groq.generate_async(prompt)
 
         results = json.loads(response)
         categorized_results = []

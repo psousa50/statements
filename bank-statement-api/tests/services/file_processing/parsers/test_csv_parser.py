@@ -9,12 +9,14 @@ from src.app.services.file_processing.parsers.csv_parser import CSVParser
 
 class TestCSVParser:
     def test_parse_csv_file(self):
-        csv_content = textwrap.dedent("""
+        csv_content = textwrap.dedent(
+            """
                         Date,Description,Amount,Balance
                         2023-01-01,Salary,1000.00,1000.00
                         2023-01-02,Groceries,-50.00,950.00
                         2023-01-03,Rent,-500.00,450.00
-                    """)
+                    """
+        )
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False, mode="w") as f:
             f.write(csv_content)
             temp_file_path = f.name
@@ -47,12 +49,14 @@ class TestCSVParser:
             os.unlink(temp_file_path)
 
     def test_parse_csv_with_missing_columns(self):
-        csv_content = textwrap.dedent("""
+        csv_content = textwrap.dedent(
+            """
                         Date,Description,Amount
                         2023-01-01,Salary,1000.00
                         2023-01-02,Groceries,-50.00
                         2023-01-03,Rent,-500.00
-                    """)
+                    """
+        )
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False, mode="w") as f:
             f.write(csv_content)
             temp_file_path = f.name
