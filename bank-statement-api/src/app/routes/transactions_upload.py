@@ -55,55 +55,15 @@ class TransactionUploader:
         transactions = []
         skipped_count = 0
 
-        for _, row in df.iterrows():
+        for i, row in df.iterrows():
             try:
-                date_str = row["date"]
-                if pd.isna(date_str):
-                    continue
-
-                transaction_date = None
-                date_formats = [
-                    "%Y-%m-%d %H:%M:%S",
-                    "%d-%m-%Y",
-                    "%m/%d/%Y",
-                    "%d/%m/%Y",
-                    "%Y/%m/%d",
-                ]
-
-                if isinstance(date_str, str):
-                    for date_format in date_formats:
-                        try:
-                            transaction_date = datetime.strptime(
-                                date_str, date_format
-                            ).date()
-                            break
-                        except ValueError:
-                            continue
-                elif isinstance(date_str, datetime):
-                    transaction_date = date_str.date()
-
-                if transaction_date is None:
-                    continue
-
                 description = row["description"]
                 if pd.isna(description):
                     continue
                 description = str(description)
                 normalized_description = self.normalize_description(description)
 
-                amount = row["amount"]
-                if pd.isna(amount):
-                    continue
-
-                try:
-                    amount = float(amount)
-                except (ValueError, TypeError):
-                    amount_str = str(amount).replace(",", ".").strip()
-                    amount_str = re.sub(r"[^\d.-]", "", amount_str)
-                    try:
-                        amount = float(amount_str)
-                    except ValueError:
-                        continue
+                transaction_date = row["date"]
 
                 try:
                     filter = TransactionsFilter(
@@ -119,6 +79,10 @@ class TransactionUploader:
                         continue
                 except Exception as e:
                     print(f"Error checking for duplicate transaction: {str(e)}")
+
+                amount = row["amount"]
+                if pd.isna(amount):
+                    continue
 
                 new_transaction = Transaction(
                     date=transaction_date,
@@ -137,6 +101,7 @@ class TransactionUploader:
 
             except Exception as e:
                 print(f"Error processing row: {row}. Error: {str(e)}")
+                
 
         return transactions, skipped_count
 
@@ -145,30 +110,6 @@ class TransactionUploader:
         df: pd.DataFrame,
         source_id: Optional[int] = Query(None),
     ):
-
-        column_mapping = {}
-        for col in df.columns:
-            col_lower = col.lower().strip()
-            if col_lower in ["date", "data", "transaction date", "transaction_date"]:
-                column_mapping[col] = "date"
-            elif col_lower in ["description", "desc", "details", "transaction", "memo"]:
-                column_mapping[col] = "description"
-            elif col_lower in ["amount", "value", "sum", "total"]:
-                column_mapping[col] = "amount"
-            elif col_lower in ["currency", "curr"]:
-                column_mapping[col] = "currency"
-
-        if column_mapping:
-            df = df.rename(columns=column_mapping)
-            print(f"Renamed columns to: {df.columns.tolist()}")
-
-        required_columns = ["date", "description", "amount"]
-        if not all(col in df.columns for col in required_columns):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Missing required columns. File must contain: {', '.join(required_columns)}",
-            )
-
         if source_id is None:
             default_source = self.sources_repository.get_by_name("unknown")
             if default_source is None:

@@ -10,7 +10,7 @@ from src.app.services.file_processing.transaction_cleaner import TransactionClea
 class TestTransactionCleaner:
     def test_clean_standard_columns(self):
         data = {
-            "Date": ["2023-01-01", "2023-01-02"],
+            "Date": ["2023-01-01", "01/01/2023"],
             "Description": ["Salary", "Groceries"],
             "Amount": [1000.00, -50.00],
             "Currency": ["EUR", "EUR"],
@@ -26,10 +26,9 @@ class TestTransactionCleaner:
             "Balance": "balance",
         }
 
-        cleaner = TransactionCleaner()
-        result_df = cleaner.clean(df, column_map)
+        cleaner = TransactionCleaner(column_map)
+        result_df = cleaner.clean(df)
 
-        # Check that the columns are renamed
         assert set(result_df.columns) == {
             "date",
             "description",
@@ -38,11 +37,9 @@ class TestTransactionCleaner:
             "balance",
         }
 
-        # Check that the date is parsed correctly
         assert isinstance(result_df["date"].iloc[0], date)
         assert result_df["date"].iloc[0] == date(2023, 1, 1)
 
-        # Check that the values are preserved
         assert result_df["amount"].iloc[0] == 1000.00
         assert result_df["amount"].iloc[1] == -50.00
 
@@ -65,8 +62,8 @@ class TestTransactionCleaner:
             "currency": "",
         }
 
-        cleaner = TransactionCleaner()
-        result_df = cleaner.clean(df, column_map)
+        cleaner = TransactionCleaner(column_map)
+        result_df = cleaner.clean(df)
 
         # Check that the columns are renamed
         assert set(result_df.columns) == {
@@ -90,27 +87,18 @@ class TestTransactionCleaner:
 
     def test_clean_with_different_date_formats(self):
         data = {
-            "Date": ["01/01/2023", "02-01-2023", "2023.01.03"],
-            "Description": ["Salary", "Groceries", "Rent"],
-            "Amount": [1000.00, -50.00, -500.00],
+            "date": ["01/01/2023", "02-01-2023", "2023.01.03", "01/01/2023 10:11:12", "01/01/2023 10:11:12", "01/01/2023 10:11:12"],
         }
         df = pd.DataFrame(data)
 
         column_map = {
-            "Date": "date",
-            "Description": "description",
-            "Amount": "amount",
-            "currency": "",
-            "balance": "",
+            "date": "date",
         }
 
-        cleaner = TransactionCleaner()
-        result_df = cleaner.clean(df, column_map)
+        cleaner = TransactionCleaner(column_map)
+        result_df = cleaner.clean(df)
 
-        # Check that all dates are parsed correctly
-        assert result_df["date"].iloc[0] == date(2023, 1, 1)
-        assert result_df["date"].iloc[1] == date(2023, 1, 2)
-        assert result_df["date"].iloc[2] == date(2023, 1, 3)
+        assert result_df["date"].tolist() == [date(2023, 1, 1), date(2023, 1, 2), date(2023, 1, 3), date(2023, 1, 1), date(2023, 1, 1), date(2023, 1, 1)]
 
     def test_clean_with_missing_columns(self):
         data = {
@@ -128,8 +116,8 @@ class TestTransactionCleaner:
             "balance": "",
         }
 
-        cleaner = TransactionCleaner()
-        result_df = cleaner.clean(df, column_map)
+        cleaner = TransactionCleaner(column_map)
+        result_df = cleaner.clean(df)
 
         # Check that missing columns are added with default values
         assert "currency" in result_df.columns

@@ -10,9 +10,11 @@ class FileType(Enum):
 
 
 class FileTypeDetector:
-    def detect_file_type(self, file_path: str) -> FileType:
-        extension = Path(file_path).suffix.lower().lstrip(".")
-
+    def detect_file_type(self, file_name: str) -> FileType:
+        extension = Path(file_name).suffix.lower().lstrip(".")
+        return self._get_file_type_from_extension(extension)
+        
+    def _get_file_type_from_extension(self, extension: str) -> FileType:
         if extension == "csv":
             return FileType.CSV
         elif extension in ["xlsx", "xls"]:

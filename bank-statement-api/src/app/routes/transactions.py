@@ -1,4 +1,3 @@
-import io
 from datetime import date
 from typing import Callable, List, Optional
 
@@ -13,6 +12,7 @@ from ..repositories.transactions_repository import (
 from ..routes.transactions_upload import TransactionUploader
 from ..schemas import FileUploadResponse
 from ..schemas import Transaction as TransactionSchema
+from ..services.file_processing.file_processor import FileProcessor
 
 
 class TransactionRouter:
@@ -112,31 +112,14 @@ class TransactionRouter:
         source_id: Optional[int] = Query(None),
     ):
         file_content = await file.read()
-        file_format = self.detect_file_format(file.filename)
-        df = self.parse_file(file_content, file_format)
-
-        return await self.transaction_uploader.upload_file(df, source_id)
-
-    def detect_file_format(self, filename):
-        if filename.endswith(".csv"):
-            return "csv"
-        elif filename.endswith((".xls", ".xlsx")):
-            return "excel"
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Unsupported file format. Please upload CSV or Excel files.",
-            )
-
-    def parse_file(self, file_content, file_format):
+        filename = file.filename
+        
         try:
-            if file_format == "csv":
-                df = pd.read_csv(io.BytesIO(file_content))
-            elif file_format == "excel":
-                df = pd.read_excel(io.BytesIO(file_content))
-            else:
-                raise HTTPException(status_code=400, detail="Unsupported file format")
-
-            return df
+            file_processor = FileProcessor()
+            df = file_processor.process_file(file_content, filename)
+            
+            result = await self.transaction_uploader.upload_file(df, source_id)
+            
+            return result
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Error parsing file: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Error processing file: {str(e)}")

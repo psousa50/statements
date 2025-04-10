@@ -49,16 +49,6 @@ class ColumnNormalizer:
         }
 
     def normalize_columns(self, df: pd.DataFrame) -> Dict[str, str]:
-        """
-        Map dataframe column names to standard column names.
-
-        Args:
-            df: DataFrame with columns to normalize
-
-        Returns:
-            Dictionary mapping original column names to standard column names.
-            If a standard column doesn't exist, it will map to an empty string.
-        """
         column_map = {}
         df_columns_lower = {col.lower(): col for col in df.columns}
 
