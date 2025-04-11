@@ -1,1 +1,1 @@
-1. Always activate  virtual environment in ".venv" folder before running Python commands
+1. Always activate virtual environment in ".venv" folder before running Python commands. The .venv folder is in the root of the project.

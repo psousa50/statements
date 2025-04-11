@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 from fastapi import FastAPI
@@ -26,6 +27,11 @@ from .services.categorizers.transaction_categorizer import TransactionCategorize
 
 models.Base.metadata.create_all(bind=engine)
 
+from .logging.config import init_logging
+
+init_logging()
+logger = logging.getLogger("app")
+
 
 class App:
     def __init__(
@@ -36,6 +42,8 @@ class App:
         transactions_repository: Optional[TransactionsRepository] = None,
         categorizer: Optional[TransactionCategorizer] = None,
     ):
+        logger.info("Initializing app...")
+
         self.app = FastAPI(
             title="Bank Statement API",
             description="API for processing and categorizing bank statements",

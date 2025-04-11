@@ -1,9 +1,12 @@
 import json
+import logging
 
 import pandas as pd
 
 from src.app.ai.llm_client import LLMClient
 from src.app.services.file_processing.conversion_model import ConversionModel
+
+logger_content = logging.getLogger("app.llm.big")
 
 
 class ColumnNormalizer:
@@ -13,12 +16,18 @@ class ColumnNormalizer:
     def normalize_columns(self, df: pd.DataFrame) -> ConversionModel:
         prompt = self.get_prompt(df)
         response = self.llm_client.generate(prompt)
+        logger_content.debug(
+            "Raw Response: %s", response, extra={"prefix": "column_normalizer"}
+        )
         response = (
             response.strip()
             .replace("\n", "")
             .replace("\r", "")
             .replace("`", "")
             .replace("json", "")
+        )
+        logger_content.debug(
+            "Processed Response: %s", response, extra={"prefix": "column_normalizer"}
         )
         return self.parse_response(response)
 

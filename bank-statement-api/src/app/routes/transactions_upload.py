@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import Optional
 
@@ -14,6 +15,8 @@ from ..schemas import FileUploadResponse
 from ..schemas import Transaction as TransactionSchema
 from ..schemas import TransactionCreate
 from ..services.categorizers.transaction_categorizer import TransactionCategorizer
+
+logger = logging.getLogger("app")
 
 
 class TransactionUploader:
@@ -77,7 +80,7 @@ class TransactionUploader:
                         skipped_count += 1
                         continue
                 except Exception as e:
-                    print(f"Error checking for duplicate transaction: {str(e)}")
+                    logger.error(f"Error checking for duplicate transaction: {str(e)}")
 
                 amount = row["amount"]
                 if pd.isna(amount):
@@ -99,7 +102,7 @@ class TransactionUploader:
                 transactions.append(new_transaction)
 
             except Exception as e:
-                print(f"Error processing row: {row}. Error: {str(e)}")
+                logger.error(f"Error processing row: {row}. Error: {str(e)}")
 
         return transactions, skipped_count
 
@@ -119,7 +122,7 @@ class TransactionUploader:
             source_id = default_source.id
 
         transactions, skipped_count = self.process_transactions(df, source_id)
-        print(
+        logger.info(
             f"Processed {len(transactions)} transactions, skipped {skipped_count} duplicates"
         )
 

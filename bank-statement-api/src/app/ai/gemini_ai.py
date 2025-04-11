@@ -1,9 +1,13 @@
+import logging
 import os
 from typing import Optional
 
 import google.generativeai as genai
 
 from src.app.ai.llm_client import LLMClient
+
+logger_content = logging.getLogger("app.llm.big")
+logger = logging.getLogger("app")
 
 
 class GeminiAI(LLMClient):
@@ -29,9 +33,13 @@ class GeminiAI(LLMClient):
 
     def generate(self, prompt: str) -> str:
         try:
+            logger_content.debug(prompt, extra={"prefix": "gemini.prompt"})
             response = self.model.generate_content(prompt)
-            return response.text
+            response = response.text
+            logger_content.debug(response, extra={"prefix": "gemini.response"})
+            return response
         except Exception as e:
+            logger.error("Error generating response: %s", str(e))
             raise Exception(f"Error generating response: {str(e)}")
 
     async def generate_async(self, prompt: str) -> str:
