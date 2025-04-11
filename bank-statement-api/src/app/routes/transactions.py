@@ -1,3 +1,6 @@
+import json
+import pandas as pd
+import logging
 from datetime import date
 from typing import Callable, List, Optional
 
@@ -9,9 +12,13 @@ from ..repositories.transactions_repository import (
     TransactionsRepository,
 )
 from ..routes.transactions_upload import TransactionUploader
-from ..schemas import FileUploadResponse
+from ..schemas import FileAnalysisResponse, FileUploadResponse, ColumnMapping
 from ..schemas import Transaction as TransactionSchema
 from ..services.file_processing.file_processor import FileProcessor
+from ..services.file_processing.conversion_model import ConversionModel
+
+logger_content = logging.getLogger("app.llm.big")
+logger = logging.getLogger("app")
 
 
 class TransactionRouter:
@@ -19,6 +26,7 @@ class TransactionRouter:
         self,
         transactions_repository: TransactionsRepository,
         transaction_uploader: TransactionUploader,
+        file_processor: FileProcessor,
         on_change_callback: Optional[Callable[[str, List[Transaction]], None]] = None,
     ):
         self.router = APIRouter(
@@ -27,6 +35,7 @@ class TransactionRouter:
         )
         self.transaction_repository = transactions_repository
         self.transaction_uploader = transaction_uploader
+        self.file_processor = file_processor
         self.on_change_callback = on_change_callback
 
         self.router.add_api_route(
@@ -52,6 +61,12 @@ class TransactionRouter:
             self.upload_file,
             methods=["POST"],
             response_model=FileUploadResponse,
+        )
+        self.router.add_api_route(
+            "/analyze",
+            self.analyze_file,
+            methods=["POST"],
+            response_model=FileAnalysisResponse,
         )
 
     def _notify_change(self, action: str, transactions: List[Transaction]):
@@ -121,8 +136,10 @@ class TransactionRouter:
         filename = file.filename
 
         try:
-            file_processor = FileProcessor()
-            df = file_processor.process_file(file_content, filename)
+            df, _, column_names = self.file_processor.process_file(
+                file_content, filename
+            )
+            df.columns = column_names
 
             result = await self.transaction_uploader.upload_file(
                 df, source_id, auto_categorize
@@ -132,4 +149,113 @@ class TransactionRouter:
         except Exception as e:
             raise HTTPException(
                 status_code=400, detail=f"Error processing file: {str(e)}"
+            )
+
+    async def analyze_file(
+        self,
+        file: UploadFile = File(...),
+    ):
+        import uuid
+
+        import numpy as np
+
+        file_content = await file.read()
+        filename = file.filename
+
+        try:
+            df, conversion_model, column_names = self.file_processor.process_file(
+                file_content, filename
+            )
+
+            file_id = str(uuid.uuid4())
+
+            total_amount = 0
+            if "amount" in df.columns:
+                numeric_amounts = pd.to_numeric(df["amount"], errors="coerce")
+                total_amount = float(numeric_amounts.sum(skipna=True))
+
+            date_range_start = None
+            date_range_end = None
+            if "date" in df.columns and not df["date"].empty:
+                dates = pd.to_datetime(df["date"], errors="coerce")
+                valid_dates = dates.dropna()
+                if not valid_dates.empty:
+                    date_range_start = valid_dates.min().date()
+                    date_range_end = valid_dates.max().date()
+
+            preview_rows = []
+            for _, row in df.head(10).iterrows():
+                row_dict = row.to_dict()
+                for key, value in row_dict.items():
+                    if isinstance(value, (np.float64, np.float32)):
+                        if np.isnan(value):
+                            row_dict[key] = None
+                        else:
+                            row_dict[key] = float(value)
+                    if isinstance(value, (np.int64, np.int32)):
+                        if np.isnan(value):
+                            row_dict[key] = None
+                        else:
+                            row_dict[key] = int(value)
+                preview_rows.append(row_dict)
+
+            source = None
+
+            column_mapping_dict = {
+                "date": conversion_model.column_map.get("date", ""),
+                "description": conversion_model.column_map.get("description", ""),
+                "amount": conversion_model.column_map.get("amount", ""),
+                "debit_amount": conversion_model.column_map.get("debit_amount", ""),
+                "credit_amount": conversion_model.column_map.get("credit_amount", ""),
+                "amount_column": conversion_model.column_map.get("amount_column", ""),
+                "currency": conversion_model.column_map.get("currency", ""),
+                "balance": conversion_model.column_map.get("balance", ""),
+            }
+
+            logger_content.debug(
+                df.head(5).to_dict(orient="records"),
+                extra={"prefix": "file_processor.preview"},
+            )
+
+            df.columns = column_names
+            column_map = conversion_model.column_map
+
+            rename_dict = {
+                col: std_col
+                for std_col, col in column_map.items()
+                if col and col in df.columns
+            }
+            df = df.rename(columns=rename_dict)
+
+            logger_content.debug(
+                json.dumps(column_mapping_dict),
+                extra={"prefix": "file_processor.column_mapping"},
+            )
+
+            logger_content.debug(
+                df.head(5).to_dict(orient="records"),
+                extra={"prefix": "file_processor.preview_after_renaming"},
+            )
+
+            response = FileAnalysisResponse(
+                source=source,
+                total_transactions=len(df),
+                total_amount=float(total_amount),
+                date_range_start=date_range_start,
+                date_range_end=date_range_end,
+                column_mappings=ColumnMapping(**column_mapping_dict),
+                start_row=conversion_model.start_row,
+                file_id=file_id,
+                preview_rows=df.head(5)
+                .replace({np.nan: None})
+                .astype(object)
+                .to_dict(orient="records"),
+            )
+
+            return response
+
+        except Exception as e:
+            logger.error(f"Error analyzing file: {str(e)}")
+            raise HTTPException(
+                status_code=400, detail=f"Error analyzing file: {str(e)}"
             )

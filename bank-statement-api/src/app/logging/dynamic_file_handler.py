@@ -16,7 +16,7 @@ class DynamicContentFileHandler(logging.Handler):
 
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             uid = uuid.uuid4().hex[:8]
-            filename = f"{prefix}_{timestamp}_{uid}.log"
+            filename = f"{timestamp}_{prefix}_{uid}.log"
             filepath = os.path.join(self.directory, filename)
 
             with open(filepath, "w", encoding="utf-8") as f:

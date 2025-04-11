@@ -11,6 +11,7 @@ from src.app.services.categorizers.existing_transactions_categorizer import (
 from src.app.services.categorizers.llm_transaction_categorizer import (
     LLMTransactionCategorizer,
 )
+from src.app.services.file_processing.file_processor import FileProcessor
 
 from . import models
 from .ai.gemini_ai import GeminiAI
@@ -91,14 +92,16 @@ class App:
             sources_repository=self.sources_repository,
             categorizer=self.categorizer,
         )
+        file_processor = FileProcessor(llm_client)
         transaction_router = TransactionRouter(
-            self.transactions_repository,
+            transactions_repository=self.transactions_repository,
             transaction_uploader=transaction_uploader,
+            file_processor=file_processor,
         )
         categorization_router = CategorizationRouter(
-            self.transactions_repository,
-            self.categories_repository,
-            self.categorizer,
+            transactions_repository=self.transactions_repository,
+            categories_repository=self.categories_repository,
+            categorizer=self.categorizer,
         )
 
         self.app.include_router(category_router.router)

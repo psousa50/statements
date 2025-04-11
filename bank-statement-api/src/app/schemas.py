@@ -66,3 +66,26 @@ class FileUploadResponse(BaseModel):
     transactions: List[Transaction]
     skipped_duplicates: int = 0
     categorization_task_id: Optional[str] = None
+
+
+class ColumnMapping(BaseModel):
+    date: str
+    description: str
+    amount: str
+    debit_amount: Optional[str] = ""
+    credit_amount: Optional[str] = ""
+    amount_column: Optional[str] = ""
+    currency: Optional[str] = ""
+    balance: Optional[str] = ""
+
+
+class FileAnalysisResponse(BaseModel):
+    source: Optional[str] = None
+    total_transactions: int
+    total_amount: float
+    date_range_start: Optional[date] = None
+    date_range_end: Optional[date] = None
+    column_mappings: ColumnMapping
+    start_row: int
+    file_id: str
+    preview_rows: List[dict] = []
