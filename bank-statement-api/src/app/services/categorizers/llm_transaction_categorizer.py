@@ -21,9 +21,7 @@ class Subcategory:
 
 class LLMTransactionCategorizer(TransactionCategorizer):
     def __init__(
-            self,
-            categories_repository: CategoriesRepository,
-            llm_client: LLMClient
+        self, categories_repository: CategoriesRepository, llm_client: LLMClient
     ):
         self.categories_repository = categories_repository
         self.llm_client = llm_client
@@ -31,7 +29,7 @@ class LLMTransactionCategorizer(TransactionCategorizer):
         self.refresh_rules()
 
     async def categorize_transaction(
-            self, transactions: List[CategorisationData]
+        self, transactions: List[CategorisationData]
     ) -> List[CategorizationResult]:
         if not self.categories:
             raise ValueError("Categories not loaded")

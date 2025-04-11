@@ -209,5 +209,3 @@ class TestTransactionCleaner:
         assert result_df["amount"].iloc[0] == 1000.00
         assert result_df["currency"].iloc[0] == "EUR"
         assert result_df["balance"].iloc[0] == 1000.00
-        
-            

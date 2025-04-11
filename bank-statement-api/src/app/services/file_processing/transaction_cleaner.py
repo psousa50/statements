@@ -21,7 +21,7 @@ class TransactionCleaner:
             result_df.columns = column_names
             result_df = result_df.iloc[start_row:]
         else:
-            result_df = result_df.iloc[start_row-1:]
+            result_df = result_df.iloc[start_row - 1 :]
 
         column_map = self.conversion_model.column_map
 
@@ -62,9 +62,7 @@ class TransactionCleaner:
         result_df["amount"] = 0.0
 
         credit_mask = ~result_df[credit_col].isna() & (result_df[credit_col] != 0)
-        result_df.loc[credit_mask, "amount"] = result_df.loc[
-            credit_mask, credit_col
-        ]
+        result_df.loc[credit_mask, "amount"] = result_df.loc[credit_mask, credit_col]
 
         debit_mask = ~result_df[debit_col].isna() & (result_df[debit_col] != 0)
         result_df.loc[debit_mask, "amount"] = -result_df.loc[debit_mask, debit_col]

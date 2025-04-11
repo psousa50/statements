@@ -8,7 +8,9 @@ from ..repositories.transactions_repository import TransactionsRepository
 from ..services.categorizers.existing_transactions_categorizer import (
     ExistingTransactionsCategorizer,
 )
-from ..services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
+from ..services.categorizers.llm_transaction_categorizer import (
+    LLMTransactionCategorizer,
+)
 from ..services.transaction_categorization_service import (
     TransactionCategorizationService,
 )

@@ -17,7 +17,9 @@ class TestFileProcessor:
 
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 3
-        assert {"date", "description", "amount", "currency", "balance"}.issubset(set(df.columns))
+        assert {"date", "description", "amount", "currency", "balance"}.issubset(
+            set(df.columns)
+        )
 
     def test_process_excel_file(self):
         test_file_path = os.path.join(TEST_RESOURCES_DIR, "sample.xlsx")
@@ -27,4 +29,6 @@ class TestFileProcessor:
 
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 3
-        assert {"date", "description", "amount", "currency", "balance"}.issubset(set(df.columns))
+        assert {"date", "description", "amount", "currency", "balance"}.issubset(
+            set(df.columns)
+        )

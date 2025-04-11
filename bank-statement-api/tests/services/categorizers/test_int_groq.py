@@ -3,7 +3,9 @@ import pytest
 from src.app.ai.groq_ai import GroqAI
 from src.app.db import get_db
 from src.app.repositories.categories_repository import CategoriesRepository
-from src.app.services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
+from src.app.services.categorizers.llm_transaction_categorizer import (
+    LLMTransactionCategorizer,
+)
 from src.app.services.categorizers.transaction_categorizer import (
     CategorisationData,
 )

@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 from src.app.services.categorizers.existing_transactions_categorizer import (
     ExistingTransactionsCategorizer,
 )
-from src.app.services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
+from src.app.services.categorizers.llm_transaction_categorizer import (
+    LLMTransactionCategorizer,
+)
 
 from . import models
 from .ai.gemini_ai import GeminiAI
@@ -61,8 +63,7 @@ class App:
 
         llm_client = GeminiAI()
         groq_categorizer = categorizer or LLMTransactionCategorizer(
-            self.categories_repository,
-            llm_client
+            self.categories_repository, llm_client
         )
 
         self.categorizer = ExistingTransactionsCategorizer(
