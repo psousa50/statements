@@ -2,7 +2,6 @@ import json
 from dataclasses import dataclass
 from typing import List
 
-from src.app.ai.groq_ai import GroqAI
 from src.app.ai.llm_client import LLMClient
 from src.app.repositories.categories_repository import CategoriesRepository
 from src.app.services.categorizers.prompts import categorization_prompt
@@ -39,6 +38,7 @@ class LLMTransactionCategorizer(TransactionCategorizer):
 
         prompt = categorization_prompt(transactions, self.categories)
         response = await self.llm_client.generate_async(prompt)
+        response = response.strip().strip("\n").replace("```", "").replace("json", "")
 
         results = json.loads(response)
         categorized_results = []

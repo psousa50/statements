@@ -12,8 +12,6 @@ class ColumnNormalizer:
 
     def normalize_columns(self, df: pd.DataFrame) -> ConversionModel:
         prompt = self.get_prompt(df)
-        with open("prompt.txt", "w") as f:
-            f.write(prompt)
         response = self.llm_client.generate(prompt)
         response = (
             response.strip()
@@ -22,8 +20,6 @@ class ColumnNormalizer:
             .replace("`", "")
             .replace("json", "")
         )
-        with open("response.json", "w") as f:
-            f.write(response)
         return self.parse_response(response)
 
     def parse_response(self, response: str) -> ConversionModel:
@@ -45,8 +41,8 @@ From this bank statement excerpt, extract the column map and header information 
     "currency": "<column name for currency>",
     "balance": "<column name for balance>"
   }},
-  "header_row": "<0-based index of the header row>",
-  "start_row": "<0-based index of the first row of actual transaction data>"
+  "header_row": <0-based index of the header row>,
+  "start_row": <0-based index of the first row of actual transaction data>
 }}
 
 Guidelines:
@@ -57,6 +53,22 @@ Guidelines:
 	•	Ignore any metadata rows (like account numbers, date ranges, or currency indicators) and blank rows.
 	•	Do not guess or generate column names—only use what’s present in the header row.
 	•	Only output valid JSON matching the format above. No explanations. No extra text.
+
+Example output:
+
+{{
+  "column_map": {{
+    "date": "Date",
+    "description": "Description",
+    "amount": "Amount",
+    "debit_amount": "Debit",
+    "credit_amount": "Credit",
+    "currency": "Currency",
+    "balance": "Balance"
+  }},
+  "header_row": 0,
+  "start_row": 1
+}}
 
 ---------------------------------------------------------
 {df.to_csv()}

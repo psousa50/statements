@@ -10,7 +10,7 @@ from src.app.services.categorizers.existing_transactions_categorizer import (
 from src.app.services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
 
 from . import models
-from .ai.groq_ai import GroqAI
+from .ai.gemini_ai import GeminiAI
 from .db import engine, get_db
 from .repositories.categories_repository import CategoriesRepository
 from .repositories.sources_repository import SourcesRepository
@@ -59,7 +59,7 @@ class App:
             transactions_repository or TransactionsRepository(db)
         )
 
-        llm_client = GroqAI()
+        llm_client = GeminiAI()
         groq_categorizer = categorizer or LLMTransactionCategorizer(
             self.categories_repository,
             llm_client

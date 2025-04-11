@@ -10,21 +10,21 @@ from src.app.services.file_processing.transaction_cleaner import TransactionClea
 class TestTransactionCleaner:
     def test_clean_standard_columns(self):
         data = {
-            "Date": ["2023-01-01", "01/01/2023"],
-            "Description": ["Salary", "Groceries"],
-            "Amount": [1000.00, -50.00],
-            "Currency": ["EUR", "EUR"],
-            "Balance": [1000.00, 950.00],
+            "Data Lanc.": ["2023-01-01", "01/01/2023"],
+            "Descrição": ["Salary", "Groceries"],
+            "Valor": [1000.00, -50.00],
+            "Moeda": ["EUR", "EUR"],
+            "Saldo": [1000.00, 950.00],
         }
         df = pd.DataFrame(data)
 
         conversion_model = ConversionModel(
             column_map={
-                "date": "Date",
-                "description": "Description",
-                "amount": "Amount",
-                "currency": "Currency",
-                "balance": "Balance",
+                "date": "Data Lanc.",
+                "description": "Descrição",
+                "amount": "Valor",
+                "currency": "Moeda",
+                "balance": "Saldo",
             },
             header_row=0,
             start_row=1,
@@ -196,8 +196,8 @@ class TestTransactionCleaner:
                 "currency": "Currency",
                 "balance": "Balance",
             },
-            header_row=2,
-            start_row=3,
+            header_row=1,
+            start_row=2,
         )
 
         cleaner = TransactionCleaner(conversion_model)

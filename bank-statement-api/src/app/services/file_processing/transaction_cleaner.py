@@ -17,9 +17,9 @@ class TransactionCleaner:
         result_df = df.copy()
 
         if header_row > 0:
-            column_names = df.iloc[header_row-1]
+            column_names = result_df.iloc[header_row].to_list()
             result_df.columns = column_names
-            result_df = result_df.iloc[header_row:]
+            result_df = result_df.iloc[start_row:]
         else:
             result_df = result_df.iloc[start_row-1:]
 

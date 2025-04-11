@@ -10,7 +10,7 @@ class GeminiAI(LLMClient):
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model_name: str = "gemini-2.5-pro-exp-03-25",
+        model_name: str = "gemini-2.0-flash",
         temperature: float = 0,
     ):
         self.api_key = api_key or os.environ.get("GOOGLE_API_KEY")
