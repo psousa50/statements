@@ -1,3 +1,4 @@
+from datetime import datetime
 from dataclasses import dataclass
 from datetime import date
 from typing import List, Optional, Tuple
@@ -66,13 +67,15 @@ class TransactionsRepository:
         self, transaction: TransactionCreate, auto_commit: bool = True
     ) -> Transaction:
         db_transaction = Transaction(
-            date=transaction.date,
-            description=transaction.description,
-            amount=transaction.amount,
-            currency=transaction.currency,
+            dt_created=datetime.now(),
+            dt_updated=datetime.now(),
             source_id=transaction.source_id,
             category_id=transaction.category_id,
             sub_category_id=transaction.sub_category_id,
+            description=transaction.description,
+            amount=transaction.amount,
+            currency=transaction.currency,
+            date=transaction.date,
             normalized_description=transaction.normalized_description,
             categorization_status=transaction.categorization_status,
         )
@@ -82,6 +85,7 @@ class TransactionsRepository:
         return db_transaction
 
     def update(self, transaction: Transaction) -> Transaction:
+        transaction.dt_updated = datetime.now()
         self.db.add(transaction)
         self.db.commit()
         return transaction
