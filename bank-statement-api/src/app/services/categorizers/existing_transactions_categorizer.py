@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from src.app.repositories.transactions_repository import TransactionsRepository
@@ -6,6 +7,8 @@ from src.app.services.categorizers.transaction_categorizer import (
     CategorizationResult,
     TransactionCategorizer,
 )
+
+logger = logging.getLogger("app")
 
 
 class ExistingTransactionsCategorizer(TransactionCategorizer):
@@ -27,7 +30,7 @@ class ExistingTransactionsCategorizer(TransactionCategorizer):
             self.transactions_repository.get_unique_normalized_descriptions(100)
         )
         for desc, sub_category_id in description_category_pairs:
-            print(f"Found existing category for {desc}")
+            logger.debug(f"Found existing category for {desc}")
 
         description_to_category = {
             desc: sub_category_id
@@ -36,7 +39,7 @@ class ExistingTransactionsCategorizer(TransactionCategorizer):
 
         for transaction in transactions:
             if transaction.normalized_description in description_to_category:
-                print(
+                logger.debug(
                     f"Found existing category for {transaction.normalized_description}"
                 )
                 sub_category_id = description_to_category[
@@ -53,7 +56,7 @@ class ExistingTransactionsCategorizer(TransactionCategorizer):
                 transactions_for_fallback.append(transaction)
 
         if transactions_for_fallback:
-            print(
+            logger.debug(
                 f"Falling back to {self.fallback_categorizer.__class__.__name__} for {len(transactions_for_fallback)} transactions"
             )
             fallback_results = await self.fallback_categorizer.categorize_transaction(

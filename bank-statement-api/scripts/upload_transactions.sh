@@ -6,6 +6,6 @@ if [ -z "$FILE" ]; then
   FILE="/Users/pedrosousa/Work/Personal/statements/tmp/revolut.csv"
 fi
 
-curl -X POST "http://localhost:8000/transactions/upload" \
+curl -X POST "http://localhost:8000/transactions/upload?auto_categorize=true" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@$FILE"

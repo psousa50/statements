@@ -98,6 +98,7 @@ class TransactionUploader:
         self,
         df: pd.DataFrame,
         source_id: Optional[int] = Query(None),
+        auto_categorize: bool = False,
     ):
         if source_id is None:
             default_source = self.sources_repository.get_by_name("unknown")
@@ -139,9 +140,18 @@ class TransactionUploader:
             for t in db_transactions
         ]
 
-        return FileUploadResponse(
+        response = FileUploadResponse(
             message="File processed successfully",
             transactions_processed=len(transactions),
             transactions=transaction_schemas,
             skipped_duplicates=skipped_count,
         )
+
+        # Trigger categorization if requested and there are transactions to categorize
+        if auto_categorize and transaction_ids:
+            from ..tasks.categorization import manually_trigger_categorization
+            task = manually_trigger_categorization(batch_size=100)
+            response.categorization_task_id = task.id
+            response.message = "File processed successfully and categorization triggered"
+
+        return response

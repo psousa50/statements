@@ -65,3 +65,4 @@ class FileUploadResponse(BaseModel):
     transactions_processed: int
     transactions: List[Transaction]
     skipped_duplicates: int = 0
+    categorization_task_id: Optional[str] = None
