@@ -1,9 +1,9 @@
-import json
 import logging
 
 import pandas as pd
 
 from src.app.ai.llm_client import LLMClient
+from src.app.common.json_utils import sanitize_json
 from src.app.services.file_processing.conversion_model import ConversionModel
 
 logger_content = logging.getLogger("app.llm.big")
@@ -19,21 +19,13 @@ class ColumnNormalizer:
         logger_content.debug(
             "Raw Response: %s", response, extra={"prefix": "column_normalizer"}
         )
-        response = (
-            response.strip()
-            .replace("\n", "")
-            .replace("\r", "")
-            .replace("`", "")
-            .replace("json", "")
-        )
+        json_result = sanitize_json(response)
+        if not json_result:
+            raise ValueError("Invalid JSON response")
+        conversion_model: ConversionModel = ConversionModel(**json_result)
         logger_content.debug(
             "Processed Response: %s", response, extra={"prefix": "column_normalizer"}
         )
-        return self.parse_response(response)
-
-    def parse_response(self, response: str) -> ConversionModel:
-        data = json.loads(response)
-        conversion_model: ConversionModel = ConversionModel(**data)
         return conversion_model
 
     def get_prompt(self, df: pd.DataFrame) -> str:
