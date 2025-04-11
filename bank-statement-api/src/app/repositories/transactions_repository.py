@@ -1,6 +1,5 @@
-from datetime import datetime
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional, Tuple
 
 from sqlalchemy.orm import Session

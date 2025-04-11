@@ -150,8 +150,11 @@ class TransactionUploader:
         # Trigger categorization if requested and there are transactions to categorize
         if auto_categorize and transaction_ids:
             from ..tasks.categorization import manually_trigger_categorization
+
             task = manually_trigger_categorization(batch_size=100)
             response.categorization_task_id = task.id
-            response.message = "File processed successfully and categorization triggered"
+            response.message = (
+                "File processed successfully and categorization triggered"
+            )
 
         return response

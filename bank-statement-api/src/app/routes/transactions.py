@@ -113,7 +113,9 @@ class TransactionRouter:
         self,
         file: UploadFile = File(...),
         source_id: Optional[int] = Query(None),
-        auto_categorize: bool = Query(False, description="Automatically trigger categorization after upload"),
+        auto_categorize: bool = Query(
+            False, description="Automatically trigger categorization after upload"
+        ),
     ):
         file_content = await file.read()
         filename = file.filename
@@ -122,7 +124,9 @@ class TransactionRouter:
             file_processor = FileProcessor()
             df = file_processor.process_file(file_content, filename)
 
-            result = await self.transaction_uploader.upload_file(df, source_id, auto_categorize)
+            result = await self.transaction_uploader.upload_file(
+                df, source_id, auto_categorize
+            )
 
             return result
         except Exception as e:

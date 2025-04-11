@@ -1,4 +1,14 @@
-from sqlalchemy import Column, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import (
+    Column,
+    Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    func,
+)
 from sqlalchemy.orm import relationship
 
 from .db import Base
@@ -17,8 +27,12 @@ class Category(Base):
 
     subcategories = relationship("Category", back_populates="parent_category")
 
-    transactions = relationship("Transaction", foreign_keys="Transaction.category_id", back_populates="category")
-    sub_transactions = relationship("Transaction", foreign_keys="Transaction.sub_category_id", viewonly=True)
+    transactions = relationship(
+        "Transaction", foreign_keys="Transaction.category_id", back_populates="category"
+    )
+    sub_transactions = relationship(
+        "Transaction", foreign_keys="Transaction.sub_category_id", viewonly=True
+    )
 
 
 class Source(Base):
@@ -51,6 +65,8 @@ class Transaction(Base):
         index=True,
     )
 
-    category = relationship("Category", foreign_keys=[category_id], back_populates="transactions")
+    category = relationship(
+        "Category", foreign_keys=[category_id], back_populates="transactions"
+    )
     sub_category = relationship("Category", foreign_keys=[sub_category_id])
     source = relationship("Source", back_populates="transactions")
