@@ -35,7 +35,7 @@ class KeywordTransactionCategorizer(TransactionCategorizer):
                     results.append(
                         CategorizationResult(
                             transaction_id=transaction.transaction_id,
-                            category_id=self.keywords_map[word],
+                            sub_category_id=self.keywords_map[word],
                             confidence=1.0,
                         )
                     )

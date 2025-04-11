@@ -23,6 +23,14 @@ class CategoriesRepository:
             .first()
         )
 
+    def get_parent_category_id(self, sub_category_id: int) -> Optional[int]:
+        return (
+            self.db.query(Category)
+            .filter(Category.id == sub_category_id)
+            .first()
+            .parent_category_id
+        )
+
     def create(self, category: CategoryCreate, autocommit: bool = True) -> Category:
         db_category = Category(
             category_name=category.category_name,

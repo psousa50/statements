@@ -63,6 +63,7 @@ class TransactionRouter:
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         category_id: Optional[int] = None,
+        sub_category_id: Optional[int] = None,
         source_id: Optional[int] = None,
         search: Optional[str] = None,
         skip: int = 0,
@@ -72,6 +73,7 @@ class TransactionRouter:
             start_date=start_date,
             end_date=end_date,
             category_id=category_id,
+            sub_category_id=sub_category_id,
             source_id=source_id,
             search=search,
         )
@@ -93,12 +95,14 @@ class TransactionRouter:
         self,
         transaction_id: int,
         category_id: int,
+        sub_category_id: Optional[int] = None,
     ):
         transaction = self.transaction_repository.get_by_id(transaction_id)
         if transaction is None:
             raise HTTPException(status_code=404, detail="Transaction not found")
 
         transaction.category_id = category_id
+        transaction.sub_category_id = sub_category_id
         self.transaction_repository.update(transaction)
 
         self._notify_change("update", [transaction])

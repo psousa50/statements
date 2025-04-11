@@ -26,11 +26,12 @@ class ExistingTransactionsCategorizer(TransactionCategorizer):
         description_category_pairs = (
             self.transactions_repository.get_unique_normalized_descriptions(100)
         )
-        for desc, cat_id in description_category_pairs:
+        for desc, sub_category_id in description_category_pairs:
             print(f"Found existing category for {desc}")
 
         description_to_category = {
-            desc: cat_id for desc, cat_id in description_category_pairs
+            desc: sub_category_id
+            for desc, sub_category_id in description_category_pairs
         }
 
         for transaction in transactions:
@@ -38,13 +39,13 @@ class ExistingTransactionsCategorizer(TransactionCategorizer):
                 print(
                     f"Found existing category for {transaction.normalized_description}"
                 )
-                category_id = description_to_category[
+                sub_category_id = description_to_category[
                     transaction.normalized_description
                 ]
                 results.append(
                     CategorizationResult(
                         transaction_id=transaction.transaction_id,
-                        category_id=category_id,
+                        sub_category_id=sub_category_id,
                         confidence=1.0,
                     )
                 )

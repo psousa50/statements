@@ -42,14 +42,14 @@ class LLMTransactionCategorizer(TransactionCategorizer):
         categorized_results = []
         for result in results:
             transaction_description = result.get("transaction_description")
-            category_id = result.get("category_id")
+            sub_category_id = result.get("sub_category_id")
             confidence = result.get("confidence", 0.0)
             for transaction in transactions:
                 if transaction.normalized_description == transaction_description:
                     categorized_results.append(
                         CategorizationResult(
                             transaction_id=transaction.transaction_id,
-                            category_id=category_id,
+                            sub_category_id=sub_category_id,
                             confidence=confidence,
                         )
                     )

@@ -41,9 +41,9 @@ class TestEmbeddingTransactionCategorizer:
         results = await categorizer.categorize_transaction(transactions)
 
         assert results[0].transaction_id == 100
-        assert results[0].category_id == 20
+        assert results[0].sub_category_id == 20
         assert results[0].confidence > 0.0
 
         assert results[1].transaction_id == 200
-        assert results[1].category_id == 30
+        assert results[1].sub_category_id == 30
         assert results[1].confidence > 0.4

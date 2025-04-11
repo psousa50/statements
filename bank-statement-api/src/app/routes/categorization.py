@@ -61,7 +61,9 @@ class CategorizationRouter:
 
     async def process_categorization_now(self):
         categorization_service = TransactionCategorizationService(
-            self.transactions_repository, self.categorizer
+            self.categories_repository,
+            self.transactions_repository,
+            self.categorizer,
         )
 
         batch_size = 100

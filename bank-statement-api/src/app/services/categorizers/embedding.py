@@ -85,7 +85,7 @@ class EmbeddingTransactionCategorizer(TransactionCategorizer):
             results.append(
                 CategorizationResult(
                     transaction_id=transaction.transaction_id,
-                    category_id=main_category_id,
+                    sub_category_id=main_category_id,
                     confidence=float(confidence),
                 )
             )

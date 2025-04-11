@@ -34,5 +34,5 @@ async def test_rule_based_categorizer():
     results = await categorizer.categorize_transaction(transactions)
 
     assert results[0].transaction_id == 100
-    assert results[0].category_id == 30
+    assert results[0].sub_category_id == 30
     assert results[0].confidence == 1.0

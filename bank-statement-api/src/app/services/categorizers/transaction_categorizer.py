@@ -13,7 +13,7 @@ class CategorisationData:
 @dataclass
 class CategorizationResult:
     transaction_id: int
-    category_id: Optional[int]
+    sub_category_id: Optional[int]
     confidence: float
 
 

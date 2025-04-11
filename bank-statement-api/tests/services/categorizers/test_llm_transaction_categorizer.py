@@ -28,7 +28,7 @@ class TestLLMTransactionCategorizer:
         ]
         results = await categorizer.categorize_transaction(transactions)
 
-        assert results[0].category_id == 3
+        assert results[0].sub_category_id == 3
         assert results[0].confidence > 0.0
 
     @pytest.mark.asyncio
@@ -47,5 +47,5 @@ class TestLLMTransactionCategorizer:
         ]
         results = await categorizer.categorize_transaction(transactions)
 
-        assert results[0].category_id == 3
+        assert results[0].sub_category_id == 3
         assert results[0].confidence > 0.0

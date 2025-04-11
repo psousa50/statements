@@ -30,18 +30,6 @@ class TransactionUploader:
         self.sources_repository = sources_repository
         self.categorizer = categorizer
 
-    def map_columns(self, df):
-        required_columns = ["date", "description", "amount"]
-
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Missing required columns: {', '.join(missing_columns)}",
-            )
-
-        return df
-
     def normalize_description(self, description):
         if pd.isna(description):
             return ""

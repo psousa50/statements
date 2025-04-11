@@ -44,6 +44,7 @@ class TransactionBase(BaseModel):
 
 class TransactionCreate(TransactionBase):
     category_id: Optional[int] = None
+    sub_category_id: Optional[int] = None
     categorization_status: Literal["pending", "categorized", "failed"] = "pending"
     normalized_description: Optional[str] = None
 
@@ -51,6 +52,7 @@ class TransactionCreate(TransactionBase):
 class Transaction(TransactionBase):
     id: int
     category_id: Optional[int] = None
+    sub_category_id: Optional[int] = None
     category: Optional[Category] = None
     source: Optional[Source] = None
     categorization_status: Literal["pending", "categorized", "failed"] = "pending"

@@ -13,6 +13,7 @@ class TransactionsFilter:
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     category_id: Optional[int] = None
+    sub_category_id: Optional[int] = None
     source_id: Optional[int] = None
     search: Optional[str] = None
     categorization_status: Optional[str] = None
@@ -33,6 +34,8 @@ class TransactionsRepository:
             query = query.filter(Transaction.date <= filter.end_date)
         if filter.category_id:
             query = query.filter(Transaction.category_id == filter.category_id)
+        if filter.sub_category_id:
+            query = query.filter(Transaction.sub_category_id == filter.sub_category_id)
         if filter.source_id:
             query = query.filter(Transaction.source_id == filter.source_id)
         if filter.search:
@@ -69,6 +72,7 @@ class TransactionsRepository:
             currency=transaction.currency,
             source_id=transaction.source_id,
             category_id=transaction.category_id,
+            sub_category_id=transaction.sub_category_id,
             normalized_description=transaction.normalized_description,
             categorization_status=transaction.categorization_status,
         )
@@ -100,11 +104,16 @@ class TransactionsRepository:
         )
 
     def update_transaction_category(
-        self, transaction_id: int, category_id: int, status: str = "categorized"
+        self,
+        transaction_id: int,
+        category_id: int,
+        sub_category_id: Optional[int] = None,
+        status: str = "categorized",
     ) -> Transaction:
         transaction = self.get_by_id(transaction_id)
         if transaction:
             transaction.category_id = category_id
+            transaction.sub_category_id = sub_category_id
             transaction.categorization_status = status
             self.db.add(transaction)
             self.db.commit()
@@ -118,17 +127,17 @@ class TransactionsRepository:
         subquery = (
             self.db.query(
                 Transaction.normalized_description,
-                Transaction.category_id,
+                Transaction.sub_category_id,
                 func.count().label("count"),
             )
             .filter(Transaction.categorization_status == "categorized")
-            .filter(Transaction.category_id is not None)
-            .group_by(Transaction.normalized_description, Transaction.category_id)
+            .filter(Transaction.sub_category_id is not None)
+            .group_by(Transaction.normalized_description, Transaction.sub_category_id)
             .subquery()
         )
 
         query = (
-            self.db.query(subquery.c.normalized_description, subquery.c.category_id)
+            self.db.query(subquery.c.normalized_description, subquery.c.sub_category_id)
             .distinct(subquery.c.normalized_description)
             .order_by(subquery.c.normalized_description, subquery.c.count.desc())
             .limit(limit)

@@ -47,7 +47,7 @@ class TestExistingTransactionsCategorizer:
                 results.append(
                     CategorizationResult(
                         transaction_id=transaction.transaction_id,
-                        category_id=1,
+                        sub_category_id=1,
                         confidence=0.7,
                     )
                 )
@@ -78,7 +78,7 @@ class TestExistingTransactionsCategorizer:
         results = await categorizer.categorize_transaction(transactions)
 
         assert results[0].transaction_id == 100
-        assert results[0].category_id == 10
+        assert results[0].sub_category_id == 10
         assert results[0].confidence == 1.0
 
         transactions_repository.get_unique_normalized_descriptions.assert_called_once_with(
@@ -107,7 +107,7 @@ class TestExistingTransactionsCategorizer:
         results = await categorizer.categorize_transaction(transactions)
 
         assert results[0].transaction_id == 200
-        assert results[0].category_id == 1
+        assert results[0].sub_category_id == 1
         assert results[0].confidence == 0.7
 
         transactions_repository.get_unique_normalized_descriptions.assert_called_once_with(
@@ -155,7 +155,7 @@ class TestExistingTransactionsCategorizer:
 
         for result in results:
             expected = expected_results[result.transaction_id]
-            assert result.category_id == expected.category_id
+            assert result.sub_category_id == expected.category_id
             assert result.confidence == expected.confidence
 
         assert (

@@ -10,8 +10,7 @@ from src.app.services.categorizers.transaction_categorizer import (
 
 @dataclass
 class Subcategory:
-    category_id: int
-    category_name: str
+    sub_category_id: int
     subcategory_name: str
 
 
@@ -19,14 +18,14 @@ def categorization_prompt(
     transactions: List[CategorisationData], categories: List[Category]
 ) -> str:
     expanded_categories = [
-        Subcategory(sub_cat.id, cat.category_name, sub_cat.category_name)
+        Subcategory(sub_cat.id, sub_cat.category_name)
         for cat in categories
         if cat.subcategories is not None
         for sub_cat in cat.subcategories
     ]
 
     categories_info = [
-        f"{{id: {cat.category_id}, name: {cat.subcategory_name}}}"
+        f"{{id: {cat.sub_category_id}, name: {cat.subcategory_name}}}"
         for cat in expanded_categories
     ]
 
@@ -46,12 +45,12 @@ Return your answer as a JSON object with the following format:
 [
     {{
         "transaction_description": <description of the transaction>,
-        "category_id": <id of the selected category or subcategory>,
+        "sub_category_id": <id of the selected subcategory>,
         "confidence": <a number between 0 and 1 indicating your confidence in this categorization>
     }},
     {{
         "transaction_description": <description of the transaction>,
-        "category_id": <id of the selected category or subcategory>,
+        "sub_category_id": <id of the selected subcategory>,
         "confidence": <a number between 0 and 1 indicating your confidence in this categorization>
     }}
 ]

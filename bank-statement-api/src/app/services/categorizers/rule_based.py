@@ -22,12 +22,12 @@ class RuleBasedTransactionCategorizer(TransactionCategorizer):
         for transaction in transactions:
             description = transaction.description.lower()
 
-            for pattern, category_id, confidence in self.rules:
+            for pattern, sub_category_id, confidence in self.rules:
                 if re.search(pattern, description):
                     results.append(
                         CategorizationResult(
                             transaction_id=transaction.transaction_id,
-                            category_id=category_id,
+                            sub_category_id=sub_category_id,
                             confidence=confidence,
                         )
                     )

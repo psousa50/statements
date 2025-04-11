@@ -31,7 +31,11 @@ def categorize_pending_transactions(batch_size: int = 10):
         fallback_categorizer=groq_categorizer,
     )
 
-    service = TransactionCategorizationService(TransactionsRepository(db), categorizer)
+    service = TransactionCategorizationService(
+        CategoriesRepository(db),
+        TransactionsRepository(db),
+        categorizer,
+    )
 
     return asyncio.run(service.categorize_pending_transactions(batch_size))
 

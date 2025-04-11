@@ -33,13 +33,13 @@ class GeminiTransactionCategorizer(TransactionCategorizer):
         results = json.loads(response)
         categorized_results = []
         for i, result in enumerate(results):
-            category_id = result.get("category_id")
+            sub_category_id = result.get("sub_category_id")
             confidence = result.get("confidence", 0.0)
-            if category_id is not None:
+            if sub_category_id is not None:
                 categorized_results.append(
                     CategorizationResult(
                         normalized_description=transactions[i].normalized_description,
-                        category_id=category_id,
+                        sub_category_id=sub_category_id,
                         confidence=confidence,
                     )
                 )
