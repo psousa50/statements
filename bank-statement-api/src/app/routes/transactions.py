@@ -1,7 +1,6 @@
 from datetime import date
 from typing import Callable, List, Optional
 
-import pandas as pd
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
 from ..models import Transaction

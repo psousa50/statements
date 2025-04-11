@@ -1,7 +1,6 @@
 import os
 import tempfile
 
-import numpy as np
 import pandas as pd
 
 from src.app.services.file_processing.parsers.excel_parser import ExcelParser

@@ -1,7 +1,6 @@
 from datetime import date
 
 import pandas as pd
-import pytest
 
 from src.app.services.file_processing.conversion_model import ConversionModel
 from src.app.services.file_processing.transaction_cleaner import TransactionCleaner

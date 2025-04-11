@@ -122,7 +122,7 @@ class TransactionsRepository:
                 func.count().label("count"),
             )
             .filter(Transaction.categorization_status == "categorized")
-            .filter(Transaction.category_id != None)
+            .filter(Transaction.category_id is not None)
             .group_by(Transaction.normalized_description, Transaction.category_id)
             .subquery()
         )
@@ -143,7 +143,7 @@ class TransactionsRepository:
             self.db.query(Transaction)
             .filter(Transaction.normalized_description == normalized_description)
             .filter(Transaction.categorization_status == "categorized")
-            .filter(Transaction.category_id != None)
+            .filter(Transaction.category_id is not None)
             .order_by(Transaction.date.desc())
             .limit(limit)
             .all()
