@@ -59,11 +59,12 @@ class CategorizationRouter:
             response["result"] = task.result
         return response
 
-    async def process_categorization_now(self, batch_size: int = 10):
+    async def process_categorization_now(self):
         categorization_service = TransactionCategorizationService(
             self.transactions_repository, self.categorizer
         )
 
+        batch_size = 100
         categorized_count = (
             await categorization_service.categorize_pending_transactions(batch_size)
         )
