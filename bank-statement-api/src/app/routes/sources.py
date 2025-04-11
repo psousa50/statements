@@ -1,6 +1,8 @@
+import csv
+import io
 from typing import Callable, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from ..models import Source
 from ..repositories.sources_repository import SourcesRepository
@@ -42,6 +44,12 @@ class SourceRouter:
         )
         self.router.add_api_route(
             "/{source_id}", self.delete_source, methods=["DELETE"], status_code=204
+        )
+        self.router.add_api_route(
+            "/import",
+            self.import_sources_from_csv,
+            methods=["POST"],
+            status_code=201,
         )
 
     def _notify_change(self, action: str, sources: List[Source]):
@@ -140,3 +148,42 @@ class SourceRouter:
         self._notify_change("delete", [db_source])
 
         return None
+
+    async def import_sources_from_csv(self, file: UploadFile = File(...)):
+        """Import sources from a CSV file"""
+        try:
+            contents = await file.read()
+            csv_file = io.StringIO(contents.decode("utf-8"))
+            csv_reader = csv.reader(csv_file)
+
+            # Skip header row
+            next(csv_reader)
+
+            sources_created = []
+
+            for row in csv_reader:
+                if not row or not row[0].strip():
+                    continue
+
+                # Extract source data
+                name = row[0].strip()
+                description = row[1].strip() if len(row) > 1 else None
+
+                # Check if source already exists
+                existing_source = self.source_repository.get_by_name(name)
+                if not existing_source:
+                    # Create new source
+                    new_source = Source(name=name, description=description)
+                    new_source = self.source_repository.create(new_source)
+                    sources_created.append(new_source)
+
+            if sources_created:
+                self._notify_change("import", sources_created)
+
+            return {"message": f"Successfully imported {len(sources_created)} sources"}
+
+        except Exception as e:
+            self.source_repository.rollback()
+            raise HTTPException(
+                status_code=400, detail=f"Error importing sources: {str(e)}"
+            )
