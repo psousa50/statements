@@ -7,6 +7,7 @@ from typing import Callable, List, Optional
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi.encoders import jsonable_encoder
 
 from ..models import Transaction
 from ..repositories.transactions_repository import (
@@ -138,10 +139,10 @@ class TransactionRouter:
         filename = file.filename
 
         try:
-            df, _, column_names = self.file_processor.process_file(
+            df, conversion_model = self.file_processor.process_file(
                 file_content, filename
             )
-            df.columns = column_names
+            df.columns = conversion_model.column_map.keys()
 
             result = await self.transaction_uploader.upload_file(
                 df, source_id, auto_categorize
@@ -161,7 +162,7 @@ class TransactionRouter:
         filename = file.filename
 
         try:
-            df, conversion_model, column_names = self.file_processor.process_file(
+            df, conversion_model = self.file_processor.process_file(
                 file_content, filename
             )
 
@@ -215,12 +216,9 @@ class TransactionRouter:
                 extra={"prefix": "file_processor.preview", "ext": "json"},
             )
 
-            df.columns = column_names
-            column_map = conversion_model.column_map
-
             rename_dict = {
                 col: std_col
-                for std_col, col in column_map.items()
+                for std_col, col in conversion_model.column_map.items()
                 if col and col in df.columns
             }
             df = df.rename(columns=rename_dict)
@@ -251,6 +249,10 @@ class TransactionRouter:
                 .replace({np.nan: None})
                 .astype(object)
                 .to_dict(orient="records"),
+            )
+            logger_content.debug(
+                json.dumps(jsonable_encoder(response)),
+                extra={"prefix": "file_processor.analyze_file.response", "ext": "json"},
             )
 
             return response

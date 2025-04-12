@@ -25,9 +25,9 @@ from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
 from .services.categorizers.transaction_categorizer import TransactionCategorizer
-from .services.file_processing.file_type_detector import FileTypeDetector
 from .services.file_processing.column_normalizer import ColumnNormalizer
-from .services.file_processing.transaction_cleaner import TransactionCleaner
+from .services.file_processing.file_type_detector import FileTypeDetector
+from .services.file_processing.transactions_cleaner import TransactionsCleaner
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -97,7 +97,7 @@ class App:
         )
         file_type_detector = FileTypeDetector()
         column_normalizer = ColumnNormalizer(llm_client)
-        transaction_cleaner = TransactionCleaner()
+        transaction_cleaner = TransactionsCleaner()
         file_processor = FileProcessor(
             file_type_detector, column_normalizer, transaction_cleaner
         )

@@ -6,7 +6,7 @@ import pandas as pd
 from src.app.services.file_processing.conversion_model import ConversionModel
 
 
-class TransactionCleaner:
+class TransactionsCleaner:
     def clean(
         self, df: pd.DataFrame, conversion_model: ConversionModel
     ) -> (pd.DataFrame, list[str]):
@@ -91,8 +91,11 @@ class TransactionCleaner:
             "%d-%m-%Y %H:%M:%S",
             "%Y.%m.%d %H:%M:%S",
             "%Y/%m/%d %H:%M:%S",
-            "%m.%d.%Y",
-            "%m-%d-%Y",
+            "%m.%d.%Y %H:%M:%S",
+            "%m-%d-%Y %H:%M:%S",
+            "%d %B %Y %H:%M:%S",
+            "%b %d, %Y %H:%M:%S",
+            "%B %d, %Y %H:%M:%S",
         ]
 
         def parse_date(date_str):

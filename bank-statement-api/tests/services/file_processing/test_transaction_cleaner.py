@@ -3,7 +3,7 @@ from datetime import date
 import pandas as pd
 
 from src.app.services.file_processing.conversion_model import ConversionModel
-from src.app.services.file_processing.transaction_cleaner import TransactionCleaner
+from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
 
 
 class TestTransactionCleaner:
@@ -29,7 +29,7 @@ class TestTransactionCleaner:
             start_row=1,
         )
 
-        cleaner = TransactionCleaner()
+        cleaner = TransactionsCleaner()
         result_df = cleaner.clean(df, conversion_model)
 
         assert {
@@ -63,7 +63,7 @@ class TestTransactionCleaner:
             start_row=1,
         )
 
-        cleaner = TransactionCleaner()
+        cleaner = TransactionsCleaner()
         result_df = cleaner.clean(df, conversion_model)
 
         assert set(result_df.columns) == {
@@ -94,7 +94,7 @@ class TestTransactionCleaner:
             start_row=1,
         )
 
-        cleaner = TransactionCleaner()
+        cleaner = TransactionsCleaner()
         result_df = cleaner.clean(df, conversion_model)
 
         assert set(result_df.columns) == {
@@ -132,7 +132,7 @@ class TestTransactionCleaner:
             start_row=1,
         )
 
-        cleaner = TransactionCleaner()
+        cleaner = TransactionsCleaner()
         result_df = cleaner.clean(df, conversion_model)
 
         assert result_df["date"].tolist() == [
@@ -164,7 +164,7 @@ class TestTransactionCleaner:
             start_row=1,
         )
 
-        cleaner = TransactionCleaner()
+        cleaner = TransactionsCleaner()
         result_df = cleaner.clean(df, conversion_model)
 
         assert "currency" in result_df.columns
@@ -194,7 +194,7 @@ class TestTransactionCleaner:
             start_row=2,
         )
 
-        cleaner = TransactionCleaner()
+        cleaner = TransactionsCleaner()
         result_df = cleaner.clean(df, conversion_model)
 
         assert len(result_df) == 2
@@ -221,7 +221,7 @@ class TestTransactionCleaner:
             start_row=2,
         )
 
-        cleaner = TransactionCleaner()
+        cleaner = TransactionsCleaner()
         result_df = cleaner.clean(df, conversion_model)
 
         assert len(result_df) == 1

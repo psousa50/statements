@@ -10,7 +10,7 @@ from src.app.services.file_processing.file_type_detector import FileTypeDetector
 from src.app.services.file_processing.parsers.statement_parser_factory import (
     create_parser,
 )
-from src.app.services.file_processing.transaction_cleaner import TransactionCleaner
+from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
 
 logger_content = logging.getLogger("app.llm.big")
 
@@ -20,7 +20,7 @@ class FileProcessor:
         self,
         file_type_detector: FileTypeDetector,
         column_normalizer: ColumnNormalizer,
-        transaction_cleaner: TransactionCleaner,
+        transaction_cleaner: TransactionsCleaner,
     ):
         self.file_type_detector = file_type_detector
         self.column_normalizer = column_normalizer

@@ -2,15 +2,14 @@ import os
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from src.app.ai.llm_client import LLMClient
-from src.app.services.file_processing.file_type_detector import FileTypeDetector
-from src.app.services.file_processing.column_normalizer import ColumnNormalizer
-from src.app.services.file_processing.transaction_cleaner import TransactionCleaner
-from src.app.services.file_processing.conversion_model import ConversionModel
-
 import pandas as pd
 
+from src.app.ai.llm_client import LLMClient
+from src.app.services.file_processing.column_normalizer import ColumnNormalizer
+from src.app.services.file_processing.conversion_model import ConversionModel
 from src.app.services.file_processing.file_processor import FileProcessor
+from src.app.services.file_processing.file_type_detector import FileTypeDetector
+from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
 
 TEST_RESOURCES_DIR = Path(__file__).parent.parent.parent / "resources"
 
@@ -46,7 +45,7 @@ class TestFileProcessor:
         }
         """
         column_normalizer = ColumnNormalizer(llm_client)
-        transaction_cleaner = TransactionCleaner()
+        transaction_cleaner = TransactionsCleaner()
         file_processor = FileProcessor(
             file_type_detector, column_normalizer, transaction_cleaner
         )
