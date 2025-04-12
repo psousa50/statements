@@ -1,9 +1,11 @@
 import json
-import pandas as pd
 import logging
+import uuid
 from datetime import date
 from typing import Callable, List, Optional
 
+import numpy as np
+import pandas as pd
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
 from ..models import Transaction
@@ -12,10 +14,10 @@ from ..repositories.transactions_repository import (
     TransactionsRepository,
 )
 from ..routes.transactions_upload import TransactionUploader
-from ..schemas import FileAnalysisResponse, FileUploadResponse, ColumnMapping
+from ..schemas import ColumnMapping, FileAnalysisResponse, FileUploadResponse
 from ..schemas import Transaction as TransactionSchema
-from ..services.file_processing.file_processor import FileProcessor
 from ..services.file_processing.conversion_model import ConversionModel
+from ..services.file_processing.file_processor import FileProcessor
 
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
@@ -155,10 +157,6 @@ class TransactionRouter:
         self,
         file: UploadFile = File(...),
     ):
-        import uuid
-
-        import numpy as np
-
         file_content = await file.read()
         filename = file.filename
 
@@ -214,7 +212,7 @@ class TransactionRouter:
 
             logger_content.debug(
                 df.head(5).to_dict(orient="records"),
-                extra={"prefix": "file_processor.preview"},
+                extra={"prefix": "file_processor.preview", "ext": "json"},
             )
 
             df.columns = column_names
@@ -229,12 +227,15 @@ class TransactionRouter:
 
             logger_content.debug(
                 json.dumps(column_mapping_dict),
-                extra={"prefix": "file_processor.column_mapping"},
+                extra={"prefix": "file_processor.column_mapping", "ext": "json"},
             )
 
             logger_content.debug(
                 df.head(5).to_dict(orient="records"),
-                extra={"prefix": "file_processor.preview_after_renaming"},
+                extra={
+                    "prefix": "file_processor.preview_after_renaming",
+                    "ext": "json",
+                },
             )
 
             response = FileAnalysisResponse(

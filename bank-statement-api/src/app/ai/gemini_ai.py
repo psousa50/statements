@@ -36,7 +36,9 @@ class GeminiAI(LLMClient):
             logger_content.debug(prompt, extra={"prefix": "gemini.prompt"})
             response = self.model.generate_content(prompt)
             response = response.text
-            logger_content.debug(response, extra={"prefix": "gemini.response"})
+            logger_content.debug(
+                response, extra={"prefix": "gemini.response", "ext": "json"}
+            )
             return response
         except Exception as e:
             logger.error("Error generating response: %s", str(e))

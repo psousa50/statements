@@ -47,9 +47,8 @@ class LLMTransactionCategorizer(TransactionCategorizer):
         prompt = categorization_prompt(transactions, self.categories)
         response = await self.llm_client.generate_async(prompt)
         logger_content.debug(
-            "Raw Response: %s",
             response,
-            extra={"prefix": "llm_transaction_categorizer"},
+            extra={"prefix": "llm_transaction_categorizer.response", "ext": "json"},
         )
         json_result = sanitize_json(response)
         if not json_result:

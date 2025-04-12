@@ -1,5 +1,5 @@
 import logging
-
+import json
 import pandas as pd
 
 from src.app.ai.llm_client import LLMClient
@@ -17,14 +17,20 @@ class ColumnNormalizer:
         prompt = self.get_prompt(df)
         response = self.llm_client.generate(prompt)
         logger_content.debug(
-            "Raw Response: %s", response, extra={"prefix": "column_normalizer"}
+            response,
+            extra={"prefix": "column_normalizer.response", "ext": "json"},
         )
         json_result = sanitize_json(response)
+        logger_content.debug(
+            json_result,
+            extra={"prefix": "column_normalizer.json_result", "ext": "json"},
+        )
         if not json_result:
             raise ValueError("Invalid JSON response")
         conversion_model: ConversionModel = ConversionModel(**json_result)
         logger_content.debug(
-            "Processed Response: %s", response, extra={"prefix": "column_normalizer"}
+            json.dumps(conversion_model.__dict__),
+            extra={"prefix": "column_normalizer.conversion_model", "ext": "json"},
         )
         return conversion_model
 

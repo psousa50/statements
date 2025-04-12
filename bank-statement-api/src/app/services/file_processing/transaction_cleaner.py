@@ -7,22 +7,32 @@ from src.app.services.file_processing.conversion_model import ConversionModel
 
 
 class TransactionCleaner:
-    def __init__(self, conversion_model: ConversionModel):
-        self.conversion_model = conversion_model
-
-    def clean(self, df: pd.DataFrame) -> (pd.DataFrame, list[str]):
-        header_row = self.conversion_model.header_row
-        start_row = self.conversion_model.start_row
+    def clean(
+        self, df: pd.DataFrame, conversion_model: ConversionModel
+    ) -> (pd.DataFrame, list[str]):
+        header_row = conversion_model.header_row
+        start_row = conversion_model.start_row
 
         result_df = df.copy()
 
         column_names = result_df.iloc[header_row].to_list()
         if header_row > 0:
+            column_names = result_df.iloc[header_row].to_list()
+            result_df.columns = column_names
             result_df = result_df.iloc[start_row:]
         else:
             result_df = result_df.iloc[start_row - 1 :]
 
-        result_df = self._combine_debit_credit(result_df)
+        column_map = conversion_model.column_map
+
+        rename_dict = {
+            col: std_col
+            for std_col, col in column_map.items()
+            if col and col in result_df.columns
+        }
+        result_df = result_df.rename(columns=rename_dict)
+
+        result_df = self._combine_debit_credit(result_df, conversion_model)
 
         for std_col in ["date", "description", "amount", "currency", "balance"]:
             if std_col not in result_df.columns:
@@ -37,11 +47,13 @@ class TransactionCleaner:
         if "balance" in result_df.columns:
             result_df["balance"] = pd.to_numeric(result_df["balance"], errors="coerce")
 
-        return result_df, column_names
+        return result_df
 
-    def _combine_debit_credit(self, df: pd.DataFrame) -> pd.DataFrame:
-        column_map = self.conversion_model.column_map
-        if "amount" not in column_map or column_map["amount"] != "":
+    def _combine_debit_credit(
+        self, df: pd.DataFrame, conversion_model: ConversionModel
+    ) -> pd.DataFrame:
+        column_map = conversion_model.column_map
+        if "amount" in column_map and column_map["amount"] != "":
             return df
 
         debit_col = "debit_amount"
