@@ -1,10 +1,12 @@
 import logging
 import re
 from typing import Optional
+from unicodedata import category
 
 import pandas as pd
-from fastapi import HTTPException, Query
+from fastapi import Query
 
+from ..logging.utils import log_exception
 from ..models import Source, Transaction
 from ..repositories.sources_repository import SourcesRepository
 from ..repositories.transactions_repository import (
@@ -15,6 +17,7 @@ from ..schemas import FileUploadResponse
 from ..schemas import Transaction as TransactionSchema
 from ..schemas import TransactionCreate
 from ..services.categorizers.transaction_categorizer import TransactionCategorizer
+from ..services.file_processing.file_processor import ProcessedFile
 
 logger = logging.getLogger("app")
 
@@ -41,66 +44,41 @@ class TransactionUploader:
 
         return description
 
-    def process_transactions(self, df, source_id):
-        transactions = []
-        skipped_count = 0
+    def process_transactions(self, processed_file: ProcessedFile):
+        new_transactions = []
+        for transaction in processed_file.transactions:
+            filter = TransactionsFilter(
+                start_date=transaction.date,
+                end_date=transaction.date,
+                source_id=processed_file.source_id,
+                search=transaction.description,
+            )
+            existing_transaction = self.transactions_repository.get_all(filter)
 
-        for i, row in df.iterrows():
-            try:
-                description = row["description"]
-                if pd.isna(description):
-                    continue
-                description = str(description)
-                normalized_description = self.normalize_description(description)
-
-                transaction_date = row["date"]
-
-                try:
-                    filter = TransactionsFilter(
-                        start_date=transaction_date,
-                        end_date=transaction_date,
-                        source_id=source_id,
-                        search=description,
-                    )
-                    existing_transaction = self.transactions_repository.get_all(filter)
-
-                    if existing_transaction:
-                        skipped_count += 1
-                        continue
-                except Exception as e:
-                    logger.error(f"Error checking for duplicate transaction: {str(e)}")
-
-                amount = row["amount"]
-                if pd.isna(amount):
-                    continue
-
-                new_transaction = Transaction(
-                    date=transaction_date,
-                    description=description,
-                    normalized_description=normalized_description,
-                    amount=amount,
-                    currency="EUR",
-                    source_id=source_id,
+            if not existing_transaction:
+                new_transaction = TransactionCreate(
+                    date=transaction.date,
+                    description=transaction.description,
+                    normalized_description=self.normalize_description(
+                        transaction.description
+                    ),
+                    amount=transaction.amount,
+                    currency=transaction.currency,
+                    source_id=processed_file.source_id,
+                    category_id=None,
                     categorization_status="pending",
                 )
 
-                if "currency" in row and pd.notna(row["currency"]):
-                    new_transaction.currency = str(row["currency"])
+                new_transactions.append(new_transaction)
 
-                transactions.append(new_transaction)
-
-            except Exception as e:
-                logger.error(f"Error processing row: {row}. Error: {str(e)}")
-
-        return transactions, skipped_count
+        return new_transactions
 
     async def upload_file(
         self,
-        df: pd.DataFrame,
-        source_id: Optional[int] = Query(None),
+        processed_file: ProcessedFile,
         auto_categorize: bool = False,
     ):
-        if source_id is None:
+        if processed_file.source_id is None:
             default_source = self.sources_repository.get_by_name("unknown")
             if default_source is None:
                 default_source = Source(
@@ -108,30 +86,26 @@ class TransactionUploader:
                     description="Default source for transactions with unknown origin",
                 )
                 self.sources_repository.create(default_source)
-            source_id = default_source.id
+            processed_file.source_id = default_source.id
 
-        transactions, skipped_count = self.process_transactions(df, source_id)
+        new_transactions = self.process_transactions(processed_file)
+        skipped_count = len(processed_file.transactions) - len(new_transactions)
         logger.info(
             f"Processed {len(transactions)} transactions, skipped {skipped_count} duplicates"
         )
 
         transaction_ids = []
-        for transaction in transactions:
-            transaction_create = TransactionCreate(
-                date=transaction.date,
-                description=transaction.description,
-                amount=transaction.amount,
-                source_id=source_id,
-                category_id=None,
-                categorization_status="pending",
-                normalized_description=transaction.normalized_description,
-            )
-            db_transaction = self.transactions_repository.create(
-                transaction_create, auto_commit=False
-            )
-            transaction_ids.append(db_transaction.id)
+        try:
+            for transaction in new_transactions:
+                db_transaction = self.transactions_repository.create(
+                    transaction, auto_commit=False
+                )
+                transaction_ids.append(db_transaction.id)
 
-        self.transactions_repository.commit()
+            self.transactions_repository.commit()
+        except:
+            self.transactions_repository.rollback()
+            raise
 
         db_transactions = self.transactions_repository.get_by_ids(transaction_ids)
 
@@ -147,7 +121,6 @@ class TransactionUploader:
             skipped_duplicates=skipped_count,
         )
 
-        # Trigger categorization if requested and there are transactions to categorize
         if auto_categorize and transaction_ids:
             from ..tasks.categorization import manually_trigger_categorization
 

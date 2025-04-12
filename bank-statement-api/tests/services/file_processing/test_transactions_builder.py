@@ -1,8 +1,11 @@
-import pandas as pd
 from datetime import date
 
-from src.app.services.file_processing.transactions_builder import TransactionsBuilder
-from src.app.services.file_processing.transactions_builder import StatementTransaction
+import pandas as pd
+
+from src.app.services.file_processing.transactions_builder import (
+    StatementTransaction,
+    TransactionsBuilder,
+)
 
 
 class TestTransactionsBuilder:

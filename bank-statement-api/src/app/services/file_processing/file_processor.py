@@ -1,14 +1,17 @@
 import json
 import logging
 import uuid
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 from pydantic import BaseModel
 
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 from src.app.services.file_processing.conversion_model import ConversionModel
-from src.app.services.file_processing.file_type_detector import FileTypeDetector
+from src.app.services.file_processing.file_type_detector import (
+    FileType,
+    FileTypeDetector,
+)
 from src.app.services.file_processing.parsers.statement_parser_factory import (
     create_parser,
 )
@@ -21,7 +24,6 @@ from src.app.services.file_processing.transactions_builder import (
     TransactionsBuilder,
 )
 from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
-from src.app.services.file_processing.file_type_detector import FileType
 
 logger_content = logging.getLogger("app.llm.big")
 
@@ -33,6 +35,7 @@ class ProcessedFile(BaseModel):
     conversion_model: ConversionModel
     statistics: StatementStatistics
     transactions: List[StatementTransaction]
+    source_id: Optional[int] = None
 
 
 class FileProcessor:
@@ -79,4 +82,5 @@ class FileProcessor:
             conversion_model=conversion_model,
             statistics=statistics,
             transactions=transactions,
+            source_id=2,
         )

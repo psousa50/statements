@@ -80,7 +80,7 @@ class ColumnMapping(BaseModel):
 
 
 class FileAnalysisResponse(BaseModel):
-    source: Optional[str] = None
+    source_id: Optional[int] = None
     total_transactions: int
     total_amount: float
     date_range_start: Optional[date] = None

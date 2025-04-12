@@ -12,8 +12,10 @@ from src.app.services.categorizers.llm_transaction_categorizer import (
     LLMTransactionCategorizer,
 )
 from src.app.services.file_processing.file_processor import FileProcessor
+from src.app.services.file_processing.statement_statistics_calculator import (
+    StatementStatisticsCalculator,
+)
 from src.app.services.file_processing.transactions_builder import TransactionsBuilder
-from src.app.services.file_processing.statement_statistics_calculator import StatementStatisticsCalculator
 
 from . import models
 from .ai.gemini_ai import GeminiAI
@@ -103,11 +105,11 @@ class App:
         transactions_builder = TransactionsBuilder()
         statistics_calculator = StatementStatisticsCalculator()
         file_processor = FileProcessor(
-            file_type_detector, 
-            column_normalizer, 
+            file_type_detector,
+            column_normalizer,
             transaction_cleaner,
             transactions_builder,
-            statistics_calculator
+            statistics_calculator,
         )
         transaction_router = TransactionRouter(
             transactions_repository=self.transactions_repository,

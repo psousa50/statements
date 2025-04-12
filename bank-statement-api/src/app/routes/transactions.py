@@ -1,14 +1,12 @@
 import json
 import logging
-import uuid
 from datetime import date
 from typing import Callable, List, Optional
 
-import numpy as np
-import pandas as pd
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.encoders import jsonable_encoder
 
+from ..logging.utils import log_exception
 from ..models import Transaction
 from ..repositories.transactions_repository import (
     TransactionsFilter,
@@ -17,7 +15,6 @@ from ..repositories.transactions_repository import (
 from ..routes.transactions_upload import TransactionUploader
 from ..schemas import ColumnMapping, FileAnalysisResponse, FileUploadResponse
 from ..schemas import Transaction as TransactionSchema
-from ..services.file_processing.conversion_model import ConversionModel
 from ..services.file_processing.file_processor import FileProcessor
 
 logger_content = logging.getLogger("app.llm.big")
@@ -139,13 +136,10 @@ class TransactionRouter:
         filename = file.filename
 
         try:
-            df, conversion_model = self.file_processor.process_file(
-                file_content, filename
-            )
-            df.columns = conversion_model.column_map.keys()
+            processed_file = self.file_processor.process_file(file_content, filename)
 
             result = await self.transaction_uploader.upload_file(
-                df, source_id, auto_categorize
+                processed_file, auto_categorize
             )
 
             return result
@@ -162,103 +156,30 @@ class TransactionRouter:
         filename = file.filename
 
         try:
-            df, conversion_model = self.file_processor.process_file(
-                file_content, filename
-            )
-
-            file_id = str(uuid.uuid4())
-
-            total_amount = 0
-            if "amount" in df.columns:
-                numeric_amounts = pd.to_numeric(df["amount"], errors="coerce")
-                total_amount = float(numeric_amounts.sum(skipna=True))
-
-            date_range_start = None
-            date_range_end = None
-            if "date" in df.columns and not df["date"].empty:
-                dates = pd.to_datetime(df["date"], errors="coerce")
-                valid_dates = dates.dropna()
-                if not valid_dates.empty:
-                    date_range_start = valid_dates.min().date()
-                    date_range_end = valid_dates.max().date()
-
-            preview_rows = []
-            for _, row in df.head(10).iterrows():
-                row_dict = row.to_dict()
-                for key, value in row_dict.items():
-                    if isinstance(value, (np.float64, np.float32)):
-                        if np.isnan(value):
-                            row_dict[key] = None
-                        else:
-                            row_dict[key] = float(value)
-                    if isinstance(value, (np.int64, np.int32)):
-                        if np.isnan(value):
-                            row_dict[key] = None
-                        else:
-                            row_dict[key] = int(value)
-                preview_rows.append(row_dict)
-
-            source = None
-
-            column_mapping_dict = {
-                "date": conversion_model.column_map.get("date", ""),
-                "description": conversion_model.column_map.get("description", ""),
-                "amount": conversion_model.column_map.get("amount", ""),
-                "debit_amount": conversion_model.column_map.get("debit_amount", ""),
-                "credit_amount": conversion_model.column_map.get("credit_amount", ""),
-                "amount_column": conversion_model.column_map.get("amount_column", ""),
-                "currency": conversion_model.column_map.get("currency", ""),
-                "balance": conversion_model.column_map.get("balance", ""),
-            }
-
-            logger_content.debug(
-                df.head(5).to_dict(orient="records"),
-                extra={"prefix": "file_processor.preview", "ext": "json"},
-            )
-
-            rename_dict = {
-                col: std_col
-                for std_col, col in conversion_model.column_map.items()
-                if col and col in df.columns
-            }
-            df = df.rename(columns=rename_dict)
-
-            logger_content.debug(
-                json.dumps(column_mapping_dict),
-                extra={"prefix": "file_processor.column_mapping", "ext": "json"},
-            )
-
-            logger_content.debug(
-                df.head(5).to_dict(orient="records"),
-                extra={
-                    "prefix": "file_processor.preview_after_renaming",
-                    "ext": "json",
-                },
-            )
+            processed_file = self.file_processor.process_file(file_content, filename)
 
             response = FileAnalysisResponse(
-                source=source,
-                total_transactions=len(df),
-                total_amount=float(total_amount),
-                date_range_start=date_range_start,
-                date_range_end=date_range_end,
-                column_mappings=ColumnMapping(**column_mapping_dict),
-                start_row=conversion_model.start_row,
-                file_id=file_id,
-                preview_rows=df.head(5)
-                .replace({np.nan: None})
-                .astype(object)
-                .to_dict(orient="records"),
+                source_id=processed_file.source_id,
+                total_transactions=processed_file.statistics.total_transactions,
+                total_amount=float(processed_file.statistics.total_amount),
+                date_range_start=processed_file.statistics.date_range_start,
+                date_range_end=processed_file.statistics.date_range_end,
+                column_mappings=ColumnMapping(
+                    **processed_file.conversion_model.column_map
+                ),
+                start_row=processed_file.conversion_model.start_row,
+                file_id=processed_file.file_id,
+                preview_rows=[t.dict() for t in processed_file.transactions[:5]],
             )
             logger_content.debug(
-                json.dumps(jsonable_encoder(response)),
+                jsonable_encoder(response),
                 extra={"prefix": "file_processor.analyze_file.response", "ext": "json"},
             )
 
             return response
 
         except Exception as e:
-            logger.error(f"Error analyzing file: {str(e)}")
+            log_exception(f"Error analyzing file: {str(e)}")
             raise HTTPException(
                 status_code=400, detail=f"Error analyzing file: {str(e)}"
             )

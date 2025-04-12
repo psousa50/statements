@@ -3,7 +3,6 @@ from datetime import date
 from src.app.services.file_processing.statement_statistics_calculator import (
     StatementStatisticsCalculator,
 )
-
 from src.app.services.file_processing.transactions_builder import StatementTransaction
 
 

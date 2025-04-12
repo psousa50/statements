@@ -1,8 +1,9 @@
-from decimal import Decimal
-from pydantic import BaseModel
 from datetime import date
+from decimal import Decimal
 from typing import List
+
 import pandas as pd
+from pydantic import BaseModel
 
 
 class StatementTransaction(BaseModel):

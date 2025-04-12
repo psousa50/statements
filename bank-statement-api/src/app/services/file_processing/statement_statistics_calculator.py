@@ -1,5 +1,5 @@
-from datetime import date
 from dataclasses import dataclass
+from datetime import date
 from typing import List, Optional
 
 from src.app.services.file_processing.transactions_builder import StatementTransaction

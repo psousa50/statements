@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from ..logging.utils import log_exception
 from ..repositories.categories_repository import CategoriesRepository
 from ..repositories.transactions_repository import TransactionsRepository
 from .categorizers.transaction_categorizer import (
@@ -72,7 +73,7 @@ class TransactionCategorizationService:
                         sub_category_id=None,
                         status="failed",
                     )
-                    logger.error(
+                    log_exception(
                         f"Failed to categorize transaction {result.transaction_id}"
                     )
         return categorized_count
