@@ -9,7 +9,7 @@ from src.app.services.file_processing.conversion_model import ConversionModel
 class TransactionsCleaner:
     def clean(
         self, df: pd.DataFrame, conversion_model: ConversionModel
-    ) -> (pd.DataFrame, list[str]):
+    ) -> pd.DataFrame:
         header_row = conversion_model.header_row
         start_row = conversion_model.start_row
 

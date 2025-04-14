@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { 
-  Container, Card, Button, Alert, Spinner, 
-  Table, Form, Row, Col, Badge, OverlayTrigger, Tooltip 
+import {
+  Container, Card, Button, Alert, Spinner,
+  Table, Form, Row, Col, Badge
 } from 'react-bootstrap';
 import { useFileUpload, useSources } from '../hooks/useQueries';
 import axios from 'axios';
@@ -49,7 +49,7 @@ const FileUploadZone: React.FC<{
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       onFileSelected(e.dataTransfer.files[0]);
     }
@@ -68,7 +68,7 @@ const FileUploadZone: React.FC<{
   }, []);
 
   return (
-    <Card 
+    <Card
       className={`mb-4 ${isDragging ? 'border-primary' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -87,14 +87,14 @@ const FileUploadZone: React.FC<{
             </div>
             <h5>Drag and drop your bank statement file here</h5>
             <p className="text-muted">or</p>
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               onClick={handleButtonClick}
             >
               Browse Files
             </Button>
-            <input 
-              type="file" 
+            <input
+              type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
               accept=".csv,.xls,.xlsx"
@@ -150,7 +150,7 @@ const AnalysisSummary: React.FC<{
               <Card.Body className="text-center">
                 <h6 className="text-muted">Date Range</h6>
                 <h4>
-                  {analysis.date_range_start && analysis.date_range_end 
+                  {analysis.date_range_start && analysis.date_range_end
                     ? `${new Date(analysis.date_range_start).toLocaleDateString()} - ${new Date(analysis.date_range_end).toLocaleDateString()}`
                     : 'N/A'}
                 </h4>
@@ -172,7 +172,7 @@ const ColumnMappingTable: React.FC<{
   onStartRowChange: (startRow: number) => void;
 }> = ({ analysis, columnMappings, onColumnMappingChange, startRow, onStartRowChange }) => {
   // Get all original column names from the first preview row
-  const originalColumns = analysis.preview_rows.length > 0 
+  const originalColumns = analysis.preview_rows.length > 0
     ? Object.keys(analysis.preview_rows[0])
     : [];
 
@@ -305,25 +305,25 @@ const UploadPage: React.FC = () => {
     setIsAnalyzing(true);
     setAnalysisResult(null);
     setUploadResult(null);
-    
+
     // Create form data for file upload
     const formData = new FormData();
     formData.append('file', selectedFile);
-    
+
     try {
       // Call the analyze endpoint
       const response = await axios.post<FileAnalysisResponse>(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/transactions/analyze`, 
+        `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/transactions/analyze`,
         formData
       );
-      
+
       setAnalysisResult(response.data);
-      
+
       // Initialize column mappings from the response
       const initialMappings: Record<string, string> = {};
       if (response.data.preview_rows.length > 0) {
         const columns = Object.keys(response.data.preview_rows[0]);
-        
+
         // Map columns based on the analysis response
         const columnMap = response.data.column_mappings;
         for (const column of columns) {
@@ -338,10 +338,10 @@ const UploadPage: React.FC = () => {
           }
         }
       }
-      
+
       setColumnMappings(initialMappings);
       setStartRow(response.data.start_row);
-      
+
     } catch (error) {
       console.error('Error analyzing file:', error);
       setUploadResult({
@@ -390,19 +390,19 @@ const UploadPage: React.FC = () => {
     if (!file || !analysisResult || !isMappingValid()) {
       return;
     }
-    
+
     setIsUploading(true);
-    
+
     // Create form data for file upload
     const formData = new FormData();
     formData.append('file', file);
     if (sourceId) {
       formData.append('source_id', sourceId.toString());
     }
-    
+
     // TODO: In a real implementation, we would also send the column mappings
     // and start row to the backend for processing
-    
+
     uploadFile(
       { file, sourceId },
       {
@@ -442,23 +442,23 @@ const UploadPage: React.FC = () => {
   return (
     <Container>
       <h1 className="mb-4">Upload Bank Statement</h1>
-      
+
       {!analysisResult && !uploadResult && (
-        <FileUploadZone 
+        <FileUploadZone
           onFileSelected={handleFileSelected}
           isLoading={isAnalyzing}
         />
       )}
-      
+
       {analysisResult && !uploadResult && (
         <>
           <AnalysisSummary analysis={analysisResult} />
-          
+
           <Form.Group className="mb-4">
             <Form.Label>Source</Form.Label>
-            <Form.Select 
-              value={sourceId || ''} 
-              onChange={handleSourceChange} 
+            <Form.Select
+              value={sourceId || ''}
+              onChange={handleSourceChange}
               disabled={isLoadingSources}
             >
               <option value="">Select a source (optional)</option>
@@ -472,30 +472,30 @@ const UploadPage: React.FC = () => {
               Select the bank or financial institution this statement is from
             </Form.Text>
           </Form.Group>
-          
-          <ColumnMappingTable 
+
+          <ColumnMappingTable
             analysis={analysisResult}
             columnMappings={columnMappings}
             onColumnMappingChange={handleColumnMappingChange}
             startRow={startRow}
             onStartRowChange={handleStartRowChange}
           />
-          
-          <ValidationMessages 
+
+          <ValidationMessages
             columnMappings={columnMappings}
             isValid={isMappingValid()}
           />
-          
+
           <div className="d-flex justify-content-between mb-4">
-            <Button 
-              variant="outline-secondary" 
+            <Button
+              variant="outline-secondary"
               onClick={handleReset}
             >
               Start Over
             </Button>
-            
-            <Button 
-              variant="primary" 
+
+            <Button
+              variant="primary"
               onClick={handleFinalUpload}
               disabled={!isMappingValid() || isUploading}
             >
@@ -513,8 +513,8 @@ const UploadPage: React.FC = () => {
             <>
               <p>Transactions processed: {uploadResult.processed}</p>
               <p>Duplicate transactions skipped: {uploadResult.skipped}</p>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 onClick={handleReset}
                 className="mt-3"
               >
