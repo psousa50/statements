@@ -15,7 +15,8 @@ from ..repositories.transactions_repository import (
 from ..routes.transactions_upload import TransactionUploader
 from ..schemas import ColumnMapping, FileAnalysisResponse, FileUploadResponse
 from ..schemas import Transaction as TransactionSchema
-from ..services.file_processing.file_processor import FileProcessor
+from ..services.file_processing.file_analysis_service import FileAnalysisService
+from ..services.file_processing.upload_file_service import UploadFileService, UploadFileSpec
 
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
@@ -26,7 +27,8 @@ class TransactionRouter:
         self,
         transactions_repository: TransactionsRepository,
         transaction_uploader: TransactionUploader,
-        file_processor: FileProcessor,
+        file_analysis_service: FileAnalysisService,
+        upload_file_service: UploadFileService,
         on_change_callback: Optional[Callable[[str, List[Transaction]], None]] = None,
     ):
         self.router = APIRouter(
@@ -35,7 +37,8 @@ class TransactionRouter:
         )
         self.transaction_repository = transactions_repository
         self.transaction_uploader = transaction_uploader
-        self.file_processor = file_processor
+        self.file_analysis_service = file_analysis_service
+        self.upload_file_service = upload_file_service
         self.on_change_callback = on_change_callback
 
         self.router.add_api_route(
@@ -126,24 +129,25 @@ class TransactionRouter:
 
     async def upload_file(
         self,
-        file: UploadFile = File(...),
-        source_id: Optional[int] = Query(None),
+        spec: UploadFileSpec,
         auto_categorize: bool = Query(
             False, description="Automatically trigger categorization after upload"
         ),
     ):
-        file_content = await file.read()
-        filename = file.filename
-
         try:
-            processed_file = self.file_processor.process_file(file_content, filename)
-
-            result = await self.transaction_uploader.upload_file(
-                processed_file, auto_categorize
-            )
-
+            # Use the UploadFileService to process the file with the provided spec
+            result = self.upload_file_service.upload_file(spec)
+            
+            # Trigger auto-categorization if requested
+            if auto_categorize and result.transactions_processed > 0:
+                from ..tasks.categorization import manually_trigger_categorization
+                task = manually_trigger_categorization(batch_size=100)
+                result.categorization_task_id = task.id
+                result.message = "File processed successfully and categorization triggered"
+            
             return result
         except Exception as e:
+            log_exception(f"Error processing file: {str(e)}")
             raise HTTPException(
                 status_code=400, detail=f"Error processing file: {str(e)}"
             )
@@ -156,24 +160,12 @@ class TransactionRouter:
         filename = file.filename
 
         try:
-            processed_file = self.file_processor.process_file(file_content, filename)
-
-            response = FileAnalysisResponse(
-                source_id=processed_file.source_id,
-                total_transactions=processed_file.statistics.total_transactions,
-                total_amount=float(processed_file.statistics.total_amount),
-                date_range_start=processed_file.statistics.date_range_start,
-                date_range_end=processed_file.statistics.date_range_end,
-                column_mappings=ColumnMapping(
-                    **processed_file.conversion_model.column_map
-                ),
-                start_row=processed_file.conversion_model.start_row,
-                file_id=processed_file.file_id,
-                preview_rows=[t.dict() for t in processed_file.transactions[:5]],
-            )
+            # Use the FileAnalysisService to analyze the file
+            response = self.file_analysis_service.analyze_file(file_content, filename)
+            
             logger_content.debug(
                 jsonable_encoder(response),
-                extra={"prefix": "file_processor.analyze_file.response", "ext": "json"},
+                extra={"prefix": "file_analysis_service.analyze_file.response", "ext": "json"},
             )
 
             return response

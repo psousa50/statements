@@ -5,6 +5,8 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
+    JSON,
+    LargeBinary,
     Numeric,
     String,
     func,
@@ -64,9 +66,38 @@ class Transaction(Base):
         default="pending",
         index=True,
     )
+    statement_id = Column(String, ForeignKey("statements.id"), nullable=True)
 
     category = relationship(
         "Category", foreign_keys=[category_id], back_populates="transactions"
     )
     sub_category = relationship("Category", foreign_keys=[sub_category_id])
     source = relationship("Source", back_populates="transactions")
+    statement = relationship("Statement", back_populates="transactions")
+
+
+class Statement(Base):
+    __tablename__ = "statements"
+
+    id = Column(String, primary_key=True, index=True)
+    file_name = Column(String, nullable=False)
+    content = Column(LargeBinary, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    
+    transactions = relationship("Transaction", back_populates="statement")
+    schema = relationship("StatementSchema", back_populates="statement", uselist=False)
+
+
+class StatementSchema(Base):
+    __tablename__ = "statement_schemas"
+    
+    id = Column(String, primary_key=True, index=True)
+    statement_id = Column(String, ForeignKey("statements.id"), nullable=True)
+    column_hash = Column(String, unique=True, index=True)
+    column_mapping = Column(JSON, nullable=False)
+    file_type = Column(String, nullable=False)
+    source_id = Column(Integer, ForeignKey("sources.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+    
+    statement = relationship("Statement", back_populates="schema")
+    source = relationship("Source")

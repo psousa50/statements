@@ -89,3 +89,10 @@ class FileAnalysisResponse(BaseModel):
     start_row: int
     file_id: str
     preview_rows: List[dict] = []
+
+
+class UploadFileSpec(BaseModel):
+    statement_id: str
+    column_mapping: ColumnMapping
+    source_id: int
+    start_row: int = 1

@@ -22,6 +22,8 @@ from .ai.gemini_ai import GeminiAI
 from .db import engine, get_db
 from .repositories.categories_repository import CategoriesRepository
 from .repositories.sources_repository import SourcesRepository
+from .repositories.statement_repository import StatementRepository
+from .repositories.statement_schema_repository import StatementSchemaRepository
 from .repositories.transactions_repository import TransactionsRepository
 from .routes.categories import CategoryRouter
 from .routes.categorization import CategorizationRouter
@@ -29,11 +31,18 @@ from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
 from .services.categorizers.transaction_categorizer import TransactionCategorizer
+from .services.file_processing.file_analysis_service import FileAnalysisService
 from .services.file_processing.column_normalizer import ColumnNormalizer
+from .services.file_processing.file_processor import FileProcessor
 from .services.file_processing.file_type_detector import FileTypeDetector
+from .services.file_processing.parsers.parser_factory import ParserFactory
+from .services.file_processing.statement_statistics_calculator import (
+    StatementStatisticsCalculator,
+)
+from .services.file_processing.transactions_builder import TransactionsBuilder
 from .services.file_processing.transactions_cleaner import TransactionsCleaner
-
-models.Base.metadata.create_all(bind=engine)
+from .services.file_processing.upload_file_service import UploadFileService
+from .services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
 
 from .logging.config import init_logging
 
@@ -48,6 +57,8 @@ class App:
         categories_repository: Optional[CategoriesRepository] = None,
         sources_repository: Optional[SourcesRepository] = None,
         transactions_repository: Optional[TransactionsRepository] = None,
+        statement_repository: Optional[StatementRepository] = None,
+        statement_schema_repository: Optional[StatementSchemaRepository] = None,
         categorizer: Optional[TransactionCategorizer] = None,
     ):
         logger.info("Initializing app...")
@@ -75,6 +86,10 @@ class App:
         self.sources_repository = sources_repository or SourcesRepository(db)
         self.transactions_repository = (
             transactions_repository or TransactionsRepository(db)
+        )
+        self.statement_repository = statement_repository or StatementRepository(db)
+        self.statement_schema_repository = (
+            statement_schema_repository or StatementSchemaRepository(db)
         )
 
         llm_client = GeminiAI()
@@ -111,10 +126,29 @@ class App:
             transactions_builder,
             statistics_calculator,
         )
+        parser_factory = ParserFactory()
+        file_analysis_service = FileAnalysisService(
+            file_type_detector=file_type_detector,
+            parser_factory=parser_factory,
+            column_normalizer=column_normalizer,
+            transaction_cleaner=transaction_cleaner,
+            transactions_builder=transactions_builder,
+            statistics_calculator=statistics_calculator,
+            statement_repository=self.statement_repository,
+            statement_schema_repository=self.statement_schema_repository,
+        )
+        upload_file_service = UploadFileService(
+            parser_factory=parser_factory,
+            transaction_cleaner=transaction_cleaner,
+            transactions_builder=transactions_builder,
+            statement_repository=self.statement_repository,
+            transactions_repository=self.transactions_repository,
+        )
         transaction_router = TransactionRouter(
             transactions_repository=self.transactions_repository,
             transaction_uploader=transaction_uploader,
-            file_processor=file_processor,
+            file_analysis_service=file_analysis_service,
+            upload_file_service=upload_file_service,
         )
         categorization_router = CategorizationRouter(
             transactions_repository=self.transactions_repository,
