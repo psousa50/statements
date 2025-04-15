@@ -3,31 +3,8 @@ import {
   Container, Card, Button, Alert, Spinner,
   Table, Form, Row, Col, Badge
 } from 'react-bootstrap';
-import { useFileUpload, useSources } from '../hooks/useQueries';
-import axios from 'axios';
-
-// Define types for file analysis response
-interface ColumnMapping {
-  date: string;
-  description: string;
-  amount: string;
-  debit_amount?: string;
-  credit_amount?: string;
-  currency?: string;
-  balance?: string;
-}
-
-interface FileAnalysisResponse {
-  source: string | null;
-  total_transactions: number;
-  total_amount: number;
-  date_range_start: string | null;
-  date_range_end: string | null;
-  column_mappings: ColumnMapping;
-  start_row: number;
-  file_id: string;
-  preview_rows: Record<string, any>[];
-}
+import { useFileUpload, useFileAnalysis, useSources } from '../hooks/useQueries';
+import { FileUploadResponse, ColumnMapping, StatementSchema, FileAnalysisResponse } from '../types';
 
 // Component for file upload zone with drag and drop
 const FileUploadZone: React.FC<{
@@ -125,7 +102,7 @@ const AnalysisSummary: React.FC<{
             <Card className="h-100">
               <Card.Body className="text-center">
                 <h6 className="text-muted">Source</h6>
-                <h4>{analysis.source || 'Unknown'}</h4>
+                <h4>{analysis.statement_schema.source_id || 'Unknown'}</h4>
               </Card.Body>
             </Card>
           </Col>
@@ -171,16 +148,22 @@ const ColumnMappingTable: React.FC<{
   startRow: number;
   onStartRowChange: (startRow: number) => void;
 }> = ({ analysis, columnMappings, onColumnMappingChange, startRow, onStartRowChange }) => {
-  // Get all original column names from the first preview row
-  const originalColumns = analysis.preview_rows.length > 0
-    ? Object.keys(analysis.preview_rows[0])
-    : [];
+  // Use column_names from the statement schema if available, otherwise fall back to preview rows
+  const originalColumns = analysis.statement_schema.column_names.length > 0
+    ? analysis.statement_schema.column_names
+    : analysis.preview_rows.length > 0
+      ? analysis.preview_rows[0].map((_, index) => `Column ${index + 1}`)
+      : [];
 
   // Column mapping options
   const columnOptions = [
     { value: "date", label: "Date" },
     { value: "description", label: "Description" },
     { value: "amount", label: "Amount" },
+    { value: "debit_amount", label: "Debit Amount" },
+    { value: "credit_amount", label: "Credit Amount" },
+    { value: "currency", label: "Currency" },
+    { value: "balance", label: "Balance" },
     { value: "category", label: "Category (optional)" },
     { value: "ignore", label: "Ignore" }
   ];
@@ -228,11 +211,15 @@ const ColumnMappingTable: React.FC<{
             <tbody>
               {analysis.preview_rows.map((row, rowIndex) => (
                 <tr key={rowIndex}>
-                  {originalColumns.map((column, colIndex) => (
-                    <td key={colIndex}>
-                      {row[column] !== null ? String(row[column]) : ''}
-                    </td>
-                  ))}
+                  {originalColumns.map((column, colIndex) => {
+                    // Ensure we're displaying the value at the correct index
+                    const value = colIndex < row.length ? row[colIndex] : '';
+                    return (
+                      <td key={colIndex} className={columnMappings[column] !== 'ignore' ? 'fw-bold' : ''}>
+                        {value}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
@@ -296,7 +283,8 @@ const UploadPage: React.FC = () => {
     skipped: number;
   } | null>(null);
 
-  const { mutate: uploadFile } = useFileUpload();
+  const { mutate: uploadFileMutation } = useFileUpload();
+  const { mutate: analyzeFileMutation, isPending: isAnalyzingMutation } = useFileAnalysis();
   const { data: sources, isLoading: isLoadingSources } = useSources();
 
   // Handle file selection
@@ -306,54 +294,102 @@ const UploadPage: React.FC = () => {
     setAnalysisResult(null);
     setUploadResult(null);
 
-    // Create form data for file upload
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
     try {
-      // Call the analyze endpoint
-      const response = await axios.post<FileAnalysisResponse>(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/transactions/analyze`,
-        formData
-      );
+      // Convert file to base64
+      const fileContent = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          // Remove the data:application/octet-stream;base64, prefix
+          const base64Content = base64.split(',')[1];
+          resolve(base64Content);
+        };
+        reader.readAsDataURL(selectedFile);
+      });
 
-      setAnalysisResult(response.data);
+      // Call the analyze endpoint using the mutation
+      analyzeFileMutation(
+        { fileContent, fileName: selectedFile.name },
+        {
+          onSuccess: (data) => {
+            setAnalysisResult(data);
 
-      // Initialize column mappings from the response
-      const initialMappings: Record<string, string> = {};
-      if (response.data.preview_rows.length > 0) {
-        const columns = Object.keys(response.data.preview_rows[0]);
+            // Initialize column mappings from the response
+            const initialMappings: Record<string, string> = {};
 
-        // Map columns based on the analysis response
-        const columnMap = response.data.column_mappings;
-        for (const column of columns) {
-          if (column === columnMap.date) {
-            initialMappings[column] = 'date';
-          } else if (column === columnMap.description) {
-            initialMappings[column] = 'description';
-          } else if (column === columnMap.amount) {
-            initialMappings[column] = 'amount';
-          } else {
-            initialMappings[column] = 'ignore';
+            // Use the column_names from the statement schema
+            const columnNames = data.statement_schema.column_names;
+
+            // Map columns based on the analysis response
+            const columnMap = data.statement_schema.column_mapping;
+
+            // For debugging
+            console.log('Column Names:', columnNames);
+            console.log('Column Map:', columnMap);
+
+            // Initialize all columns to 'ignore' by default
+            for (const column of columnNames) {
+              initialMappings[column] = 'ignore';
+            }
+
+            // Set mappings based on exact matches with column_map values
+            if (columnMap.date && columnNames.includes(columnMap.date)) {
+              initialMappings[columnMap.date] = 'date';
+            }
+
+            if (columnMap.description && columnNames.includes(columnMap.description)) {
+              initialMappings[columnMap.description] = 'description';
+            }
+
+            if (columnMap.amount && columnNames.includes(columnMap.amount)) {
+              initialMappings[columnMap.amount] = 'amount';
+            }
+
+            if (columnMap.debit_amount && columnNames.includes(columnMap.debit_amount)) {
+              initialMappings[columnMap.debit_amount] = 'debit_amount';
+            }
+
+            if (columnMap.credit_amount && columnNames.includes(columnMap.credit_amount)) {
+              initialMappings[columnMap.credit_amount] = 'credit_amount';
+            }
+
+            if (columnMap.currency && columnNames.includes(columnMap.currency)) {
+              initialMappings[columnMap.currency] = 'currency';
+            }
+
+            if (columnMap.balance && columnNames.includes(columnMap.balance)) {
+              initialMappings[columnMap.balance] = 'balance';
+            }
+
+            console.log('Initial Mappings:', initialMappings);
+
+            setColumnMappings(initialMappings);
+            setStartRow(data.statement_schema.start_row);
+            setIsAnalyzing(false);
+          },
+          onError: (error) => {
+            console.error('Error analyzing file:', error);
+            setUploadResult({
+              success: false,
+              message: 'Error analyzing file. Please try again.',
+              processed: 0,
+              skipped: 0,
+            });
+            setIsAnalyzing(false);
           }
         }
-      }
-
-      setColumnMappings(initialMappings);
-      setStartRow(response.data.start_row);
-
+      );
     } catch (error) {
-      console.error('Error analyzing file:', error);
+      console.error('Error preparing file for analysis:', error);
       setUploadResult({
         success: false,
-        message: 'Error analyzing file. Please try again.',
+        message: 'Error preparing file for analysis. Please try again.',
         processed: 0,
         skipped: 0,
       });
-    } finally {
       setIsAnalyzing(false);
     }
-  }, []);
+  }, [analyzeFileMutation]);
 
   // Handle column mapping change
   const handleColumnMappingChange = useCallback((columnName: string, mappingType: string) => {
@@ -377,13 +413,18 @@ const UploadPage: React.FC = () => {
 
   // Check if mappings are valid
   const isMappingValid = useCallback(() => {
+    if (!columnMappings) {
+      return false;
+    }
+
     const mappingValues = Object.values(columnMappings);
     return (
       mappingValues.includes('date') &&
       mappingValues.includes('description') &&
-      mappingValues.includes('amount')
+      mappingValues.includes('amount') &&
+      sourceId !== undefined // Require source selection
     );
-  }, [columnMappings]);
+  }, [columnMappings, sourceId]);
 
   // Handle final upload
   const handleFinalUpload = useCallback(async () => {
@@ -393,18 +434,24 @@ const UploadPage: React.FC = () => {
 
     setIsUploading(true);
 
-    // Create form data for file upload
-    const formData = new FormData();
-    formData.append('file', file);
-    if (sourceId) {
-      formData.append('source_id', sourceId.toString());
-    }
+    // Create a copy of the statement schema with the updated start_row
+    const updatedSchema = {
+      ...analysisResult.statement_schema,
+      start_row: startRow, // Use the current startRow value from the UI
+      source_id: sourceId || analysisResult.statement_schema.source_id
+    };
 
-    // TODO: In a real implementation, we would also send the column mappings
-    // and start row to the backend for processing
+    // Create the request payload with the updated structure
+    const payload = {
+      sourceId: sourceId || null,
+      statementSchema: updatedSchema,
+      statement_id: analysisResult.file_id // Include the file_id from the analysis result
+    };
 
-    uploadFile(
-      { file, sourceId },
+    console.log('Upload payload:', payload);
+
+    uploadFileMutation(
+      payload,
       {
         onSuccess: (data) => {
           setUploadResult({
@@ -429,7 +476,7 @@ const UploadPage: React.FC = () => {
         }
       }
     );
-  }, [file, analysisResult, sourceId, uploadFile, isMappingValid]);
+  }, [file, analysisResult, sourceId, uploadFileMutation, isMappingValid, startRow]);
 
   // Reset the form
   const handleReset = useCallback(() => {
@@ -455,19 +502,26 @@ const UploadPage: React.FC = () => {
           <AnalysisSummary analysis={analysisResult} />
 
           <Form.Group className="mb-4">
-            <Form.Label>Source</Form.Label>
+            <Form.Label>Source <span className="text-danger">*</span></Form.Label>
             <Form.Select
               value={sourceId || ''}
               onChange={handleSourceChange}
               disabled={isLoadingSources}
+              isInvalid={analysisResult && !sourceId}
+              required
             >
-              <option value="">Select a source (optional)</option>
+              <option value="">Select a source</option>
               {sources?.map((source) => (
                 <option key={source.id} value={source.id}>
                   {source.name}
                 </option>
               ))}
             </Form.Select>
+            {!sourceId && (
+              <Form.Control.Feedback type="invalid">
+                Please select a source. This is required to upload the statement.
+              </Form.Control.Feedback>
+            )}
             <Form.Text className="text-muted">
               Select the bank or financial institution this statement is from
             </Form.Text>

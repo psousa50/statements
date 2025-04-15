@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Transaction, Category, Source, FileUploadResponse } from '../types';
+import { Transaction, Category, Source, FileUploadResponse, StatementSchema, FileAnalysisResponse } from '../types';
 
 const API_URL = 'http://localhost:8000';
 
@@ -23,12 +23,12 @@ export const transactionsApi = {
     const response = await api.get('/transactions', { params });
     return response.data;
   },
-  
+
   getById: async (id: number): Promise<Transaction> => {
     const response = await api.get(`/transactions/${id}`);
     return response.data;
   },
-  
+
   updateCategory: async (transactionId: number, categoryId: number): Promise<Transaction> => {
     const response = await api.patch(`/transactions/${transactionId}`, {
       category_id: categoryId
@@ -42,12 +42,12 @@ export const categoriesApi = {
     const response = await api.get('/categories');
     return response.data;
   },
-  
+
   getById: async (id: number): Promise<Category> => {
     const response = await api.get(`/categories/${id}`);
     return response.data;
   },
-  
+
   create: async (category: { category_name: string; parent_category_id?: number | null }): Promise<Category> => {
     const response = await api.post('/categories', category);
     return response.data;
@@ -59,22 +59,22 @@ export const sourcesApi = {
     const response = await api.get('/sources', { params });
     return response.data;
   },
-  
+
   getById: async (id: number): Promise<Source> => {
     const response = await api.get(`/sources/${id}`);
     return response.data;
   },
-  
+
   create: async (source: { name: string; description?: string }): Promise<Source> => {
     const response = await api.post('/sources', source);
     return response.data;
   },
-  
+
   update: async (id: number, source: { name: string; description?: string }): Promise<Source> => {
     const response = await api.put(`/sources/${id}`, source);
     return response.data;
   },
-  
+
   delete: async (id: number): Promise<Source> => {
     const response = await api.delete(`/sources/${id}`);
     return response.data;
@@ -82,22 +82,45 @@ export const sourcesApi = {
 };
 
 export const uploadApi = {
-  uploadFile: async (file: File, sourceId?: number): Promise<FileUploadResponse> => {
-    const formData = new FormData();
-    formData.append('file', file);
+  uploadFile: async (
+    sourceId?: number,
+    statementSchema?: StatementSchema,
+    statement_id?: string
+  ): Promise<FileUploadResponse> => {
+    // Create the request body with just the statement schema
+    const body = {
+      statement_id: statement_id, // Use the explicitly provided statement_id
+      statement_schema: statementSchema
+    };
     
     // Build the URL with query parameter if sourceId exists
-    const url = sourceId ? `/transactions/upload/?source_id=${sourceId}` : '/transactions/upload/';
+    const url = sourceId ? `/transactions/upload?source_id=${sourceId}` : '/transactions/upload';
     console.log('Upload URL with query param:', url);
+    console.log('Upload payload:', body);
     
-    const response = await api.post(url, formData, {
+    const response = await api.post(url, body, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json',
       },
     });
     
     return response.data;
   },
+  
+  analyzeFile: async (fileContent: string, fileName: string): Promise<FileAnalysisResponse> => {
+    const body = {
+      file_content: fileContent,
+      file_name: fileName
+    };
+    
+    const response = await api.post('/transactions/analyze', body, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    return response.data;
+  }
 };
 
 export default api;

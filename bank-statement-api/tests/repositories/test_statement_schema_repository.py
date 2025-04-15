@@ -20,16 +20,18 @@ class TestStatementSchemaRepository:
         
         # Test data
         schema_data = {
-            "column_hash": "abc123",
-            "column_mapping": {
-                "date": "Date",
-                "description": "Description",
-                "amount": "Amount",
-                "currency": "Currency",
-                "balance": "Balance"
-            },
-            "file_type": FileType.CSV,
-            "source_id": 1
+            "statement_hash": "abc123",
+            "schema_data": {
+                "column_mapping": {
+                    "date": "Date",
+                    "description": "Description",
+                    "amount": "Amount",
+                    "currency": "Currency",
+                    "balance": "Balance"
+                },
+                "file_type": FileType.CSV.name,
+                "source_id": 1
+            }
         }
         
         # Act
@@ -45,54 +47,51 @@ class TestStatementSchemaRepository:
         # Verify the schema was created with correct attributes
         schema = session.add.call_args[0][0]
         assert isinstance(schema, StatementSchema)
-        assert schema.column_hash == schema_data["column_hash"]
-        assert schema.column_mapping == schema_data["column_mapping"]
-        assert schema.file_type == schema_data["file_type"].name
-        assert schema.source_id == schema_data["source_id"]
+        assert schema.statement_hash == schema_data["statement_hash"]
+        assert schema.schema_data == schema_data["schema_data"]
         assert schema.id is not None
     
-    def test_find_by_column_hash(self):
+    def test_find_by_statement_hash(self):
         # Arrange
         # Mock session
         session = MagicMock(spec=Session)
         
-        # Create mock schema
-        schema_id = str(uuid.uuid4())
-        mock_schema = MagicMock(spec=StatementSchema)
-        mock_schema.id = schema_id
-        mock_schema.column_hash = "abc123"
-        mock_schema.column_mapping = {
-            "date": "Date",
-            "description": "Description",
-            "amount": "Amount",
-            "currency": "Currency",
-            "balance": "Balance"
+        # Mock schema
+        schema = MagicMock(spec=StatementSchema)
+        schema.id = str(uuid.uuid4())
+        schema.statement_hash = "abc123"
+        schema.schema_data = {
+            "column_mapping": {
+                "date": "Date",
+                "description": "Description",
+                "amount": "Amount",
+                "currency": "Currency",
+                "balance": "Balance"
+            },
+            "file_type": FileType.CSV.name,
+            "source_id": 1
         }
-        mock_schema.file_type = "CSV"
-        mock_schema.source_id = 1
         
         # Configure session to return the mock schema
-        session.query.return_value.filter.return_value.first.return_value = mock_schema
+        session.query.return_value.filter.return_value.first.return_value = schema
         
         # Create repository
         repository = StatementSchemaRepository(session)
         
         # Act
-        result = repository.find_by_column_hash("abc123")
+        result = repository.find_by_statement_hash("abc123")
         
         # Assert
         assert result is not None
-        assert result.id == schema_id
-        assert result.column_hash == mock_schema.column_hash
-        assert result.column_mapping == mock_schema.column_mapping
-        assert result.file_type == mock_schema.file_type
-        assert result.source_id == mock_schema.source_id
+        assert result.id == schema.id
+        assert result.statement_hash == schema.statement_hash
+        assert result.schema_data == schema.schema_data
         
         # Verify session interactions
         session.query.assert_called_once_with(StatementSchema)
         session.query.return_value.filter.assert_called_once()
     
-    def test_find_by_column_hash_not_found(self):
+    def test_find_by_statement_hash_not_found(self):
         # Arrange
         # Mock session
         session = MagicMock(spec=Session)
@@ -104,7 +103,7 @@ class TestStatementSchemaRepository:
         repository = StatementSchemaRepository(session)
         
         # Act
-        result = repository.find_by_column_hash("nonexistent")
+        result = repository.find_by_statement_hash("nonexistent")
         
         # Assert
         assert result is None

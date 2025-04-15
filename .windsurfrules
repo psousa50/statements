@@ -1,1 +1,2 @@
 1. Always activate virtual environment in ".venv" folder before running Python commands. The .venv folder is in the root of the project.
+2. This project use Alembic for database migrations. The migrations are in the "migrations" folder.

@@ -79,20 +79,47 @@ class ColumnMapping(BaseModel):
     balance: Optional[str] = ""
 
 
-class FileAnalysisResponse(BaseModel):
+class StatementSchema(BaseModel):
+    id: str
     source_id: Optional[int] = None
+    file_type: str
+    column_mapping: ColumnMapping
+    start_row: int = 1
+    header_row: int = 0
+    column_names: List[str] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FileAnalysisResponse(BaseModel):
+    statement_schema: StatementSchema
+    preview_rows: List[List[str]] = []
     total_transactions: int
     total_amount: float
     date_range_start: Optional[date] = None
     date_range_end: Optional[date] = None
-    column_mappings: ColumnMapping
-    start_row: int
     file_id: str
-    preview_rows: List[dict] = []
 
 
 class UploadFileSpec(BaseModel):
     statement_id: str
-    column_mapping: ColumnMapping
-    source_id: int
-    start_row: int = 1
+    statement_schema: StatementSchema
+
+    # For backward compatibility
+    @property
+    def column_mapping(self) -> ColumnMapping:
+        return self.statement_schema.column_mapping
+
+    @property
+    def source_id(self) -> Optional[int]:
+        return self.statement_schema.source_id
+
+    # For backward compatibility with code that uses schema
+    @property
+    def schema(self) -> StatementSchema:
+        return self.statement_schema
+
+    # For backward compatibility with code that uses start_row
+    @property
+    def start_row(self) -> int:
+        return self.statement_schema.start_row

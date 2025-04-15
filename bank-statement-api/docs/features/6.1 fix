@@ -1,0 +1,6 @@
+A few things to change:
+
+1. The column_hash column in statement_schema tableshould be called statement_hash
+2, it should be build with the columns names of the statement and the file type
+3. The statement_schema table should have only the statement_hash column and a json column with the StatementSchema 
+4. It looks like upload_file_service and file_analysis_service contains some dummy classes, like StatementRepository and TransactionsRepository

@@ -1,36 +1,30 @@
 import hashlib
 import logging
+import uuid
 from typing import Dict, List, Optional
 
 import pandas as pd
 
-from src.app.schemas import ColumnMapping, FileAnalysisResponse
+from src.app.schemas import ColumnMapping, FileAnalysisResponse, StatementSchema
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 from src.app.services.file_processing.conversion_model import ConversionModel
-from src.app.services.file_processing.file_type_detector import FileType, FileTypeDetector
-from src.app.services.file_processing.statement_statistics_calculator import StatementStatisticsCalculator
-from src.app.services.file_processing.transactions_builder import StatementTransaction, TransactionsBuilder
+from src.app.services.file_processing.file_type_detector import (
+    FileType,
+    FileTypeDetector,
+)
+from src.app.services.file_processing.statement_statistics_calculator import (
+    StatementStatisticsCalculator,
+)
+from src.app.services.file_processing.transactions_builder import (
+    StatementTransaction,
+    TransactionsBuilder,
+)
 from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
+from src.app.repositories.statement_schema_repository import StatementSchemaRepository
+from src.app.repositories.statement_repository import StatementRepository
+from src.app.services.file_processing.parsers.parser_factory import ParserFactory
 
 logger = logging.getLogger("app")
-
-
-class StatementSchemaRepository:
-    def find_by_column_hash(self, column_hash: str):
-        pass
-
-    def save(self, schema):
-        pass
-
-
-class StatementRepository:
-    def save(self, file_content: bytes, file_name: str) -> str:
-        pass
-
-
-class ParserFactory:
-    def create_parser(self, file_type: FileType):
-        pass
 
 
 class FileAnalysisService:
@@ -56,69 +50,129 @@ class FileAnalysisService:
 
     def analyze_file(self, file_content: bytes, file_name: str) -> FileAnalysisResponse:
         try:
-            # Step 1: Save the uploaded file to the database
             statement_id = self.statement_repository.save(file_content, file_name)
-            
-            # Step 2: Detect file type and parse the file
+
             file_type = self.file_type_detector.detect_file_type(file_name)
             parser = self.parser_factory.create_parser(file_type)
             df = parser.parse(file_content)
-            
-            # Step 3: Normalize columns
+
             conversion_model = self.column_normalizer.normalize_columns(df)
-            
-            # Step 4: Calculate column hash
-            column_hash = self._calculate_column_hash(df.columns.tolist())
-            
-            # Step 5: Look for existing schema
-            existing_schema = self.statement_schema_repository.find_by_column_hash(column_hash)
+
+            statement_hash = self._calculate_statement_hash(
+                df.columns.tolist(), file_type
+            )
+
+            existing_schema = self.statement_schema_repository.find_by_statement_hash(
+                statement_hash
+            )
             source_id = None
-            
+
             if existing_schema:
-                # Use existing schema
-                source_id = existing_schema.source_id
+                schema_data = existing_schema.schema_data
+
+                file_type_value = schema_data.get("file_type")
+                if isinstance(file_type_value, int):
+                    try:
+                        file_type_str = FileType(file_type_value).name
+                    except ValueError:
+                        file_type_str = str(file_type_value)
+                else:
+                    file_type_str = str(file_type_value)
+
+                statement_schema = StatementSchema(
+                    id=existing_schema.id,
+                    source_id=schema_data.get("source_id"),
+                    file_type=file_type_str,
+                    column_mapping=ColumnMapping(
+                        **schema_data.get("column_mapping", {})
+                    ),
+                    start_row=schema_data.get("start_row", 1),
+                    header_row=schema_data.get("header_row", 0),
+                    column_names=schema_data.get("column_names", []),
+                )
+                source_id = schema_data.get("source_id")
             else:
-                # Create new schema if none exists
-                self.statement_schema_repository.save({
-                    "column_hash": column_hash,
+                column_names = (
+                    df.columns.tolist()
+                    if conversion_model.header_row == 0
+                    else df.iloc[conversion_model.header_row].tolist()
+                )
+
+                column_names = [str(col) for col in column_names]
+
+                schema_id = str(uuid.uuid4())
+                statement_schema = StatementSchema(
+                    id=schema_id,
+                    source_id=source_id,
+                    file_type=file_type.name,
+                    column_mapping=ColumnMapping(**conversion_model.column_map),
+                    start_row=conversion_model.start_row,
+                    header_row=conversion_model.header_row,
+                    column_names=column_names,
+                )
+
+                schema_data = {
+                    "id": schema_id,
+                    "source_id": source_id,
+                    "file_type": file_type.name,
                     "column_mapping": conversion_model.column_map,
-                    "file_type": file_type,
-                })
-            
-            # Step 6: Clean transactions
+                    "start_row": conversion_model.start_row,
+                    "header_row": conversion_model.header_row,
+                    "column_names": column_names,
+                }
+
+                self.statement_schema_repository.save(
+                    {
+                        "id": schema_id,
+                        "statement_hash": statement_hash,
+                        "schema_data": schema_data,
+                        "statement_id": statement_id,
+                    }
+                )
+
             cleaned_df = self.transaction_cleaner.clean(df, conversion_model)
-            
-            # Step 7: Build transactions
+
             transactions = self.transactions_builder.build_transactions(cleaned_df)
-            
-            # Step 8: Calculate statistics
+
             statistics = self.statistics_calculator.calc_statistics(transactions)
-            
-            # Step 9: Prepare preview rows (first 10)
-            preview_rows = self._prepare_preview_rows(transactions[:10])
-            
-            # Step 10: Create response
+
+            preview_df = df.iloc[:8]
+
+            preview_rows = []
+            column_names = df.columns.tolist()
+            for _, row in preview_df.iterrows():
+                row_values = []
+                for col in column_names:
+                    value = row[col]
+                    if pd.isna(value):
+                        row_values.append("")
+                    else:
+                        row_values.append(str(value))
+                preview_rows.append(row_values)
+
             response = FileAnalysisResponse(
-                source_id=source_id,
+                statement_schema=statement_schema,
                 total_transactions=statistics.total_transactions,
                 total_amount=float(statistics.total_amount),
                 date_range_start=statistics.date_range_start,
                 date_range_end=statistics.date_range_end,
-                column_mappings=ColumnMapping(**conversion_model.column_map),
-                start_row=conversion_model.start_row,
                 file_id=statement_id,
+                start_row=conversion_model.start_row,
                 preview_rows=preview_rows,
             )
-            
+
             return response
-            
+
         except Exception as e:
             logger.error(f"Error analyzing file: {str(e)}")
             raise ValueError(f"Error analyzing file: {str(e)}")
-    
-    def _calculate_column_hash(self, columns: List[str]) -> str:
+
+    def _calculate_statement_hash(self, columns: List[str], file_type: FileType) -> str:
         columns_str = ",".join(sorted(columns))
-        return hashlib.sha256(columns_str.encode()).hexdigest()
-    
-    def _prepare_preview_rows(self, transactions: List[StatementTransaction]) -> List[Dict]:
+        hash_input = f"{columns_str}|{file_type.name}"
+        return hashlib.sha256(hash_input.encode()).hexdigest()
+
+    def _prepare_preview_rows(
+        self, transactions: List[StatementTransaction]
+    ) -> List[Dict]:
         return [transaction.model_dump() for transaction in transactions]

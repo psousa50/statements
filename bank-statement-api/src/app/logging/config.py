@@ -1,8 +1,6 @@
 import logging.config
 import os
 
-from .dynamic_file_handler import DynamicContentFileHandler
-
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -31,7 +29,7 @@ LOGGING_CONFIG = {
     },
     "loggers": {
         "app.llm.big": {"handlers": ["big_file"], "level": "DEBUG", "propagate": False},
-        "app": {"handlers": ["console", "file"], "level": "INFO", "propagate": True},
+        "app": {"handlers": ["console", "file"], "level": "DEBUG", "propagate": True},
     },
 }
 

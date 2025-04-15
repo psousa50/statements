@@ -149,6 +149,7 @@ class App:
             transaction_uploader=transaction_uploader,
             file_analysis_service=file_analysis_service,
             upload_file_service=upload_file_service,
+            statement_repository=self.statement_repository,
         )
         categorization_router = CategorizationRouter(
             transactions_repository=self.transactions_repository,

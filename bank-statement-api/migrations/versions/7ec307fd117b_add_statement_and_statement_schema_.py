@@ -30,11 +30,15 @@ def upgrade() -> None:
     
     op.create_table(
         'statement_schemas',
-        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('id', sa.String(), nullable=False),
+        sa.Column('statement_id', sa.String(), nullable=True),
         sa.Column('column_hash', sa.String(), nullable=False),
-        sa.Column('file_type', sa.String(), nullable=False),
         sa.Column('column_mapping', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+        sa.Column('file_type', sa.String(), nullable=False),
+        sa.Column('source_id', sa.Integer(), nullable=True),
         sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+        sa.ForeignKeyConstraint(['source_id'], ['sources.id'], ),
+        sa.ForeignKeyConstraint(['statement_id'], ['statements.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_statement_schemas_column_hash'), 'statement_schemas', ['column_hash'], unique=True)

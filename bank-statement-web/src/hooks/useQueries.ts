@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsApi, categoriesApi, sourcesApi, uploadApi } from '../api/api';
-import type { FileUploadResponse, Transaction } from '../types';
+import type { FileUploadResponse, Transaction, StatementSchema, FileAnalysisResponse } from '../types';
 
 // Transaction queries
 export const useTransactions = (params?: {
@@ -44,9 +44,9 @@ export const useCategory = (id: number) => {
 
 export const useCreateCategory = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (category: { category_name: string; parent_category_id?: number | null }) => 
+    mutationFn: (category: { category_name: string; parent_category_id?: number | null }) =>
       categoriesApi.create(category),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -72,9 +72,9 @@ export const useSource = (id: number) => {
 
 export const useCreateSource = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (source: { name: string; description?: string }) => 
+    mutationFn: (source: { name: string; description?: string }) =>
       sourcesApi.create(source),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sources'] });
@@ -84,9 +84,9 @@ export const useCreateSource = () => {
 
 export const useUpdateSource = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, source }: { id: number; source: { name: string; description?: string } }) => 
+    mutationFn: ({ id, source }: { id: number; source: { name: string; description?: string } }) =>
       sourcesApi.update(id, source),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sources'] });
@@ -96,7 +96,7 @@ export const useUpdateSource = () => {
 
 export const useDeleteSource = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id: number) => sourcesApi.delete(id),
     onSuccess: () => {
@@ -108,19 +108,19 @@ export const useDeleteSource = () => {
 // Transaction category update
 export const useUpdateTransactionCategory = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ transactionId, categoryId }: { transactionId: number; categoryId: number }) => 
+    mutationFn: ({ transactionId, categoryId }: { transactionId: number; categoryId: number }) =>
       transactionsApi.updateCategory(transactionId, categoryId),
     onSuccess: (updatedTransaction) => {
       // Invalidate the specific transaction query
       queryClient.invalidateQueries({ queryKey: ['transaction', updatedTransaction.id] });
-      
+
       // Update the transaction in the transactions list cache
       queryClient.setQueryData(['transactions'], (oldData: any) => {
         if (!oldData) return undefined;
-        
-        return oldData.map((transaction: Transaction) => 
+
+        return oldData.map((transaction: Transaction) =>
           transaction.id === updatedTransaction.id ? updatedTransaction : transaction
         );
       });
@@ -131,12 +131,33 @@ export const useUpdateTransactionCategory = () => {
 // File upload mutation
 export const useFileUpload = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ file, sourceId }: { file: File; sourceId?: number }): Promise<FileUploadResponse> => 
-      uploadApi.uploadFile(file, sourceId),
+    mutationFn: ({
+      sourceId,
+      statementSchema,
+      statement_id
+    }: {
+      sourceId?: number | null;
+      statementSchema?: StatementSchema;
+      statement_id?: string;
+    }): Promise<FileUploadResponse> =>
+      uploadApi.uploadFile(sourceId || undefined, statementSchema, statement_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
+  });
+};
+
+// File analysis mutation
+export const useFileAnalysis = () => {
+  return useMutation<FileAnalysisResponse, Error, {
+    fileContent: string;
+    fileName: string;
+  }>({
+    mutationFn: ({
+      fileContent,
+      fileName
+    }) => uploadApi.analyzeFile(fileContent, fileName)
   });
 };

@@ -1,9 +1,10 @@
 import json
 import logging
+import base64
 from datetime import date
 from typing import Callable, List, Optional
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
 
 from ..logging.utils import log_exception
@@ -16,7 +17,11 @@ from ..routes.transactions_upload import TransactionUploader
 from ..schemas import ColumnMapping, FileAnalysisResponse, FileUploadResponse
 from ..schemas import Transaction as TransactionSchema
 from ..services.file_processing.file_analysis_service import FileAnalysisService
-from ..services.file_processing.upload_file_service import UploadFileService, UploadFileSpec
+from ..services.file_processing.upload_file_service import (
+    UploadFileSpec,
+    UploadFileService,
+)
+from ..schemas import StatementSchema
 
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
@@ -29,6 +34,7 @@ class TransactionRouter:
         transaction_uploader: TransactionUploader,
         file_analysis_service: FileAnalysisService,
         upload_file_service: UploadFileService,
+        statement_repository,
         on_change_callback: Optional[Callable[[str, List[Transaction]], None]] = None,
     ):
         self.router = APIRouter(
@@ -39,6 +45,7 @@ class TransactionRouter:
         self.transaction_uploader = transaction_uploader
         self.file_analysis_service = file_analysis_service
         self.upload_file_service = upload_file_service
+        self.statement_repository = statement_repository
         self.on_change_callback = on_change_callback
 
         self.router.add_api_route(
@@ -129,22 +136,50 @@ class TransactionRouter:
 
     async def upload_file(
         self,
-        spec: UploadFileSpec,
+        request: Request,
         auto_categorize: bool = Query(
             False, description="Automatically trigger categorization after upload"
         ),
     ):
         try:
-            # Use the UploadFileService to process the file with the provided spec
-            result = self.upload_file_service.upload_file(spec)
+            body = await request.json()
+            statement_id = body.get("statement_id")
+            statement_schema_data = body.get("statement_schema")
             
-            # Trigger auto-categorization if requested
+            # Debug logging
+            logger = logging.getLogger("app")
+            logger.info(f"Received upload request with statement_id: {statement_id}")
+            logger.info(f"Statement schema data: {statement_schema_data}")
+
+            if not statement_id:
+                raise HTTPException(status_code=400, detail="statement_id is required")
+
+            # Check if statement exists
+            statement = self.statement_repository.get_by_id(statement_id)
+            if not statement:
+                logger.error(f"Statement with ID {statement_id} not found in database")
+                raise HTTPException(status_code=404, detail=f"Statement with ID {statement_id} not found")
+
+            schema_obj = None
+            if statement_schema_data:
+                schema_obj = StatementSchema(**statement_schema_data)
+
+            spec = UploadFileSpec(
+                statement_id=statement_id,
+                statement_schema=schema_obj,
+            )
+
+            result = self.upload_file_service.upload_file(spec)
+
             if auto_categorize and result.transactions_processed > 0:
                 from ..tasks.categorization import manually_trigger_categorization
+
                 task = manually_trigger_categorization(batch_size=100)
                 result.categorization_task_id = task.id
-                result.message = "File processed successfully and categorization triggered"
-            
+                result.message = (
+                    "File processed successfully and categorization triggered"
+                )
+
             return result
         except Exception as e:
             log_exception(f"Error processing file: {str(e)}")
@@ -154,22 +189,24 @@ class TransactionRouter:
 
     async def analyze_file(
         self,
-        file: UploadFile = File(...),
+        request: Request,
     ):
-        file_content = await file.read()
-        filename = file.filename
-
         try:
-            # Use the FileAnalysisService to analyze the file
+            body = await request.json()
+            file_content = base64.b64decode(body.get("file_content", ""))
+            filename = body.get("file_name", "")
+
             response = self.file_analysis_service.analyze_file(file_content, filename)
-            
+
             logger_content.debug(
                 jsonable_encoder(response),
-                extra={"prefix": "file_analysis_service.analyze_file.response", "ext": "json"},
+                extra={
+                    "prefix": "file_analysis_service.analyze_file.response",
+                    "ext": "json",
+                },
             )
 
             return response
-
         except Exception as e:
             log_exception(f"Error analyzing file: {str(e)}")
             raise HTTPException(

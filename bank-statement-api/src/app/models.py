@@ -93,11 +93,8 @@ class StatementSchema(Base):
     
     id = Column(String, primary_key=True, index=True)
     statement_id = Column(String, ForeignKey("statements.id"), nullable=True)
-    column_hash = Column(String, unique=True, index=True)
-    column_mapping = Column(JSON, nullable=False)
-    file_type = Column(String, nullable=False)
-    source_id = Column(Integer, ForeignKey("sources.id"), nullable=True)
+    statement_hash = Column(String, unique=True, index=True)
+    schema_data = Column(JSON, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     
     statement = relationship("Statement", back_populates="schema")
-    source = relationship("Source")
