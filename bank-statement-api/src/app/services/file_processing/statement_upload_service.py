@@ -1,8 +1,11 @@
+import json
 import logging
 from typing import List, Optional
+from fastapi.encoders import jsonable_encoder
 
 from src.app.repositories.statement_repository import StatementRepository
 from src.app.repositories.transactions_repository import TransactionsRepository
+from src.app.repositories.statement_schema_repository import StatementSchemaRepository
 from src.app.schemas import (
     ColumnMapping,
     FileUploadResponse,
@@ -18,6 +21,7 @@ from src.app.services.file_processing.transactions_builder import (
 )
 from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
 
+logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
 
 
@@ -29,12 +33,14 @@ class StatementUploadService:
         transactions_builder: TransactionsBuilder,
         statement_repository: StatementRepository,
         transactions_repository: TransactionsRepository,
+        statement_schema_repository: StatementSchemaRepository,
     ):
         self.parser_factory = parser_factory
         self.transaction_cleaner = transaction_cleaner
         self.transactions_builder = transactions_builder
         self.statement_repository = statement_repository
         self.transactions_repository = transactions_repository
+        self.statement_schema_repository = statement_schema_repository
 
     def upload_statement(self, spec: UploadFileSpec) -> FileUploadResponse:
         try:
@@ -75,6 +81,27 @@ class StatementUploadService:
             )
             created_transactions = self.transactions_repository.create_many(
                 transaction_creates
+            )
+
+            logger_content.debug(
+                jsonable_encoder(spec.statement_schema),
+                extra={
+                    "prefix": "statement_upload_service.upload_statement.statement_schema",
+                    "ext": "json",
+                },
+            )
+
+            # Prepare the schema data in the format expected by the repository
+            schema_data = {
+                "id": spec.statement_schema.id,
+                "statement_hash": spec.statement_schema.statement_hash,
+                "schema_data": jsonable_encoder(spec.statement_schema),
+                "statement_id": spec.statement_id
+            }
+
+            # Update the schema
+            self.statement_schema_repository.update(
+                spec.statement_schema.id, schema_data
             )
 
             response = FileUploadResponse(

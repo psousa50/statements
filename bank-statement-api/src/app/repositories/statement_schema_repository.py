@@ -50,18 +50,13 @@ class StatementSchemaRepository:
             .all()
         )
 
-    def update(self, schema_id: str, schema_data: Dict) -> Optional[StatementSchema]:
-        schema = self.get_by_id(schema_id)
+    def update(self, statement_id: str, schema_data: Dict) -> Optional[StatementSchema]:
+        schema = self.get_by_id(statement_id)
 
         if not schema:
             return None
 
-        if "schema" in schema_data:
-            schema.schema_data = schema_data["schema"]
-
-        if "statement_id" in schema_data:
-            schema.statement_id = schema_data["statement_id"]
-
+        schema.schema_data = schema_data["schema_data"]
         self.db.commit()
 
         return schema

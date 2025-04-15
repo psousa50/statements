@@ -121,6 +121,7 @@ class App:
             transactions_builder=transactions_builder,
             statement_repository=self.statement_repository,
             transactions_repository=self.transactions_repository,
+            statement_schema_repository=self.statement_schema_repository,
         )
         transaction_router = TransactionRouter(
             transactions_repository=self.transactions_repository,

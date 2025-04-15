@@ -83,42 +83,36 @@ export const sourcesApi = {
 
 export const uploadApi = {
   uploadFile: async (
-    sourceId?: number,
     statementSchema?: StatementSchema,
     statement_id?: string
   ): Promise<FileUploadResponse> => {
     // Create the request body with just the statement schema
     const body = {
-      statement_id: statement_id, // Use the explicitly provided statement_id
+      statement_id: statement_id,
       statement_schema: statementSchema
     };
-    
-    // Build the URL with query parameter if sourceId exists
-    const url = sourceId ? `/transactions/upload?source_id=${sourceId}` : '/transactions/upload';
-    console.log('Upload URL with query param:', url);
-    console.log('Upload payload:', body);
-    
-    const response = await api.post(url, body, {
+
+    const response = await api.post('/transactions/upload', body, {
       headers: {
         'Content-Type': 'application/json',
       },
     });
-    
+
     return response.data;
   },
-  
+
   analyzeFile: async (fileContent: string, fileName: string): Promise<FileAnalysisResponse> => {
     const body = {
       file_content: fileContent,
       file_name: fileName
     };
-    
+
     const response = await api.post('/transactions/analyze', body, {
       headers: {
         'Content-Type': 'application/json'
       }
     });
-    
+
     return response.data;
   }
 };

@@ -137,7 +137,7 @@ class StatementAnalysisService:
 
             statistics = self.statistics_calculator.calc_statistics(transactions)
 
-            preview_df = df.iloc[:8]
+            preview_df = df.iloc[:10]
 
             preview_rows = []
             column_names = df.columns.tolist()

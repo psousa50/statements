@@ -147,7 +147,9 @@ const ColumnMappingTable: React.FC<{
   onColumnMappingChange: (columnName: string, mappingType: string) => void;
   startRow: number;
   onStartRowChange: (startRow: number) => void;
-}> = ({ analysis, columnMappings, onColumnMappingChange, startRow, onStartRowChange }) => {
+  headerRow: number;
+  onHeaderRowChange: (headerRow: number) => void;
+}> = ({ analysis, columnMappings, onColumnMappingChange, startRow, onStartRowChange, headerRow, onHeaderRowChange }) => {
   // Use column_names from the statement schema if available, otherwise fall back to preview rows
   const originalColumns = analysis.statement_schema.column_names.length > 0
     ? analysis.statement_schema.column_names
@@ -172,28 +174,42 @@ const ColumnMappingTable: React.FC<{
     <Card className="mb-4">
       <Card.Header className="d-flex justify-content-between align-items-center">
         <h5 className="mb-0">Column Mapping</h5>
-        <Form.Group className="mb-0 d-flex align-items-center">
-          <Form.Label className="me-2 mb-0">Data starts at row:</Form.Label>
-          <Form.Control
-            type="number"
-            min="0"
-            value={startRow}
-            onChange={(e) => onStartRowChange(parseInt(e.target.value))}
-            style={{ width: '80px' }}
-          />
-        </Form.Group>
+        <div className="d-flex gap-3">
+          <Form.Group className="mb-0 d-flex align-items-center">
+            <Form.Label className="me-2 mb-0">Header row:</Form.Label>
+            <Form.Control
+              type="number"
+              min="0"
+              value={headerRow}
+              onChange={(e) => onHeaderRowChange(parseInt(e.target.value))}
+              style={{ width: '80px' }}
+            />
+          </Form.Group>
+          <Form.Group className="mb-0 d-flex align-items-center">
+            <Form.Label className="me-2 mb-0">Data starts at row:</Form.Label>
+            <Form.Control
+              type="number"
+              min="0"
+              value={startRow}
+              onChange={(e) => onStartRowChange(parseInt(e.target.value))}
+              style={{ width: '80px' }}
+            />
+          </Form.Group>
+        </div>
       </Card.Header>
       <Card.Body className="p-0">
         <div className="table-responsive">
           <Table bordered hover>
             <thead>
               <tr>
+                <th style={{ width: '60px' }} className="text-center">Row</th>
                 {originalColumns.map((column, index) => (
-                  <th key={index} className="text-center">
+                  <th key={index} className={`text-center ${columnMappings[column] !== 'ignore' ? 'bg-info bg-opacity-25 fw-bold' : ''}`}>
                     <Form.Select
                       size="sm"
                       value={columnMappings[column] || 'ignore'}
                       onChange={(e) => onColumnMappingChange(column, e.target.value)}
+                      className={columnMappings[column] !== 'ignore' ? 'border-primary' : ''}
                     >
                       {columnOptions.map(option => (
                         <option key={option.value} value={option.value}>
@@ -201,7 +217,7 @@ const ColumnMappingTable: React.FC<{
                         </option>
                       ))}
                     </Form.Select>
-                    <Badge bg="secondary" className="mt-2 d-block">
+                    <Badge bg={columnMappings[column] !== 'ignore' ? 'primary' : 'secondary'} className="mt-2 d-block">
                       {column}
                     </Badge>
                   </th>
@@ -209,19 +225,48 @@ const ColumnMappingTable: React.FC<{
               </tr>
             </thead>
             <tbody>
-              {analysis.preview_rows.map((row, rowIndex) => (
-                <tr key={rowIndex}>
-                  {originalColumns.map((column, colIndex) => {
-                    // Ensure we're displaying the value at the correct index
-                    const value = colIndex < row.length ? row[colIndex] : '';
-                    return (
-                      <td key={colIndex} className={columnMappings[column] !== 'ignore' ? 'fw-bold' : ''}>
-                        {value}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+              {analysis.preview_rows.map((row, rowIndex) => {
+                const isSpecialRow = rowIndex === headerRow || rowIndex === startRow;
+                return (
+                  <tr key={rowIndex}>
+                    <td className={`text-center align-middle ${isSpecialRow ? 'bg-info bg-opacity-25' : ''}`}>
+                      <div className="d-flex flex-row gap-2 justify-content-center">
+                        <Form.Check
+                          type="radio"
+                          name="headerRow"
+                          id={`header-row-${rowIndex}`}
+                          checked={rowIndex === headerRow}
+                          onChange={() => onHeaderRowChange(rowIndex)}
+                          label="H"
+                          title="Set as header row"
+                        />
+                        <Form.Check
+                          type="radio"
+                          name="startRow"
+                          id={`start-row-${rowIndex}`}
+                          checked={rowIndex === startRow}
+                          onChange={() => onStartRowChange(rowIndex)}
+                          label="D"
+                          title="Set as data start row"
+                        />
+                      </div>
+                    </td>
+                    {originalColumns.map((column, colIndex) => {
+                      // Ensure we're displaying the value at the correct index
+                      const value = colIndex < row.length ? row[colIndex] : '';
+                      const isAssignedColumn = columnMappings[column] !== 'ignore';
+                      return (
+                        <td
+                          key={colIndex}
+                          className={`${isSpecialRow ? 'bg-info bg-opacity-25' : isAssignedColumn ? 'bg-info bg-opacity-10' : ''} ${isAssignedColumn ? 'fw-bold' : ''}`}
+                        >
+                          {value}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                )
+              })}
             </tbody>
           </Table>
         </div>
@@ -249,7 +294,9 @@ const ValidationMessages: React.FC<{
     );
   }
 
-  return (
+  const hasIssues = !hasDateColumn || !hasDescriptionColumn || !hasAmountColumn;
+
+  return hasIssues ? (
     <Alert variant="warning" className="mb-4">
       <Alert.Heading>Please Fix the Following Issues:</Alert.Heading>
       <ul className="mb-0">
@@ -264,7 +311,7 @@ const ValidationMessages: React.FC<{
         )}
       </ul>
     </Alert>
-  );
+  ) : <div></div>;
 };
 
 // Main Upload Page component
@@ -276,6 +323,7 @@ const UploadPage: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<FileAnalysisResponse | null>(null);
   const [columnMappings, setColumnMappings] = useState<Record<string, string>>({});
   const [startRow, setStartRow] = useState(0);
+  const [headerRow, setHeaderRow] = useState(0);
   const [uploadResult, setUploadResult] = useState<{
     success: boolean;
     message: string;
@@ -284,7 +332,7 @@ const UploadPage: React.FC = () => {
   } | null>(null);
 
   const { mutate: uploadFileMutation } = useFileUpload();
-  const { mutate: analyzeFileMutation, isPending: isAnalyzingMutation } = useFileAnalysis();
+  const { mutate: analyzeFileMutation } = useFileAnalysis();
   const { data: sources, isLoading: isLoadingSources } = useSources();
 
   // Handle file selection
@@ -365,6 +413,7 @@ const UploadPage: React.FC = () => {
 
             setColumnMappings(initialMappings);
             setStartRow(data.statement_schema.start_row);
+            setHeaderRow(data.statement_schema.header_row || 0);
             setIsAnalyzing(false);
           },
           onError: (error) => {
@@ -404,6 +453,11 @@ const UploadPage: React.FC = () => {
     setStartRow(newStartRow);
   }, []);
 
+  // Handle header row change
+  const handleHeaderRowChange = useCallback((newHeaderRow: number) => {
+    setHeaderRow(newHeaderRow);
+  }, []);
+
   // Handle source change
   const handleSourceChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -438,17 +492,15 @@ const UploadPage: React.FC = () => {
     const updatedSchema = {
       ...analysisResult.statement_schema,
       start_row: startRow, // Use the current startRow value from the UI
+      header_row: headerRow, // Use the current headerRow value from the UI
       source_id: sourceId || analysisResult.statement_schema.source_id
     };
 
     // Create the request payload with the updated structure
     const payload = {
-      sourceId: sourceId || null,
       statementSchema: updatedSchema,
       statement_id: analysisResult.file_id // Include the file_id from the analysis result
     };
-
-    console.log('Upload payload:', payload);
 
     uploadFileMutation(
       payload,
@@ -476,7 +528,7 @@ const UploadPage: React.FC = () => {
         }
       }
     );
-  }, [file, analysisResult, sourceId, uploadFileMutation, isMappingValid, startRow]);
+  }, [file, analysisResult, sourceId, uploadFileMutation, isMappingValid, startRow, headerRow]);
 
   // Reset the form
   const handleReset = useCallback(() => {
@@ -484,6 +536,9 @@ const UploadPage: React.FC = () => {
     setAnalysisResult(null);
     setColumnMappings({});
     setUploadResult(null);
+    setSourceId(undefined);
+    setHeaderRow(0);
+    setStartRow(0);
   }, []);
 
   return (
@@ -533,6 +588,8 @@ const UploadPage: React.FC = () => {
             onColumnMappingChange={handleColumnMappingChange}
             startRow={startRow}
             onStartRowChange={handleStartRowChange}
+            headerRow={headerRow}
+            onHeaderRowChange={handleHeaderRowChange}
           />
 
           <ValidationMessages

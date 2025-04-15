@@ -134,15 +134,13 @@ export const useFileUpload = () => {
 
   return useMutation({
     mutationFn: ({
-      sourceId,
       statementSchema,
       statement_id
     }: {
-      sourceId?: number | null;
       statementSchema?: StatementSchema;
       statement_id?: string;
     }): Promise<FileUploadResponse> =>
-      uploadApi.uploadFile(sourceId || undefined, statementSchema, statement_id),
+      uploadApi.uploadFile(statementSchema, statement_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
