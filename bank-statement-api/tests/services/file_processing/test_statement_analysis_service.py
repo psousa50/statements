@@ -8,7 +8,7 @@ import pytest
 from src.app.schemas import ColumnMapping, FileAnalysisResponse
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 from src.app.services.file_processing.conversion_model import ConversionModel
-from src.app.services.file_processing.file_analysis_service import FileAnalysisService
+from src.app.services.file_processing.statement_analysis_service import StatementAnalysisService
 from src.app.services.file_processing.file_type_detector import (
     FileType,
     FileTypeDetector,
@@ -95,7 +95,7 @@ class TestFileAnalysisService:
         statement_schema_repository = MagicMock()
         statement_schema_repository.find_by_statement_hash.return_value = None
 
-        service = FileAnalysisService(
+        service = StatementAnalysisService(
             file_type_detector=file_type_detector,
             parser_factory=parser_factory,
             column_normalizer=column_normalizer,
@@ -106,7 +106,7 @@ class TestFileAnalysisService:
             statement_schema_repository=statement_schema_repository,
         )
 
-        result = service.analyze_file(file_content, file_name)
+        result = service.analyze_statement(file_content, file_name)
 
         assert isinstance(result, FileAnalysisResponse)
         assert result.file_id == statement_id
@@ -228,7 +228,7 @@ class TestFileAnalysisService:
             existing_schema
         )
 
-        service = FileAnalysisService(
+        service = StatementAnalysisService(
             file_type_detector=file_type_detector,
             parser_factory=parser_factory,
             column_normalizer=column_normalizer,
@@ -239,7 +239,7 @@ class TestFileAnalysisService:
             statement_schema_repository=statement_schema_repository,
         )
 
-        result = service.analyze_file(file_content, file_name)
+        result = service.analyze_statement(file_content, file_name)
 
         assert isinstance(result, FileAnalysisResponse)
         assert result.file_id == statement_id

@@ -8,7 +8,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Query, Request, Upload
 from fastapi.encoders import jsonable_encoder
 
 from ..logging.utils import log_exception
-from ..models import Transaction
+from ..models import Transaction, Statement
 from ..repositories.transactions_repository import (
     TransactionsFilter,
     TransactionsRepository,
@@ -21,9 +21,9 @@ from ..schemas import (
     StatementSchema,
 )
 from ..schemas import Transaction as TransactionSchema
-from ..services.file_processing.file_analysis_service import FileAnalysisService
-from ..services.file_processing.upload_file_service import (
-    UploadFileService,
+from ..services.file_processing.statement_analysis_service import StatementAnalysisService
+from ..services.file_processing.statement_upload_service import (
+    StatementUploadService,
     UploadFileSpec,
 )
 
@@ -36,8 +36,8 @@ class TransactionRouter:
         self,
         transactions_repository: TransactionsRepository,
         transaction_uploader: TransactionUploader,
-        file_analysis_service: FileAnalysisService,
-        upload_file_service: UploadFileService,
+        statement_analysis_service: StatementAnalysisService,
+        statement_upload_service: StatementUploadService,
         statement_repository,
         on_change_callback: Optional[Callable[[str, List[Transaction]], None]] = None,
     ):
@@ -47,8 +47,8 @@ class TransactionRouter:
         )
         self.transaction_repository = transactions_repository
         self.transaction_uploader = transaction_uploader
-        self.file_analysis_service = file_analysis_service
-        self.upload_file_service = upload_file_service
+        self.statement_analysis_service = statement_analysis_service
+        self.upload_statement_service = statement_upload_service
         self.statement_repository = statement_repository
         self.on_change_callback = on_change_callback
 
@@ -72,13 +72,13 @@ class TransactionRouter:
         )
         self.router.add_api_route(
             "/upload",
-            self.upload_file,
+            self.upload_statement,
             methods=["POST"],
             response_model=FileUploadResponse,
         )
         self.router.add_api_route(
             "/analyze",
-            self.analyze_file,
+            self.analyze_statement,
             methods=["POST"],
             response_model=FileAnalysisResponse,
         )
@@ -138,7 +138,32 @@ class TransactionRouter:
 
         return transaction
 
-    async def upload_file(
+    async def analyze_statement(
+        self,
+        request: Request,
+    ):
+        try:
+            body = await request.json()
+            file_content = base64.b64decode(body.get("file_content", ""))
+            filename = body.get("file_name", "")
+
+            response = self.statement_analysis_service.analyze_statement(file_content, filename)
+
+            logger_content.debug(
+                jsonable_encoder(response),
+                extra={
+                    "prefix": "statement_analysis_service.analyze_file.response",
+                    "ext": "json",
+                },
+            )
+
+            return response
+        except Exception as e:
+            log_exception(f"Error analyzing file: {str(e)}")
+            raise HTTPException(
+                status_code=400, detail=f"Error analyzing file: {str(e)}"
+            )
+    async def upload_statement(
         self,
         request: Request,
         auto_categorize: bool = Query(
@@ -176,7 +201,7 @@ class TransactionRouter:
                 statement_schema=schema_obj,
             )
 
-            result = self.upload_file_service.upload_file(spec)
+            result = self.upload_statement_service.upload_statement(spec)
 
             if auto_categorize and result.transactions_processed > 0:
                 from ..tasks.categorization import manually_trigger_categorization
@@ -194,28 +219,3 @@ class TransactionRouter:
                 status_code=400, detail=f"Error processing file: {str(e)}"
             )
 
-    async def analyze_file(
-        self,
-        request: Request,
-    ):
-        try:
-            body = await request.json()
-            file_content = base64.b64decode(body.get("file_content", ""))
-            filename = body.get("file_name", "")
-
-            response = self.file_analysis_service.analyze_file(file_content, filename)
-
-            logger_content.debug(
-                jsonable_encoder(response),
-                extra={
-                    "prefix": "file_analysis_service.analyze_file.response",
-                    "ext": "json",
-                },
-            )
-
-            return response
-        except Exception as e:
-            log_exception(f"Error analyzing file: {str(e)}")
-            raise HTTPException(
-                status_code=400, detail=f"Error analyzing file: {str(e)}"
-            )

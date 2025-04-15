@@ -24,12 +24,12 @@ from src.app.services.file_processing.transactions_builder import (
     TransactionsBuilder,
 )
 from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
-from src.app.services.file_processing.upload_file_service import (
-    UploadFileService,
+from src.app.services.file_processing.statement_upload_service import (
+    StatementUploadService,
 )
 
 
-class TestUploadFileService:
+class TestStatementUploadService:
     def test_upload_file(self):
         # Arrange
         # Sample data for testing
@@ -129,7 +129,7 @@ class TestUploadFileService:
         transactions_repository.create_many.return_value = created_transactions
 
         # Create service under test
-        service = UploadFileService(
+        service = StatementUploadService(
             parser_factory=parser_factory,
             transaction_cleaner=transaction_cleaner,
             transactions_builder=transactions_builder,
@@ -150,7 +150,7 @@ class TestUploadFileService:
         )
 
         # Act
-        result = service.upload_file(upload_spec)
+        result = service.upload_statement(upload_spec)
 
         # Assert
         assert isinstance(result, FileUploadResponse)
@@ -166,7 +166,7 @@ class TestUploadFileService:
         transactions_builder.build_transactions.assert_called_once_with(cleaned_df)
         transactions_repository.create_many.assert_called_once()
 
-    def test_upload_file_with_duplicate_transactions(self):
+    def test_statement_upload_service_with_duplicate_transactions(self):
         # Arrange
         # Sample data for testing
         data = {
@@ -255,7 +255,7 @@ class TestUploadFileService:
         transactions_repository.create_many.return_value = created_transactions
 
         # Create service under test
-        service = UploadFileService(
+        service = StatementUploadService(
             parser_factory=parser_factory,
             transaction_cleaner=transaction_cleaner,
             transactions_builder=transactions_builder,
@@ -276,7 +276,7 @@ class TestUploadFileService:
         )
 
         # Act
-        result = service.upload_file(upload_spec)
+        result = service.upload_statement(upload_spec)
 
         # Assert
         assert isinstance(result, FileUploadResponse)

@@ -27,7 +27,7 @@ from src.app.services.file_processing.transactions_cleaner import TransactionsCl
 logger = logging.getLogger("app")
 
 
-class FileAnalysisService:
+class StatementAnalysisService:
     def __init__(
         self,
         file_type_detector: FileTypeDetector,
@@ -48,7 +48,7 @@ class FileAnalysisService:
         self.statement_repository = statement_repository
         self.statement_schema_repository = statement_schema_repository
 
-    def analyze_file(self, file_content: bytes, file_name: str) -> FileAnalysisResponse:
+    def analyze_statement(self, file_content: bytes, file_name: str) -> FileAnalysisResponse:
         try:
             statement_id = self.statement_repository.save(file_content, file_name)
 

@@ -23,7 +23,7 @@ from src.app.services.file_processing.transactions_cleaner import TransactionsCl
 logger = logging.getLogger("app")
 
 
-class UploadFileService:
+class StatementUploadService:
     def __init__(
         self,
         parser_factory: ParserFactory,
@@ -38,7 +38,7 @@ class UploadFileService:
         self.statement_repository = statement_repository
         self.transactions_repository = transactions_repository
 
-    def upload_file(self, spec: UploadFileSpec) -> FileUploadResponse:
+    def upload_statement(self, spec: UploadFileSpec) -> FileUploadResponse:
         try:
             statement = self.statement_repository.get_by_id(spec.statement_id)
             if not statement:

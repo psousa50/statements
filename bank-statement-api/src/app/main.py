@@ -34,7 +34,7 @@ from .routes.transactions_upload import TransactionUploader
 from .services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
 from .services.categorizers.transaction_categorizer import TransactionCategorizer
 from .services.file_processing.column_normalizer import ColumnNormalizer
-from .services.file_processing.file_analysis_service import FileAnalysisService
+from .services.file_processing.statement_analysis_service import StatementAnalysisService
 from .services.file_processing.file_processor import FileProcessor
 from .services.file_processing.file_type_detector import FileTypeDetector
 from .services.file_processing.parsers.parser_factory import ParserFactory
@@ -43,7 +43,7 @@ from .services.file_processing.statement_statistics_calculator import (
 )
 from .services.file_processing.transactions_builder import TransactionsBuilder
 from .services.file_processing.transactions_cleaner import TransactionsCleaner
-from .services.file_processing.upload_file_service import UploadFileService
+from .services.file_processing.statement_upload_service import StatementUploadService
 
 init_logging()
 logger = logging.getLogger("app")
@@ -126,7 +126,7 @@ class App:
             statistics_calculator,
         )
         parser_factory = ParserFactory()
-        file_analysis_service = FileAnalysisService(
+        statement_analysis_service = StatementAnalysisService(
             file_type_detector=file_type_detector,
             parser_factory=parser_factory,
             column_normalizer=column_normalizer,
@@ -136,7 +136,7 @@ class App:
             statement_repository=self.statement_repository,
             statement_schema_repository=self.statement_schema_repository,
         )
-        upload_file_service = UploadFileService(
+        statement_upload_service = StatementUploadService(
             parser_factory=parser_factory,
             transaction_cleaner=transaction_cleaner,
             transactions_builder=transactions_builder,
@@ -146,8 +146,8 @@ class App:
         transaction_router = TransactionRouter(
             transactions_repository=self.transactions_repository,
             transaction_uploader=transaction_uploader,
-            file_analysis_service=file_analysis_service,
-            upload_file_service=upload_file_service,
+            statement_analysis_service=statement_analysis_service,
+            statement_upload_service=statement_upload_service,
             statement_repository=self.statement_repository,
         )
         categorization_router = CategorizationRouter(
