@@ -92,6 +92,12 @@ const AnalysisSummary: React.FC<{
   analysis: FileAnalysisResponse;
   selectedSource: { name: string } | undefined;
 }> = ({ analysis, selectedSource }) => {
+  function formatDateVertical(dateStr?: string) {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
   return (
     <Card className="mb-4">
       <Card.Header>
@@ -127,11 +133,11 @@ const AnalysisSummary: React.FC<{
             <Card className="h-100">
               <Card.Body className="text-center">
                 <h6 className="text-muted">Date Range</h6>
-                <h4>
-                  {analysis.date_range_start && analysis.date_range_end
-                    ? `${new Date(analysis.date_range_start).toLocaleDateString()} - ${new Date(analysis.date_range_end).toLocaleDateString()}`
-                    : 'N/A'}
-                </h4>
+                <div style={{ fontSize: 20, fontWeight: 500, lineHeight: 1.2 }}>
+                  <div>{formatDateVertical(analysis.date_range_start ?? undefined)}</div>
+                  <div style={{ fontSize: 16, color: '#888' }}>to</div>
+                  <div>{formatDateVertical(analysis.date_range_end ?? undefined)}</div>
+                </div>
               </Card.Body>
             </Card>
           </Col>
