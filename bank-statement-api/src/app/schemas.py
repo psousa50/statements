@@ -74,7 +74,6 @@ class ColumnMapping(BaseModel):
     amount: str
     debit_amount: Optional[str] = ""
     credit_amount: Optional[str] = ""
-    amount_column: Optional[str] = ""
     currency: Optional[str] = ""
     balance: Optional[str] = ""
 
