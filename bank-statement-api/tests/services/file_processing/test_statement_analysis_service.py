@@ -3,26 +3,18 @@ from datetime import date
 from unittest.mock import MagicMock
 
 import pandas as pd
-import pytest
 
 from src.app.schemas import ColumnMapping, FileAnalysisResponse
-from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 from src.app.services.file_processing.conversion_model import ConversionModel
 from src.app.services.file_processing.file_type_detector import (
     FileType,
-    FileTypeDetector,
 )
 from src.app.services.file_processing.statement_analysis_service import (
     StatementAnalysisService,
 )
-from src.app.services.file_processing.statement_statistics_calculator import (
-    StatementStatisticsCalculator,
-)
 from src.app.services.file_processing.transactions_builder import (
     StatementTransaction,
-    TransactionsBuilder,
 )
-from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
 
 
 class TestFileAnalysisService:

@@ -3,7 +3,6 @@ import logging
 import uuid
 from typing import List, Optional
 
-import pandas as pd
 from pydantic import BaseModel
 
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer

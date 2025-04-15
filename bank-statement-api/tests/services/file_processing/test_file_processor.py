@@ -1,14 +1,10 @@
-import os
-import uuid
 from decimal import Decimal
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pandas as pd
 
 from src.app.ai.llm_client import LLMClient
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
-from src.app.services.file_processing.conversion_model import ConversionModel
 from src.app.services.file_processing.file_processor import FileProcessor, ProcessedFile
 from src.app.services.file_processing.file_type_detector import (
     FileType,

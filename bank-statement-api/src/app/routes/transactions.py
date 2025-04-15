@@ -1,21 +1,19 @@
 import base64
-import json
 import logging
 from datetime import date
 from typing import Callable, List, Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
 
 from ..logging.utils import log_exception
-from ..models import Statement, Transaction
+from ..models import Transaction
 from ..repositories.transactions_repository import (
     TransactionsFilter,
     TransactionsRepository,
 )
 from ..routes.transactions_upload import TransactionUploader
 from ..schemas import (
-    ColumnMapping,
     FileAnalysisResponse,
     FileUploadResponse,
     StatementSchema,

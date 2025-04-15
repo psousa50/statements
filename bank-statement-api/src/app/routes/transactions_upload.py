@@ -1,13 +1,9 @@
 import logging
 import re
-from typing import Optional
-from unicodedata import category
 
 import pandas as pd
-from fastapi import Query
 
-from ..logging.utils import log_exception
-from ..models import Source, Transaction
+from ..models import Source
 from ..repositories.sources_repository import SourcesRepository
 from ..repositories.transactions_repository import (
     TransactionsFilter,
@@ -91,7 +87,7 @@ class TransactionUploader:
         new_transactions = self.process_transactions(processed_file)
         skipped_count = len(processed_file.transactions) - len(new_transactions)
         logger.info(
-            f"Processed {len(transactions)} transactions, skipped {skipped_count} duplicates"
+            f"Processed {len(new_transactions)} transactions, skipped {skipped_count} duplicates"
         )
 
         transaction_ids = []
@@ -116,7 +112,7 @@ class TransactionUploader:
 
         response = FileUploadResponse(
             message="File processed successfully",
-            transactions_processed=len(transactions),
+            transactions_processed=len(new_transactions),
             transactions=transaction_schemas,
             skipped_duplicates=skipped_count,
         )

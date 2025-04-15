@@ -1,7 +1,5 @@
 import logging
-from typing import Dict, List, Optional
-
-import pandas as pd
+from typing import List, Optional
 
 from src.app.repositories.statement_repository import StatementRepository
 from src.app.repositories.transactions_repository import TransactionsRepository

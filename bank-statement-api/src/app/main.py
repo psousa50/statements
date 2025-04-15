@@ -8,18 +8,13 @@ from sqlalchemy.orm import Session
 from src.app.services.categorizers.existing_transactions_categorizer import (
     ExistingTransactionsCategorizer,
 )
-from src.app.services.categorizers.llm_transaction_categorizer import (
-    LLMTransactionCategorizer,
-)
-from src.app.services.file_processing.file_processor import FileProcessor
 from src.app.services.file_processing.statement_statistics_calculator import (
     StatementStatisticsCalculator,
 )
 from src.app.services.file_processing.transactions_builder import TransactionsBuilder
 
-from . import models
 from .ai.gemini_ai import GeminiAI
-from .db import engine, get_db
+from .db import get_db
 from .logging.config import init_logging
 from .repositories.categories_repository import CategoriesRepository
 from .repositories.sources_repository import SourcesRepository
@@ -34,17 +29,12 @@ from .routes.transactions_upload import TransactionUploader
 from .services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
 from .services.categorizers.transaction_categorizer import TransactionCategorizer
 from .services.file_processing.column_normalizer import ColumnNormalizer
-from .services.file_processing.file_processor import FileProcessor
 from .services.file_processing.file_type_detector import FileTypeDetector
 from .services.file_processing.parsers.parser_factory import ParserFactory
 from .services.file_processing.statement_analysis_service import (
     StatementAnalysisService,
 )
-from .services.file_processing.statement_statistics_calculator import (
-    StatementStatisticsCalculator,
-)
 from .services.file_processing.statement_upload_service import StatementUploadService
-from .services.file_processing.transactions_builder import TransactionsBuilder
 from .services.file_processing.transactions_cleaner import TransactionsCleaner
 
 init_logging()
@@ -120,13 +110,6 @@ class App:
         transaction_cleaner = TransactionsCleaner()
         transactions_builder = TransactionsBuilder()
         statistics_calculator = StatementStatisticsCalculator()
-        file_processor = FileProcessor(
-            file_type_detector,
-            column_normalizer,
-            transaction_cleaner,
-            transactions_builder,
-            statistics_calculator,
-        )
         parser_factory = ParserFactory()
         statement_analysis_service = StatementAnalysisService(
             file_type_detector=file_type_detector,
