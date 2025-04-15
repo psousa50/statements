@@ -3,22 +3,22 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
+from src.app.repositories.statement_repository import StatementRepository
+from src.app.repositories.transactions_repository import TransactionsRepository
 from src.app.schemas import (
     ColumnMapping,
     FileUploadResponse,
-    UploadFileSpec,
     TransactionCreate,
+    UploadFileSpec,
 )
 from src.app.services.file_processing.conversion_model import ConversionModel
 from src.app.services.file_processing.file_type_detector import FileType
+from src.app.services.file_processing.parsers.parser_factory import ParserFactory
 from src.app.services.file_processing.transactions_builder import (
     StatementTransaction,
     TransactionsBuilder,
 )
 from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
-from src.app.repositories.statement_repository import StatementRepository
-from src.app.repositories.transactions_repository import TransactionsRepository
-from src.app.services.file_processing.parsers.parser_factory import ParserFactory
 
 logger = logging.getLogger("app")
 
@@ -43,7 +43,7 @@ class UploadFileService:
             statement = self.statement_repository.get_by_id(spec.statement_id)
             if not statement:
                 raise ValueError(f"Statement with ID {spec.statement_id} not found")
-                
+
             file_content = statement["content"]
 
             file_type_str = spec.statement_schema.file_type

@@ -1,6 +1,8 @@
 from src.app.services.file_processing.file_type_detector import FileType
 from src.app.services.file_processing.parsers.statement_parser import StatementParser
-from src.app.services.file_processing.parsers.statement_parser_factory import create_parser as create_parser_func
+from src.app.services.file_processing.parsers.statement_parser_factory import (
+    create_parser as create_parser_func,
+)
 
 
 class ParserFactory:

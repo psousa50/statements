@@ -6,7 +6,13 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from src.app.schemas import ColumnMapping, FileUploadResponse, Transaction, StatementSchema, UploadFileSpec
+from src.app.schemas import (
+    ColumnMapping,
+    FileUploadResponse,
+    StatementSchema,
+    Transaction,
+    UploadFileSpec,
+)
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 from src.app.services.file_processing.conversion_model import ConversionModel
 from src.app.services.file_processing.file_type_detector import (
@@ -136,10 +142,10 @@ class TestUploadFileService:
             statement_id=statement_id,
             statement_schema=StatementSchema(
                 id=str(uuid.uuid4()),
-                column_mapping=column_mapping, 
-                source_id=1, 
+                column_mapping=column_mapping,
+                source_id=1,
                 start_row=1,
-                file_type="CSV"
+                file_type="CSV",
             ),
         )
 
@@ -262,10 +268,10 @@ class TestUploadFileService:
             statement_id=statement_id,
             statement_schema=StatementSchema(
                 id=str(uuid.uuid4()),
-                column_mapping=column_mapping, 
-                source_id=1, 
+                column_mapping=column_mapping,
+                source_id=1,
                 start_row=1,
-                file_type="CSV"
+                file_type="CSV",
             ),
         )
 

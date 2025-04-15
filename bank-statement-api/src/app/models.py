@@ -1,11 +1,11 @@
 from sqlalchemy import (
+    JSON,
     Column,
     Date,
     DateTime,
     Enum,
     ForeignKey,
     Integer,
-    JSON,
     LargeBinary,
     Numeric,
     String,
@@ -83,18 +83,18 @@ class Statement(Base):
     file_name = Column(String, nullable=False)
     content = Column(LargeBinary, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-    
+
     transactions = relationship("Transaction", back_populates="statement")
     schema = relationship("StatementSchema", back_populates="statement", uselist=False)
 
 
 class StatementSchema(Base):
     __tablename__ = "statement_schemas"
-    
+
     id = Column(String, primary_key=True, index=True)
     statement_id = Column(String, ForeignKey("statements.id"), nullable=True)
     statement_hash = Column(String, unique=True, index=True)
     schema_data = Column(JSON, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-    
+
     statement = relationship("Statement", back_populates="schema")

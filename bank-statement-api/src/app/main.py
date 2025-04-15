@@ -20,6 +20,7 @@ from src.app.services.file_processing.transactions_builder import TransactionsBu
 from . import models
 from .ai.gemini_ai import GeminiAI
 from .db import engine, get_db
+from .logging.config import init_logging
 from .repositories.categories_repository import CategoriesRepository
 from .repositories.sources_repository import SourcesRepository
 from .repositories.statement_repository import StatementRepository
@@ -30,9 +31,10 @@ from .routes.categorization import CategorizationRouter
 from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
 from .routes.transactions_upload import TransactionUploader
+from .services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
 from .services.categorizers.transaction_categorizer import TransactionCategorizer
-from .services.file_processing.file_analysis_service import FileAnalysisService
 from .services.file_processing.column_normalizer import ColumnNormalizer
+from .services.file_processing.file_analysis_service import FileAnalysisService
 from .services.file_processing.file_processor import FileProcessor
 from .services.file_processing.file_type_detector import FileTypeDetector
 from .services.file_processing.parsers.parser_factory import ParserFactory
@@ -42,9 +44,6 @@ from .services.file_processing.statement_statistics_calculator import (
 from .services.file_processing.transactions_builder import TransactionsBuilder
 from .services.file_processing.transactions_cleaner import TransactionsCleaner
 from .services.file_processing.upload_file_service import UploadFileService
-from .services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
-
-from .logging.config import init_logging
 
 init_logging()
 logger = logging.getLogger("app")

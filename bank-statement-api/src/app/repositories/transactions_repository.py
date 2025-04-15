@@ -147,19 +147,19 @@ class TransactionsRepository:
         )
 
         return [(result[0], result[1]) for result in query.all()]
-    
+
     def find_duplicates(self, transactions: List) -> List:
         """
         Find transactions that already exist in the database.
-        
+
         Args:
             transactions: List of transaction objects with date, description, and amount attributes
-            
+
         Returns:
             List of transactions that are duplicates
         """
         duplicates = []
-        
+
         for transaction in transactions:
             # Check if a transaction with the same date, description, and amount exists
             existing = (
@@ -169,35 +169,35 @@ class TransactionsRepository:
                 .filter(Transaction.amount == transaction.amount)
                 .first()
             )
-            
+
             if existing:
                 duplicates.append(transaction)
-                
+
         return duplicates
-    
+
     def create_many(self, transactions: List[TransactionCreate]) -> List[Transaction]:
         """
         Create multiple transactions in the database.
-        
+
         Args:
             transactions: List of TransactionCreate objects
-            
+
         Returns:
             List of created Transaction objects
         """
         db_transactions = []
-        
+
         for transaction_data in transactions:
             db_transaction = Transaction(**transaction_data.model_dump())
             self.db.add(db_transaction)
             db_transactions.append(db_transaction)
-            
+
         self.db.commit()
-        
+
         # Refresh all transactions to get their generated IDs
         for transaction in db_transactions:
             self.db.refresh(transaction)
-            
+
         return db_transactions
 
     def get_transactions_by_normalized_description(

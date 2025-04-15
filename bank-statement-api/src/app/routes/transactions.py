@@ -1,6 +1,6 @@
+import base64
 import json
 import logging
-import base64
 from datetime import date
 from typing import Callable, List, Optional
 
@@ -14,14 +14,18 @@ from ..repositories.transactions_repository import (
     TransactionsRepository,
 )
 from ..routes.transactions_upload import TransactionUploader
-from ..schemas import ColumnMapping, FileAnalysisResponse, FileUploadResponse
+from ..schemas import (
+    ColumnMapping,
+    FileAnalysisResponse,
+    FileUploadResponse,
+    StatementSchema,
+)
 from ..schemas import Transaction as TransactionSchema
 from ..services.file_processing.file_analysis_service import FileAnalysisService
 from ..services.file_processing.upload_file_service import (
-    UploadFileSpec,
     UploadFileService,
+    UploadFileSpec,
 )
-from ..schemas import StatementSchema
 
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
@@ -145,7 +149,7 @@ class TransactionRouter:
             body = await request.json()
             statement_id = body.get("statement_id")
             statement_schema_data = body.get("statement_schema")
-            
+
             # Debug logging
             logger = logging.getLogger("app")
             logger.info(f"Received upload request with statement_id: {statement_id}")
@@ -158,7 +162,10 @@ class TransactionRouter:
             statement = self.statement_repository.get_by_id(statement_id)
             if not statement:
                 logger.error(f"Statement with ID {statement_id} not found in database")
-                raise HTTPException(status_code=404, detail=f"Statement with ID {statement_id} not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Statement with ID {statement_id} not found",
+                )
 
             schema_obj = None
             if statement_schema_data:

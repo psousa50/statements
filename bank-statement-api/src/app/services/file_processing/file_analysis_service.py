@@ -5,6 +5,8 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
+from src.app.repositories.statement_repository import StatementRepository
+from src.app.repositories.statement_schema_repository import StatementSchemaRepository
 from src.app.schemas import ColumnMapping, FileAnalysisResponse, StatementSchema
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 from src.app.services.file_processing.conversion_model import ConversionModel
@@ -12,6 +14,7 @@ from src.app.services.file_processing.file_type_detector import (
     FileType,
     FileTypeDetector,
 )
+from src.app.services.file_processing.parsers.parser_factory import ParserFactory
 from src.app.services.file_processing.statement_statistics_calculator import (
     StatementStatisticsCalculator,
 )
@@ -20,9 +23,6 @@ from src.app.services.file_processing.transactions_builder import (
     TransactionsBuilder,
 )
 from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
-from src.app.repositories.statement_schema_repository import StatementSchemaRepository
-from src.app.repositories.statement_repository import StatementRepository
-from src.app.services.file_processing.parsers.parser_factory import ParserFactory
 
 logger = logging.getLogger("app")
 

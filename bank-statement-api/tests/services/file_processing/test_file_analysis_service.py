@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from src.app.schemas import FileAnalysisResponse, ColumnMapping
+from src.app.schemas import ColumnMapping, FileAnalysisResponse
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 from src.app.services.file_processing.conversion_model import ConversionModel
 from src.app.services.file_processing.file_analysis_service import FileAnalysisService
@@ -13,14 +13,14 @@ from src.app.services.file_processing.file_type_detector import (
     FileType,
     FileTypeDetector,
 )
+from src.app.services.file_processing.statement_statistics_calculator import (
+    StatementStatisticsCalculator,
+)
 from src.app.services.file_processing.transactions_builder import (
     StatementTransaction,
     TransactionsBuilder,
 )
 from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
-from src.app.services.file_processing.statement_statistics_calculator import (
-    StatementStatisticsCalculator,
-)
 
 
 class TestFileAnalysisService:
@@ -205,7 +205,7 @@ class TestFileAnalysisService:
 
         existing_schema = MagicMock()
         existing_schema.id = "existing-schema-id"
-        
+
         schema_data = {
             "id": "existing-schema-id",
             "source_id": 1,
@@ -221,10 +221,12 @@ class TestFileAnalysisService:
             "header_row": 0,
             "column_names": ["Date", "Description", "Amount", "Currency", "Balance"],
         }
-        
+
         existing_schema.schema_data = schema_data
         statement_schema_repository = MagicMock()
-        statement_schema_repository.find_by_statement_hash.return_value = existing_schema
+        statement_schema_repository.find_by_statement_hash.return_value = (
+            existing_schema
+        )
 
         service = FileAnalysisService(
             file_type_detector=file_type_detector,
