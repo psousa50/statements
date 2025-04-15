@@ -1,5 +1,6 @@
 import json
 import logging
+import hashlib
 from typing import List, Optional
 from fastapi.encoders import jsonable_encoder
 
@@ -23,6 +24,11 @@ from src.app.services.file_processing.transactions_cleaner import TransactionsCl
 
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
+
+
+def _calculate_statement_hash(column_names: list[str], file_type: str) -> str:
+    joined = ",".join(column_names) + f"|{file_type}"
+    return hashlib.sha256(joined.encode("utf-8")).hexdigest()
 
 
 class StatementUploadService:
@@ -94,9 +100,11 @@ class StatementUploadService:
             # Prepare the schema data in the format expected by the repository
             schema_data = {
                 "id": spec.statement_schema.id,
-                "statement_hash": spec.statement_schema.statement_hash,
-                "schema_data": jsonable_encoder(spec.statement_schema),
-                "statement_id": spec.statement_id
+                "statement_hash": _calculate_statement_hash(
+                    spec.statement_schema.column_names,
+                    spec.statement_schema.file_type,
+                ),
+                "schema_data": jsonable_encoder(spec.statement_schema)
             }
 
             # Update the schema

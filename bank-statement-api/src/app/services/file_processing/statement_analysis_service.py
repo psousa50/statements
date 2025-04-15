@@ -7,7 +7,7 @@ import pandas as pd
 
 from src.app.repositories.statement_repository import StatementRepository
 from src.app.repositories.statement_schema_repository import StatementSchemaRepository
-from src.app.schemas import ColumnMapping, FileAnalysisResponse, StatementSchema
+from src.app.schemas import ColumnMapping, FileAnalysisResponse, StatementSchemaDefinition
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 from src.app.services.file_processing.file_type_detector import (
     FileType,
@@ -80,7 +80,7 @@ class StatementAnalysisService:
                 else:
                     file_type_str = str(file_type_value)
 
-                statement_schema = StatementSchema(
+                statement_schema = StatementSchemaDefinition(
                     id=existing_schema.id,
                     source_id=schema_data.get("source_id"),
                     file_type=file_type_str,
@@ -102,7 +102,7 @@ class StatementAnalysisService:
                 column_names = [str(col) for col in column_names]
 
                 schema_id = str(uuid.uuid4())
-                statement_schema = StatementSchema(
+                statement_schema = StatementSchemaDefinition(
                     id=schema_id,
                     source_id=source_id,
                     file_type=file_type.name,
@@ -126,8 +126,7 @@ class StatementAnalysisService:
                     {
                         "id": schema_id,
                         "statement_hash": statement_hash,
-                        "schema_data": schema_data,
-                        "statement_id": statement_id,
+                        "schema_data": schema_data
                     }
                 )
 

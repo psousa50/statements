@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 from sqlalchemy.orm import Session
 
-from src.app.models import StatementSchema
+from src.app.models import StatementSchemaMapping
 from src.app.repositories.statement_schema_repository import StatementSchemaRepository
 from src.app.services.file_processing.file_type_detector import FileType
 
@@ -45,7 +45,7 @@ class TestStatementSchemaRepository:
 
         # Verify the schema was created with correct attributes
         schema = session.add.call_args[0][0]
-        assert isinstance(schema, StatementSchema)
+        assert isinstance(schema, StatementSchemaMapping)
         assert schema.statement_hash == schema_data["statement_hash"]
         assert schema.schema_data == schema_data["schema_data"]
         assert schema.id is not None
@@ -56,7 +56,7 @@ class TestStatementSchemaRepository:
         session = MagicMock(spec=Session)
 
         # Mock schema
-        schema = MagicMock(spec=StatementSchema)
+        schema = MagicMock(spec=StatementSchemaMapping)
         schema.id = str(uuid.uuid4())
         schema.statement_hash = "abc123"
         schema.schema_data = {
@@ -87,7 +87,7 @@ class TestStatementSchemaRepository:
         assert result.schema_data == schema.schema_data
 
         # Verify session interactions
-        session.query.assert_called_once_with(StatementSchema)
+        session.query.assert_called_once_with(StatementSchemaMapping)
         session.query.return_value.filter.assert_called_once()
 
     def test_find_by_statement_hash_not_found(self):
@@ -108,5 +108,14 @@ class TestStatementSchemaRepository:
         assert result is None
 
         # Verify session interactions
-        session.query.assert_called_once_with(StatementSchema)
+        session.query.assert_called_once_with(StatementSchemaMapping)
         session.query.return_value.filter.assert_called_once()
+
+    def test_statement_schema_mapping_has_statement_hash(self):
+        schema = StatementSchemaMapping(
+            id="test_id",
+            statement_hash="test_hash",
+            schema_data={}
+        )
+        assert hasattr(schema, "statement_hash")
+        assert schema.statement_hash == "test_hash"

@@ -13,11 +13,17 @@ from ..repositories.transactions_repository import (
     TransactionsRepository,
 )
 from ..schemas import (
+    Category,
+    CategoryCreate,
+    ColumnMapping,
     FileAnalysisResponse,
     FileUploadResponse,
-    StatementSchema,
+    Source,
+    SourceCreate,
+    StatementSchemaDefinition,
+    Transaction as TransactionSchema,
+    TransactionCreate,
 )
-from ..schemas import Transaction as TransactionSchema
 from ..services.file_processing.statement_analysis_service import (
     StatementAnalysisService,
 )
@@ -194,7 +200,7 @@ class TransactionRouter:
 
             schema_obj = None
             if statement_schema_data:
-                schema_obj = StatementSchema(**statement_schema_data)
+                schema_obj = StatementSchemaDefinition(**statement_schema_data)
 
             spec = UploadFileSpec(
                 statement_id=statement_id,

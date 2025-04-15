@@ -85,16 +85,12 @@ class Statement(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     transactions = relationship("Transaction", back_populates="statement")
-    schema = relationship("StatementSchema", back_populates="statement", uselist=False)
 
 
-class StatementSchema(Base):
-    __tablename__ = "statement_schemas"
+class StatementSchemaMapping(Base):
+    __tablename__ = "statement_schema_mappings"
 
     id = Column(String, primary_key=True, index=True)
-    statement_id = Column(String, ForeignKey("statements.id"), nullable=True)
     statement_hash = Column(String, unique=True, index=True)
     schema_data = Column(JSON, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-
-    statement = relationship("Statement", back_populates="schema")

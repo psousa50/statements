@@ -8,7 +8,7 @@ import pandas as pd
 from src.app.schemas import (
     ColumnMapping,
     FileUploadResponse,
-    StatementSchema,
+    StatementSchemaDefinition,
     Transaction,
     UploadFileSpec,
 )
@@ -17,6 +17,7 @@ from src.app.services.file_processing.file_type_detector import (
 )
 from src.app.services.file_processing.statement_upload_service import (
     StatementUploadService,
+    _calculate_statement_hash
 )
 from src.app.services.file_processing.transactions_builder import (
     StatementTransaction,
@@ -122,6 +123,10 @@ class TestStatementUploadService:
         ]
         transactions_repository.create_many.return_value = created_transactions
 
+        # Mock statement schema repository
+        statement_schema_repository = MagicMock()
+        statement_schema_repository.update.return_value = None
+
         # Create service under test
         service = StatementUploadService(
             parser_factory=parser_factory,
@@ -129,17 +134,23 @@ class TestStatementUploadService:
             transactions_builder=transactions_builder,
             statement_repository=statement_repository,
             transactions_repository=transactions_repository,
+            statement_schema_repository=statement_schema_repository
         )
 
         # Create upload spec
         upload_spec = UploadFileSpec(
             statement_id=statement_id,
-            statement_schema=StatementSchema(
+            statement_schema=StatementSchemaDefinition(
                 id=str(uuid.uuid4()),
-                column_mapping=column_mapping,
-                source_id=1,
-                start_row=1,
+                statement_hash=str(uuid.uuid4()),
                 file_type="CSV",
+                column_mapping=column_mapping,
+                schema_data={
+                    "column_mapping": column_mapping,
+                    "source_id": 1,
+                    "start_row": 1,
+                    "file_type": "CSV"
+                }
             ),
         )
 
@@ -248,6 +259,10 @@ class TestStatementUploadService:
         ]
         transactions_repository.create_many.return_value = created_transactions
 
+        # Mock statement schema repository
+        statement_schema_repository = MagicMock()
+        statement_schema_repository.update.return_value = None
+
         # Create service under test
         service = StatementUploadService(
             parser_factory=parser_factory,
@@ -255,17 +270,23 @@ class TestStatementUploadService:
             transactions_builder=transactions_builder,
             statement_repository=statement_repository,
             transactions_repository=transactions_repository,
+            statement_schema_repository=statement_schema_repository
         )
 
         # Create upload spec
         upload_spec = UploadFileSpec(
             statement_id=statement_id,
-            statement_schema=StatementSchema(
+            statement_schema=StatementSchemaDefinition(
                 id=str(uuid.uuid4()),
-                column_mapping=column_mapping,
-                source_id=1,
-                start_row=1,
+                statement_hash=str(uuid.uuid4()),
                 file_type="CSV",
+                column_mapping=column_mapping,
+                schema_data={
+                    "column_mapping": column_mapping,
+                    "source_id": 1,
+                    "start_row": 1,
+                    "file_type": "CSV"
+                }
             ),
         )
 
@@ -281,3 +302,25 @@ class TestStatementUploadService:
         # Verify interactions with dependencies
         transactions_repository.find_duplicates.assert_called_once()
         transactions_repository.create_many.assert_called_once()  # Only non-duplicate transactions created
+
+    def test_statement_hash_calculation(self):
+        # Arrange
+        schema = StatementSchemaDefinition(
+            id="test-id",
+            file_type="CSV",
+            column_mapping=ColumnMapping(
+                date="Date",
+                description="Description",
+                amount="Amount",
+                currency="Currency",
+                balance="Balance",
+            ),
+            column_names=["Date", "Description", "Amount", "Currency", "Balance"],
+            start_row=1,
+            header_row=0,
+        )
+        # Act
+        result_hash = _calculate_statement_hash(schema.column_names, schema.file_type)
+        # Assert
+        assert isinstance(result_hash, str)
+        assert len(result_hash) > 0
