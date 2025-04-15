@@ -48,7 +48,9 @@ class StatementAnalysisService:
         self.statement_repository = statement_repository
         self.statement_schema_repository = statement_schema_repository
 
-    def analyze_statement(self, file_content: bytes, file_name: str) -> FileAnalysisResponse:
+    def analyze_statement(
+        self, file_content: bytes, file_name: str
+    ) -> FileAnalysisResponse:
         try:
             statement_id = self.statement_repository.save(file_content, file_name)
 

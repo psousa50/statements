@@ -19,14 +19,14 @@ from src.app.services.file_processing.file_type_detector import (
     FileType,
     FileTypeDetector,
 )
+from src.app.services.file_processing.statement_upload_service import (
+    StatementUploadService,
+)
 from src.app.services.file_processing.transactions_builder import (
     StatementTransaction,
     TransactionsBuilder,
 )
 from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
-from src.app.services.file_processing.statement_upload_service import (
-    StatementUploadService,
-)
 
 
 class TestStatementUploadService:

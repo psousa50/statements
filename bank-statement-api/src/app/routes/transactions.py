@@ -8,7 +8,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Query, Request, Upload
 from fastapi.encoders import jsonable_encoder
 
 from ..logging.utils import log_exception
-from ..models import Transaction, Statement
+from ..models import Statement, Transaction
 from ..repositories.transactions_repository import (
     TransactionsFilter,
     TransactionsRepository,
@@ -21,7 +21,9 @@ from ..schemas import (
     StatementSchema,
 )
 from ..schemas import Transaction as TransactionSchema
-from ..services.file_processing.statement_analysis_service import StatementAnalysisService
+from ..services.file_processing.statement_analysis_service import (
+    StatementAnalysisService,
+)
 from ..services.file_processing.statement_upload_service import (
     StatementUploadService,
     UploadFileSpec,
@@ -147,7 +149,9 @@ class TransactionRouter:
             file_content = base64.b64decode(body.get("file_content", ""))
             filename = body.get("file_name", "")
 
-            response = self.statement_analysis_service.analyze_statement(file_content, filename)
+            response = self.statement_analysis_service.analyze_statement(
+                file_content, filename
+            )
 
             logger_content.debug(
                 jsonable_encoder(response),
@@ -163,6 +167,7 @@ class TransactionRouter:
             raise HTTPException(
                 status_code=400, detail=f"Error analyzing file: {str(e)}"
             )
+
     async def upload_statement(
         self,
         request: Request,
@@ -218,4 +223,3 @@ class TransactionRouter:
             raise HTTPException(
                 status_code=400, detail=f"Error processing file: {str(e)}"
             )
-

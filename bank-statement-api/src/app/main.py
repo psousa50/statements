@@ -34,16 +34,18 @@ from .routes.transactions_upload import TransactionUploader
 from .services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
 from .services.categorizers.transaction_categorizer import TransactionCategorizer
 from .services.file_processing.column_normalizer import ColumnNormalizer
-from .services.file_processing.statement_analysis_service import StatementAnalysisService
 from .services.file_processing.file_processor import FileProcessor
 from .services.file_processing.file_type_detector import FileTypeDetector
 from .services.file_processing.parsers.parser_factory import ParserFactory
+from .services.file_processing.statement_analysis_service import (
+    StatementAnalysisService,
+)
 from .services.file_processing.statement_statistics_calculator import (
     StatementStatisticsCalculator,
 )
+from .services.file_processing.statement_upload_service import StatementUploadService
 from .services.file_processing.transactions_builder import TransactionsBuilder
 from .services.file_processing.transactions_cleaner import TransactionsCleaner
-from .services.file_processing.statement_upload_service import StatementUploadService
 
 init_logging()
 logger = logging.getLogger("app")
