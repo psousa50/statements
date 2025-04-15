@@ -12,7 +12,6 @@ from ..repositories.transactions_repository import (
     TransactionsFilter,
     TransactionsRepository,
 )
-from ..routes.transactions_upload import TransactionUploader
 from ..schemas import (
     FileAnalysisResponse,
     FileUploadResponse,
@@ -35,7 +34,6 @@ class TransactionRouter:
     def __init__(
         self,
         transactions_repository: TransactionsRepository,
-        transaction_uploader: TransactionUploader,
         statement_analysis_service: StatementAnalysisService,
         statement_upload_service: StatementUploadService,
         statement_repository,
@@ -46,7 +44,6 @@ class TransactionRouter:
             tags=["transactions"],
         )
         self.transaction_repository = transactions_repository
-        self.transaction_uploader = transaction_uploader
         self.statement_analysis_service = statement_analysis_service
         self.upload_statement_service = statement_upload_service
         self.statement_repository = statement_repository

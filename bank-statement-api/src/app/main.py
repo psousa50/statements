@@ -25,7 +25,6 @@ from .routes.categories import CategoryRouter
 from .routes.categorization import CategorizationRouter
 from .routes.sources import SourceRouter
 from .routes.transactions import TransactionRouter
-from .routes.transactions_upload import TransactionUploader
 from .services.categorizers.llm_transaction_categorizer import LLMTransactionCategorizer
 from .services.categorizers.transaction_categorizer import TransactionCategorizer
 from .services.file_processing.column_normalizer import ColumnNormalizer
@@ -100,11 +99,6 @@ class App:
             self.categories_repository, on_change_callback=on_category_change
         )
         source_router = SourceRouter(self.sources_repository)
-        transaction_uploader = TransactionUploader(
-            transactions_repository=self.transactions_repository,
-            sources_repository=self.sources_repository,
-            categorizer=self.categorizer,
-        )
         file_type_detector = FileTypeDetector()
         column_normalizer = ColumnNormalizer(llm_client)
         transaction_cleaner = TransactionsCleaner()
@@ -130,7 +124,6 @@ class App:
         )
         transaction_router = TransactionRouter(
             transactions_repository=self.transactions_repository,
-            transaction_uploader=transaction_uploader,
             statement_analysis_service=statement_analysis_service,
             statement_upload_service=statement_upload_service,
             statement_repository=self.statement_repository,
