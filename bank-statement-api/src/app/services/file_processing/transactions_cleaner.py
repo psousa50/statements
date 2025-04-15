@@ -15,12 +15,12 @@ class TransactionsCleaner:
 
         result_df = df.copy()
 
-        column_names = result_df.iloc[header_row].to_list()
         if header_row > 0:
-            column_names = result_df.iloc[header_row].to_list()
+            column_names = result_df.iloc[header_row - 1].to_list()
             result_df.columns = column_names
-            result_df = result_df.iloc[start_row:]
+            result_df = result_df.iloc[start_row - 1 :]
         else:
+            column_names = result_df.iloc[header_row].to_list()
             result_df = result_df.iloc[start_row - 1 :]
 
         column_map = conversion_model.column_map

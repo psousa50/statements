@@ -139,5 +139,5 @@ class TestColumnNormalizer:
         assert response.column_map["amount"] == "Valor"
         assert response.column_map["currency"] == ""
         assert response.column_map["balance"] == "Saldo"
-        assert response.header_row == 6
-        assert response.start_row == 7
+        assert response.header_row == 7
+        assert response.start_row == 8

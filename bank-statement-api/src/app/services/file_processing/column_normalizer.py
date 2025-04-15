@@ -56,29 +56,41 @@ From this bank statement excerpt, extract the column map and header information 
 Guidelines:
 	•	Only use actual column names from the transaction table header row (not metadata or sample values).
 	•	If a field is missing (e.g. no currency column), set its value to an empty string: "".
-	•	header_row is the 0-based index of the row where the column headers (like “Data Lanc.”, “Descrição”, etc.) appear.
-	•	start_row is the 0-based index of the first row immediately after the header that contains actual transaction data.
+	•	header_row is the 0-based index of the row where the column headers (like “Date”, “Description”, etc.) appear.
+	•	start_row is the 0-based index of the first row after the header that contains actual transaction data.
 	•	Ignore any metadata rows (like account numbers, date ranges, or currency indicators) and blank rows.
 	•	Do not guess or generate column names—only use what’s present in the header row.
 	•	Only output valid JSON matching the format above. No explanations. No extra text.
+	•	Transaction rows contain actual dates and amounts; ignore rows that have empty fields, labels, or static information.
 
-Example output:
+Example:
+---------------------------------------------------------
+Account Statement,,,,,
+Currency: EUR,,,,,
+Date Range: 2023-01-01 to 2023-01-31,,,,,
+
+Transaction Date,Value Date,Details,Amount,Balance
+2023-01-01,2023-01-01,Coffee Shop,-3.50,996.50
+2023-01-02,2023-01-02,Grocery Store,-25.00,971.50
+
+---------------------------------------------------------
 
 {{
   "column_map": {{
-    "date": "Date",
-    "description": "Description",
+    "date": "Transaction Date",
+    "description": "Details",
     "amount": "Amount",
-    "debit_amount": "Debit",
-    "credit_amount": "Credit",
-    "currency": "Currency",
+    "debit_amount": "",
+    "credit_amount": "",
+    "currency": "",
     "balance": "Balance"
   }},
-  "header_row": 0,
-  "start_row": 1
+  "header_row": 4,
+  "start_row": 5
 }}
 
+
 ---------------------------------------------------------
-{df.to_csv()}
+{df.iloc[:10].to_csv(index=False)}
 ---------------------------------------------------------
 """

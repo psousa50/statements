@@ -21,7 +21,9 @@ from ..schemas import (
     Source,
     SourceCreate,
     StatementSchemaDefinition,
-    Transaction as TransactionSchema,
+)
+from ..schemas import Transaction as TransactionSchema
+from ..schemas import (
     TransactionCreate,
 )
 from ..services.file_processing.statement_analysis_service import (

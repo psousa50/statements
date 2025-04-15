@@ -1,4 +1,5 @@
-from src.app.schemas import StatementSchemaDefinition, ColumnMapping
+from src.app.schemas import ColumnMapping, StatementSchemaDefinition
+
 
 def test_statement_schema_definition_fields():
     schema = StatementSchemaDefinition(

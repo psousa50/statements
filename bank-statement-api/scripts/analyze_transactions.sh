@@ -7,5 +7,5 @@ if [ -z "$FILE" ]; then
 fi
 
 curl -X POST "http://localhost:8000/transactions/analyze" \
-  -H "Content-Type: multipart/form-data" \
-  -F "file=@$FILE"
+  -H "Content-Type: application/octet-stream" \
+  --data-binary "@$FILE"

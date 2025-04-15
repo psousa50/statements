@@ -7,7 +7,11 @@ import pandas as pd
 
 from src.app.repositories.statement_repository import StatementRepository
 from src.app.repositories.statement_schema_repository import StatementSchemaRepository
-from src.app.schemas import ColumnMapping, FileAnalysisResponse, StatementSchemaDefinition
+from src.app.schemas import (
+    ColumnMapping,
+    FileAnalysisResponse,
+    StatementSchemaDefinition,
+)
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 from src.app.services.file_processing.file_type_detector import (
     FileType,
@@ -23,6 +27,7 @@ from src.app.services.file_processing.transactions_builder import (
 )
 from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
 
+logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
 
 
@@ -58,6 +63,14 @@ class StatementAnalysisService:
             df = parser.parse(file_content)
 
             conversion_model = self.column_normalizer.normalize_columns(df)
+
+            logger_content.debug(
+                conversion_model,
+                extra={
+                    "prefix": "statement_analysis_service.conversion_model",
+                    "ext": "json",
+                },
+            )
 
             statement_hash = self._calculate_statement_hash(
                 df.columns.tolist(), file_type
@@ -96,7 +109,13 @@ class StatementAnalysisService:
                 column_names = (
                     df.columns.tolist()
                     if conversion_model.header_row == 0
-                    else df.iloc[conversion_model.header_row].tolist()
+                    else df.iloc[conversion_model.header_row - 1].tolist()
+                )
+                logger.debug(
+                    column_names,
+                    extra={
+                        "prefix": "statement_analysis_service.column_names",
+                    },
                 )
 
                 column_names = [str(col) for col in column_names]
@@ -126,23 +145,28 @@ class StatementAnalysisService:
                     {
                         "id": schema_id,
                         "statement_hash": statement_hash,
-                        "schema_data": schema_data
+                        "schema_data": schema_data,
                     }
                 )
 
             cleaned_df = self.transaction_cleaner.clean(df, conversion_model)
+            logger_content.debug(
+                cleaned_df.to_csv(index=False),
+                extra={"prefix": "statement_analysis_service.cleaned_df", "ext": "csv"},
+            )
 
             transactions = self.transactions_builder.build_transactions(cleaned_df)
 
             statistics = self.statistics_calculator.calc_statistics(transactions)
 
-            preview_df = df.iloc[:10]
+            preview_df = pd.DataFrame(
+                [df.columns.tolist()] + df.iloc[:9].values.tolist()
+            )
 
             preview_rows = []
-            column_names = df.columns.tolist()
             for _, row in preview_df.iterrows():
                 row_values = []
-                for col in column_names:
+                for col in preview_df.columns:
                     value = row[col]
                     if pd.isna(value):
                         row_values.append("")
@@ -157,7 +181,6 @@ class StatementAnalysisService:
                 date_range_start=statistics.date_range_start,
                 date_range_end=statistics.date_range_end,
                 file_id=statement_id,
-                start_row=conversion_model.start_row,
                 preview_rows=preview_rows,
             )
 

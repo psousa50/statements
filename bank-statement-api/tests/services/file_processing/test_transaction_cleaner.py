@@ -217,8 +217,8 @@ class TestTransactionCleaner:
                 "currency": "Currency",
                 "balance": "Balance",
             },
-            header_row=1,
-            start_row=2,
+            header_row=2,
+            start_row=3,
         )
 
         cleaner = TransactionsCleaner()

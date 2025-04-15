@@ -7,5 +7,5 @@ if [ -z "$FILE" ]; then
 fi
 
 curl -X POST "http://localhost:8000/transactions/upload?auto_categorize=true" \
-  -H "Content-Type: multipart/form-data" \
-  -F "file=@$FILE"
+  -H "Content-Type: application/octet-stream" \
+  --data-binary "@$FILE"
