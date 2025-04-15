@@ -90,7 +90,8 @@ const FileUploadZone: React.FC<{
 // Component for analysis summary
 const AnalysisSummary: React.FC<{
   analysis: FileAnalysisResponse;
-}> = ({ analysis }) => {
+  selectedSource: { name: string } | undefined;
+}> = ({ analysis, selectedSource }) => {
   return (
     <Card className="mb-4">
       <Card.Header>
@@ -102,7 +103,7 @@ const AnalysisSummary: React.FC<{
             <Card className="h-100">
               <Card.Body className="text-center">
                 <h6 className="text-muted">Source</h6>
-                <h4>{analysis.statement_schema.source_id || 'Unknown'}</h4>
+                <h4>{selectedSource ? selectedSource.name : <span className="text-muted">No source selected</span>}</h4>
               </Card.Body>
             </Card>
           </Col>
@@ -316,7 +317,7 @@ const ValidationMessages: React.FC<{
 
 // Main Upload Page component
 const UploadPage: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | undefined>(undefined);
   const [sourceId, setSourceId] = useState<number | undefined>(undefined);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -334,6 +335,8 @@ const UploadPage: React.FC = () => {
   const { mutate: uploadFileMutation } = useFileUpload();
   const { mutate: analyzeFileMutation } = useFileAnalysis();
   const { data: sources, isLoading: isLoadingSources } = useSources();
+
+  const selectedSource = sources?.find((s) => s.id === sourceId);
 
   // Handle file selection
   const handleFileSelected = useCallback(async (selectedFile: File) => {
@@ -414,6 +417,7 @@ const UploadPage: React.FC = () => {
             setColumnMappings(initialMappings);
             setStartRow(data.statement_schema.start_row);
             setHeaderRow(data.statement_schema.header_row || 0);
+            setSourceId(data.statement_schema.source_id ?? undefined);
             setIsAnalyzing(false);
           },
           onError: (error) => {
@@ -512,7 +516,7 @@ const UploadPage: React.FC = () => {
             processed: data.transactions_processed,
             skipped: data.skipped_duplicates,
           });
-          setFile(null);
+          setFile(undefined);
           setAnalysisResult(null);
         },
         onError: (error) => {
@@ -532,7 +536,7 @@ const UploadPage: React.FC = () => {
 
   // Reset the form
   const handleReset = useCallback(() => {
-    setFile(null);
+    setFile(undefined);
     setAnalysisResult(null);
     setColumnMappings({});
     setUploadResult(null);
@@ -554,7 +558,7 @@ const UploadPage: React.FC = () => {
 
       {analysisResult && !uploadResult && (
         <>
-          <AnalysisSummary analysis={analysisResult} />
+          <AnalysisSummary analysis={analysisResult} selectedSource={selectedSource} />
 
           <Form.Group className="mb-4">
             <Form.Label>Source <span className="text-danger">*</span></Form.Label>
