@@ -6,7 +6,7 @@ import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
-import { useTransactions, useCategories, useSources } from '../hooks/useQueries';
+import { useTransactions, useCategories } from '../hooks/useQueries';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import './UserHomePage.css';
 
@@ -14,15 +14,11 @@ const UserHomePage: React.FC = () => {
   // Mock data - in a real app, this would come from API or context
   const userName = "John";
   const lastUpload = "5 days ago";
-  
   const { data: transactions } = useTransactions({
     limit: 100, // Get enough transactions for calculations
     skip: 0,
   });
-  
   const { data: categories } = useCategories();
-  const { data: sources } = useSources();
-  
   // Calculate metrics
   const metrics = React.useMemo(() => {
     if (!transactions) return {
@@ -31,26 +27,26 @@ const UserHomePage: React.FC = () => {
       mostCommonCategory: 'None',
       statementCount: 0
     };
-    
+
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    
+
     // Total spent this month (negative amounts)
     const totalSpent = transactions
       .filter(t => {
         const transDate = new Date(t.date);
-        return transDate.getMonth() === currentMonth && 
-               transDate.getFullYear() === currentYear && 
-               t.amount < 0;
+        return transDate.getMonth() === currentMonth &&
+          transDate.getFullYear() === currentYear &&
+          t.amount < 0;
       })
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    
+
     // Percentage of auto-categorized transactions
     const categorizedCount = transactions.filter(t => t.category_id !== null).length;
-    const autoCategorized = transactions.length > 0 
-      ? Math.round((categorizedCount / transactions.length) * 100) 
+    const autoCategorized = transactions.length > 0
+      ? Math.round((categorizedCount / transactions.length) * 100)
       : 0;
-    
+
     // Most common category
     const categoryCounts: Record<string, number> = {};
     transactions.forEach(t => {
@@ -61,20 +57,20 @@ const UserHomePage: React.FC = () => {
         }
       }
     });
-    
+
     let mostCommonCategory = 'None';
     let maxCount = 0;
-    
+
     Object.entries(categoryCounts).forEach(([category, count]) => {
       if (count > maxCount) {
         mostCommonCategory = category;
         maxCount = count;
       }
     });
-    
+
     // Count unique sources as a proxy for statement count
     const uniqueSources = new Set(transactions.map(t => t.source_id)).size;
-    
+
     return {
       totalSpent,
       autoCategorized,
@@ -82,13 +78,13 @@ const UserHomePage: React.FC = () => {
       statementCount: uniqueSources
     };
   }, [transactions, categories]);
-  
+
   // Prepare chart data
   const categoryChartData = React.useMemo(() => {
     if (!transactions || !categories) return [];
-    
+
     const categoryAmounts: Record<string, number> = {};
-    
+
     transactions.forEach(t => {
       if (t.category_id && t.amount < 0) { // Only count expenses
         const category = categories.find(c => c.id === t.category_id);
@@ -97,19 +93,19 @@ const UserHomePage: React.FC = () => {
         }
       }
     });
-    
+
     return Object.entries(categoryAmounts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5); // Top 5 categories
   }, [transactions, categories]);
-  
+
   // Merchant chart data
   const merchantChartData = React.useMemo(() => {
     if (!transactions) return [];
-    
+
     const merchantAmounts: Record<string, number> = {};
-    
+
     transactions.forEach(t => {
       if (t.amount < 0) { // Only count expenses
         // Use first word of description as merchant name (simplified)
@@ -117,20 +113,20 @@ const UserHomePage: React.FC = () => {
         merchantAmounts[merchant] = (merchantAmounts[merchant] || 0) + Math.abs(t.amount);
       }
     });
-    
+
     return Object.entries(merchantAmounts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5); // Top 5 merchants
   }, [transactions]);
-  
+
   // Mock recent activity data
   const recentActivity = [
     { id: 1, fileName: 'March_2025_Statement.pdf', uploadDate: '2025-04-05', transactionCount: 42, status: 'Processed' },
     { id: 2, fileName: 'Credit_Card_Q1.csv', uploadDate: '2025-03-15', transactionCount: 78, status: 'Processed' },
     { id: 3, fileName: 'Investment_Account.xls', uploadDate: '2025-02-28', transactionCount: 12, status: 'Processed' }
   ];
-  
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -138,10 +134,10 @@ const UserHomePage: React.FC = () => {
       currency: 'USD',
     }).format(amount);
   };
-  
+
   // Chart colors
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-  
+
   return (
     <Container className="py-4">
       {/* Welcome Section */}
@@ -149,14 +145,14 @@ const UserHomePage: React.FC = () => {
         <h1 className="mb-2">Welcome back, {userName}!</h1>
         <p className="text-muted">Last upload: {lastUpload}</p>
       </div>
-      
+
       <Row className="mb-4">
         {/* Quick Upload Widget */}
         <Col lg={4} className="mb-4">
           <Card className="h-100 shadow-sm">
             <Card.Body className="d-flex flex-column">
               <Card.Title>Quick Upload</Card.Title>
-              <div 
+              <div
                 className="border border-dashed rounded p-4 text-center my-3 flex-grow-1 d-flex flex-column justify-content-center"
                 style={{ borderStyle: 'dashed' }}
               >
@@ -177,7 +173,7 @@ const UserHomePage: React.FC = () => {
             </Card.Body>
           </Card>
         </Col>
-        
+
         {/* Key Metrics */}
         <Col lg={8}>
           <Row>
@@ -220,7 +216,7 @@ const UserHomePage: React.FC = () => {
           </Row>
         </Col>
       </Row>
-      
+
       {/* Recent Activity */}
       <Row className="mb-4">
         <Col md={12}>
@@ -250,9 +246,9 @@ const UserHomePage: React.FC = () => {
                       <td>{new Date(activity.uploadDate).toLocaleDateString()}</td>
                       <td>{activity.transactionCount}</td>
                       <td>
-                        <span className={`badge ${activity.status === 'Processed' ? 'bg-success' : 
-                                              activity.status === 'In Progress' ? 'bg-warning' : 
-                                              'bg-danger'}`}>
+                        <span className={`badge ${activity.status === 'Processed' ? 'bg-success' :
+                          activity.status === 'In Progress' ? 'bg-warning' :
+                            'bg-danger'}`}>
                           {activity.status}
                         </span>
                       </td>
@@ -264,7 +260,7 @@ const UserHomePage: React.FC = () => {
           </Card>
         </Col>
       </Row>
-      
+
       {/* Insights Preview */}
       <Row className="mb-4">
         <Col md={6} className="mb-4">

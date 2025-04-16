@@ -4,7 +4,7 @@ import {
   Table, Form, Row, Col, Badge
 } from 'react-bootstrap';
 import { useFileUpload, useFileAnalysis, useSources } from '../hooks/useQueries';
-import { FileUploadResponse, ColumnMapping, StatementSchema, FileAnalysisResponse } from '../types';
+import { FileAnalysisResponse } from '../types';
 import styles from './UploadPage.module.css';
 
 // Component for file upload zone with drag and drop

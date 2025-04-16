@@ -5,12 +5,11 @@ import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
-import { 
-  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer 
+import {
+  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { useTransactions, useCategories, useSources } from '../hooks/useQueries';
-import { Transaction } from '../types';
 
 // Colors for the charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#8DD1E1'];
@@ -44,27 +43,27 @@ const ChartsPage: React.FC = () => {
   // Prepare data for pie chart (by category)
   const prepareCategoryData = () => {
     if (!transactions || !categories) return [];
-    
+
     const categoryMap = new Map<number, { name: string; value: number }>();
-    
+
     // Initialize with all categories
     categories.forEach(category => {
       categoryMap.set(category.id, { name: category.category_name, value: 0 });
     });
-    
+
     // Sum transaction amounts by category
     transactions.forEach(transaction => {
       if (transaction.category_id && transaction.amount < 0) { // Only count expenses (negative amounts)
         const categoryData = categoryMap.get(transaction.category_id);
         if (categoryData) {
           categoryMap.set(
-            transaction.category_id, 
+            transaction.category_id,
             { ...categoryData, value: categoryData.value + Math.abs(transaction.amount) }
           );
         }
       }
     });
-    
+
     // Convert to array and filter out categories with zero value
     return Array.from(categoryMap.values())
       .filter(item => item.value > 0)
@@ -74,33 +73,33 @@ const ChartsPage: React.FC = () => {
   // Prepare data for bar chart (monthly expenses)
   const prepareMonthlyData = () => {
     if (!transactions) return [];
-    
+
     const monthlyMap = new Map<string, { name: string; expenses: number; income: number }>();
-    
+
     // Process transactions
     transactions.forEach(transaction => {
       const date = new Date(transaction.date);
       const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const monthName = date.toLocaleString('default', { month: 'short', year: 'numeric' });
-      
+
       if (!monthlyMap.has(monthYear)) {
         monthlyMap.set(monthYear, { name: monthName, expenses: 0, income: 0 });
       }
-      
+
       const monthData = monthlyMap.get(monthYear)!;
       if (transaction.amount < 0) {
         monthlyMap.set(
-          monthYear, 
+          monthYear,
           { ...monthData, expenses: monthData.expenses + Math.abs(transaction.amount) }
         );
       } else {
         monthlyMap.set(
-          monthYear, 
+          monthYear,
           { ...monthData, income: monthData.income + transaction.amount }
         );
       }
     });
-    
+
     // Convert to array and sort by date
     return Array.from(monthlyMap.values())
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -144,7 +143,7 @@ const ChartsPage: React.FC = () => {
   return (
     <Container>
       <h1 className="mb-4">Financial Charts</h1>
-      
+
       {/* Filters */}
       <Card className="mb-4">
         <Card.Body>
@@ -215,7 +214,7 @@ const ChartsPage: React.FC = () => {
           </div>
         </Card.Body>
       </Card>
-      
+
       {/* Charts */}
       <Row>
         {/* Pie Chart - Expenses by Category */}
@@ -225,9 +224,9 @@ const ChartsPage: React.FC = () => {
               <Card.Body>
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <h5>Expenses by Category</h5>
-                  <Button 
-                    variant="outline-secondary" 
-                    size="sm" 
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
                     onClick={() => toggleMaximize(ChartType.CATEGORY)}
                   >
                     {maximizedChart === ChartType.CATEGORY ? 'Minimize' : 'Maximize'}
@@ -252,7 +251,7 @@ const ChartsPage: React.FC = () => {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value: number) => [`€${value.toFixed(2)}`, 'Amount']}
                       />
                       <Legend />
@@ -265,7 +264,7 @@ const ChartsPage: React.FC = () => {
             </Card>
           </Col>
         )}
-        
+
         {/* Bar Chart - Monthly Income/Expenses */}
         {(maximizedChart === ChartType.NONE || maximizedChart === ChartType.MONTHLY) && (
           <Col md={getColWidth(ChartType.MONTHLY)}>
@@ -273,9 +272,9 @@ const ChartsPage: React.FC = () => {
               <Card.Body>
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <h5>Monthly Income & Expenses</h5>
-                  <Button 
-                    variant="outline-secondary" 
-                    size="sm" 
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
                     onClick={() => toggleMaximize(ChartType.MONTHLY)}
                   >
                     {maximizedChart === ChartType.MONTHLY ? 'Minimize' : 'Maximize'}
@@ -311,7 +310,7 @@ const ChartsPage: React.FC = () => {
           </Col>
         )}
       </Row>
-      
+
       {/* Summary Statistics - Only show when no chart is maximized */}
       {maximizedChart === ChartType.NONE && (
         <Row>
