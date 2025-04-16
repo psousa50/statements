@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
   Container, Card, Button, Alert, Spinner,
   Table, Form, Row, Col, Badge
@@ -287,10 +287,24 @@ const ValidationMessages: React.FC<{
   columnMappings: Record<string, string>;
   isValid: boolean;
 }> = ({ columnMappings, isValid }) => {
-  // Check if required columns are mapped
   const hasDateColumn = Object.values(columnMappings).includes('date');
   const hasDescriptionColumn = Object.values(columnMappings).includes('description');
   const hasAmountColumn = Object.values(columnMappings).includes('amount');
+  const hasDebitAmountColumn = Object.values(columnMappings).includes('debit_amount');
+  const hasCreditAmountColumn = Object.values(columnMappings).includes('credit_amount');
+
+  const bothDebitCreditAssigned = hasDebitAmountColumn && hasCreditAmountColumn;
+  const onlyOneDebitCreditAssigned = (hasDebitAmountColumn || hasCreditAmountColumn) && !(hasDebitAmountColumn && hasCreditAmountColumn);
+  const hasAmountAndDebitCredit = hasAmountColumn && (hasDebitAmountColumn || hasCreditAmountColumn);
+
+  const amountRequired = !bothDebitCreditAssigned;
+
+  // Ensure each mapping type is assigned only once (excluding 'ignore' and 'category')
+  const assignedTypes = Object.values(columnMappings).filter(
+    v => v !== 'ignore' && v !== 'category'
+  );
+  const duplicates = assignedTypes.filter((v, i, arr) => arr.indexOf(v) !== i);
+  const hasDuplicateAssignments = duplicates.length > 0;
 
   if (isValid) {
     return (
@@ -301,7 +315,13 @@ const ValidationMessages: React.FC<{
     );
   }
 
-  const hasIssues = !hasDateColumn || !hasDescriptionColumn || !hasAmountColumn;
+  const hasIssues =
+    !hasDateColumn ||
+    !hasDescriptionColumn ||
+    (amountRequired && !hasAmountColumn) ||
+    onlyOneDebitCreditAssigned ||
+    hasAmountAndDebitCredit ||
+    hasDuplicateAssignments;
 
   return hasIssues ? (
     <Alert variant="warning" className="mb-4">
@@ -313,8 +333,17 @@ const ValidationMessages: React.FC<{
         {!hasDescriptionColumn && (
           <li>Description column is required - please select which column contains transaction descriptions</li>
         )}
-        {!hasAmountColumn && (
-          <li>Amount column is required - please select which column contains transaction amounts</li>
+        {amountRequired && !hasAmountColumn && (
+          <li>Amount column is required unless both Debit and Credit columns are mapped</li>
+        )}
+        {onlyOneDebitCreditAssigned && (
+          <li>If you assign either Debit or Credit column, you must assign both</li>
+        )}
+        {hasAmountAndDebitCredit && (
+          <li>If using Debit and Credit columns, Amount column must not be assigned</li>
+        )}
+        {hasDuplicateAssignments && (
+          <li>Each column type (except Ignore/Category) can only be assigned once</li>
         )}
       </ul>
     </Alert>
@@ -476,23 +505,38 @@ const UploadPage: React.FC = () => {
   }, []);
 
   // Check if mappings are valid
-  const isMappingValid = useCallback(() => {
-    if (!columnMappings) {
-      return false;
-    }
-
+  const isValid = useMemo(() => {
     const mappingValues = Object.values(columnMappings);
+    const hasDateColumn = mappingValues.includes('date');
+    const hasDescriptionColumn = mappingValues.includes('description');
+    const hasAmountColumn = mappingValues.includes('amount');
+    const hasDebitAmountColumn = mappingValues.includes('debit_amount');
+    const hasCreditAmountColumn = mappingValues.includes('credit_amount');
+
+    const bothDebitCreditAssigned = hasDebitAmountColumn && hasCreditAmountColumn;
+    const onlyOneDebitCreditAssigned = (hasDebitAmountColumn || hasCreditAmountColumn) && !(hasDebitAmountColumn && hasCreditAmountColumn);
+    const hasAmountAndDebitCredit = hasAmountColumn && (hasDebitAmountColumn || hasCreditAmountColumn);
+
+    const amountRequired = !bothDebitCreditAssigned;
+
+    const assignedTypes = mappingValues.filter(v => v !== 'ignore' && v !== 'category');
+    const duplicates = assignedTypes.filter((v, i, arr) => arr.indexOf(v) !== i);
+    const hasDuplicateAssignments = duplicates.length > 0;
+
     return (
-      mappingValues.includes('date') &&
-      mappingValues.includes('description') &&
-      mappingValues.includes('amount') &&
-      sourceId !== undefined // Require source selection
+      hasDateColumn &&
+      hasDescriptionColumn &&
+      (!amountRequired ? true : hasAmountColumn) &&
+      !onlyOneDebitCreditAssigned &&
+      !hasAmountAndDebitCredit &&
+      !hasDuplicateAssignments &&
+      sourceId !== undefined
     );
   }, [columnMappings, sourceId]);
 
   // Handle final upload
   const handleFinalUpload = useCallback(async () => {
-    if (!file || !analysisResult || !isMappingValid()) {
+    if (!file || !analysisResult || !isValid) {
       return;
     }
 
@@ -538,7 +582,7 @@ const UploadPage: React.FC = () => {
         }
       }
     );
-  }, [file, analysisResult, sourceId, uploadFileMutation, isMappingValid, startRow, headerRow]);
+  }, [file, analysisResult, sourceId, uploadFileMutation, isValid, startRow, headerRow]);
 
   // Reset the form
   const handleReset = useCallback(() => {
@@ -604,7 +648,7 @@ const UploadPage: React.FC = () => {
 
           <ValidationMessages
             columnMappings={columnMappings}
-            isValid={isMappingValid()}
+            isValid={isValid}
           />
 
           <div className="d-flex justify-content-between mb-4">
@@ -618,7 +662,7 @@ const UploadPage: React.FC = () => {
             <Button
               variant="primary"
               onClick={handleFinalUpload}
-              disabled={!isMappingValid() || isUploading}
+              disabled={!isValid || isUploading}
             >
               {isUploading ? 'Uploading...' : 'Finalize Upload'}
             </Button>
