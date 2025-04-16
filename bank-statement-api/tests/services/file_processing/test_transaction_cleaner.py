@@ -230,3 +230,30 @@ class TestTransactionCleaner:
         assert result_df["amount"].iloc[0] == 1000.00
         assert result_df["currency"].iloc[0] == "EUR"
         assert result_df["balance"].iloc[0] == 1000.00
+
+    def test_clean_with_amount_with_commas_and_zeroes(self):
+        data = {
+            "Date": ["20-Aug-2020", "20-Aug-2020", "20-Aug-2020"],
+            "Description": ["NEFT", "NEFT", "Commission"],
+            "Deposits": ["23,237.00", "00.00", "245.00"],
+            "Withdrawls": ["00.00", "3,724.33", "00.00"],
+            "Balance": ["37,243.31", "33,518.98", "33,763.98"],
+        }
+        df = pd.DataFrame(data)
+
+        conversion_model = ConversionModel(
+            column_map={
+                "date": "Date",
+                "description": "Description",
+                "debit_amount": "Withdrawls",
+                "credit_amount": "Deposits",
+                "balance": "Balance",
+            },
+            header_row=0,
+            start_row=1,
+        )
+
+        cleaner = TransactionsCleaner()
+        result_df = cleaner.clean(df, conversion_model)
+        assert result_df["amount"].tolist() == [23237.0, -3724.33, 245.0]
+        assert result_df["amount"].dtype == float

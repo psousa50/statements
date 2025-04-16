@@ -42,10 +42,10 @@ class TransactionsCleaner:
             result_df["date"] = self._parse_dates(result_df["date"])
 
         if "amount" in result_df.columns:
-            result_df["amount"] = pd.to_numeric(result_df["amount"], errors="coerce")
+            result_df["amount"] = self._normalize_amount_column(result_df["amount"])
 
         if "balance" in result_df.columns:
-            result_df["balance"] = pd.to_numeric(result_df["balance"], errors="coerce")
+            result_df["balance"] = self._normalize_amount_column(result_df["balance"])
 
         return result_df
 
@@ -58,20 +58,47 @@ class TransactionsCleaner:
 
         debit_col = "debit_amount"
         credit_col = "credit_amount"
-
         result_df = df.copy()
-
+        if debit_col in result_df.columns:
+            result_df[debit_col] = (
+                result_df[debit_col].astype(str).str.replace(",", "", regex=False)
+            )
+            result_df[debit_col] = pd.to_numeric(
+                result_df[debit_col], errors="coerce"
+            ).fillna(0.0)
+        if credit_col in result_df.columns:
+            result_df[credit_col] = (
+                result_df[credit_col].astype(str).str.replace(",", "", regex=False)
+            )
+            result_df[credit_col] = pd.to_numeric(
+                result_df[credit_col], errors="coerce"
+            ).fillna(0.0)
         result_df["amount"] = 0.0
-
         credit_mask = ~result_df[credit_col].isna() & (result_df[credit_col] != 0)
         result_df.loc[credit_mask, "amount"] = result_df.loc[credit_mask, credit_col]
-
         debit_mask = ~result_df[debit_col].isna() & (result_df[debit_col] != 0)
         result_df.loc[debit_mask, "amount"] = -result_df.loc[debit_mask, debit_col]
-
         result_df = result_df.drop(columns=[debit_col, credit_col])
-
         return result_df
+
+    def _normalize_amount_column(self, amount_series: pd.Series) -> pd.Series:
+        def normalize(val):
+            if pd.isna(val):
+                return 0.0
+            s = str(val).replace(",", "").strip()
+            if s in {"", "00.00", "0.00", "0", "00"}:
+                return 0.0
+            if s.startswith("-"):
+                try:
+                    return -float(s[1:])
+                except Exception:
+                    return float("nan")
+            try:
+                return float(s)
+            except Exception:
+                return float("nan")
+
+        return amount_series.apply(normalize)
 
     def _parse_dates(self, date_series: pd.Series) -> pd.Series:
         date_formats = [
@@ -86,6 +113,7 @@ class TransactionsCleaner:
             "%d %B %Y",
             "%b %d, %Y",
             "%B %d, %Y",
+            "%d-%b-%Y",
             "%Y-%m-%d %H:%M:%S",
             "%d/%m/%Y %H:%M:%S",
             "%d-%m-%Y %H:%M:%S",
@@ -96,6 +124,7 @@ class TransactionsCleaner:
             "%d %B %Y %H:%M:%S",
             "%b %d, %Y %H:%M:%S",
             "%B %d, %Y %H:%M:%S",
+            "%d-%b-%Y %H:%M:%S",
         ]
 
         def parse_date(date_str):
