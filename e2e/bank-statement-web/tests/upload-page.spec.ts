@@ -12,7 +12,7 @@ test.describe('Upload Page', () => {
     const fileChooserPromise = page.waitForEvent('filechooser');
     await page.getByRole('button', { name: /Browse Files/i }).click();
     const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles('fixtures/100 BT Records.csv');
+    await fileChooser.setFiles('fixtures/100_BT_Records.csv');
     // Wait for the analysis summary card to appear
     const analysisSummary = page.getByRole('heading', { name: /analysis summary/i }).locator('..').locator('..');
     const transactionsPanel = analysisSummary.getByText(/transactions/i, { exact: false });

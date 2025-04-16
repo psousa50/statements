@@ -58,7 +58,6 @@ Guidelines:
 	•	If a field is missing (e.g. no currency column), set its value to an empty string: "".
 	•	header_row is the 0-based index of the row where the column headers (like “Date”, “Description”, etc.) appear.
 	•	start_row is the 0-based index of the first row after the header that contains actual transaction data.
-	•	Ignore any metadata rows (like account numbers, date ranges, or currency indicators) and blank rows.
 	•	Do not guess or generate column names—only use what’s present in the header row.
 	•	Only output valid JSON matching the format above. No explanations. No extra text.
 	•	Transaction rows contain actual dates and amounts; ignore rows that have empty fields, labels, or static information.
