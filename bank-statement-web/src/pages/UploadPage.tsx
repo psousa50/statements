@@ -429,10 +429,6 @@ const UploadPage: React.FC = () => {
             // Map columns based on the analysis response
             const columnMap = data.statement_schema.column_mapping;
 
-            // For debugging
-            console.log('Column Names:', columnNames);
-            console.log('Column Map:', columnMap);
-
             // Initialize all columns to 'ignore' by default
             for (const column of columnNames) {
               initialMappings[column] = 'ignore';
@@ -466,8 +462,6 @@ const UploadPage: React.FC = () => {
             if (columnMap.balance && columnNames.includes(columnMap.balance)) {
               initialMappings[columnMap.balance] = 'balance';
             }
-
-            console.log('Initial Mappings:', initialMappings);
 
             setColumnMappings(initialMappings);
             setStartRow(data.statement_schema.start_row);
@@ -602,7 +596,7 @@ const UploadPage: React.FC = () => {
         }
       }
     );
-  }, [file, analysisResult, sourceId, uploadFileMutation, isValid, startRow, headerRow]);
+  }, [analysisResult, sourceId, uploadFileMutation, isValid, startRow, headerRow]);
 
   // Reset the form
   const handleReset = useCallback(() => {
