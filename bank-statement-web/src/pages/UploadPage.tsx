@@ -260,15 +260,34 @@ const ColumnMappingTable: React.FC<{
                       </div>
                     </td>
                     {originalColumns.map((column, colIndex) => {
-                      // Ensure we're displaying the value at the correct index
                       const value = colIndex < row.length ? row[colIndex] : '';
                       const isAssignedColumn = columnMappings[column] !== 'ignore';
+                      const mappingType = columnMappings[column];
+                      let displayValue = value;
+                      let amountClass = '';
+                      let alignClass = '';
+                      if ((mappingType === 'debit_amount' || mappingType === 'credit_amount')) {
+                        const num = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : value;
+                        if (!isNaN(num) && Number(num) === 0) displayValue = '';
+                        alignClass = 'text-end';
+                      }
+                      if (mappingType === 'amount' && value !== '') {
+                        const num = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : value;
+                        if (!isNaN(num)) {
+                          if (num > 0) amountClass = 'text-success';
+                          else if (num < 0) amountClass = 'text-danger';
+                        }
+                        alignClass = 'text-end';
+                      }
+                      if (mappingType === 'balance') {
+                        alignClass = 'text-end';
+                      }
                       return (
                         <td
                           key={colIndex}
-                          className={`${isSpecialRow ? 'bg-info bg-opacity-25' : isAssignedColumn ? 'bg-info bg-opacity-10' : ''} ${isAssignedColumn ? 'fw-bold' : ''}`}
+                          className={`${isSpecialRow ? 'bg-info bg-opacity-25' : isAssignedColumn ? 'bg-info bg-opacity-10' : ''} ${isAssignedColumn ? 'fw-bold' : ''} ${amountClass} ${alignClass}`}
                         >
-                          {value}
+                          {displayValue}
                         </td>
                       );
                     })}
@@ -611,14 +630,15 @@ const UploadPage: React.FC = () => {
         <>
           <AnalysisSummary analysis={analysisResult} selectedSource={selectedSource} />
 
-          <Form.Group className="mb-4">
-            <Form.Label>Source <span className="text-danger">*</span></Form.Label>
+          <Form.Group className="mb-4 d-flex align-items-center gap-2">
+            <Form.Label className="mb-0">Source <span className="text-danger">*</span></Form.Label>
             <Form.Select
               value={sourceId || ''}
               onChange={handleSourceChange}
               disabled={isLoadingSources}
               isInvalid={analysisResult && !sourceId}
               required
+              style={{ maxWidth: 340 }}
             >
               <option value="">Select a source</option>
               {sources?.map((source) => (
@@ -632,7 +652,7 @@ const UploadPage: React.FC = () => {
                 Please select a source. This is required to upload the statement.
               </Form.Control.Feedback>
             )}
-            <Form.Text className="text-muted">
+            <Form.Text className="text-muted ms-2">
               Select the bank or financial institution this statement is from
             </Form.Text>
           </Form.Group>
