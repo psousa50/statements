@@ -5,6 +5,7 @@ import {
 } from 'react-bootstrap';
 import { useFileUpload, useFileAnalysis, useSources } from '../hooks/useQueries';
 import { FileUploadResponse, ColumnMapping, StatementSchema, FileAnalysisResponse } from '../types';
+import styles from './UploadPage.module.css';
 
 // Component for file upload zone with drag and drop
 const FileUploadZone: React.FC<{
@@ -206,7 +207,7 @@ const ColumnMappingTable: React.FC<{
       </Card.Header>
       <Card.Body className="p-0">
         <div className="table-responsive">
-          <Table bordered hover>
+          <Table bordered hover className={styles['table-sm']}>
             <thead>
               <tr>
                 <th style={{ width: '60px' }} className="text-center">Row</th>
