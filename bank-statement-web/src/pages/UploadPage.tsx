@@ -640,9 +640,9 @@ const UploadPage: React.FC = () => {
               ))}
             </Form.Select>
             {!sourceId && (
-              <Form.Control.Feedback type="invalid">
-                Please select a source. This is required to upload the statement.
-              </Form.Control.Feedback>
+              <span style={{ color: 'red', marginLeft: '0.75rem', whiteSpace: 'nowrap', fontSize: '0.95em' }}>
+                Please select a source.
+              </span>
             )}
             <Form.Text className="text-muted ms-2">
               Select the bank or financial institution this statement is from
