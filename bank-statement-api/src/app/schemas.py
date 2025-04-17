@@ -83,7 +83,6 @@ class StatementSchemaDefinition(BaseModel):
     source_id: Optional[int] = None
     file_type: str
     column_mapping: ColumnMapping
-    column_names: List[str] = []
     start_row: int = 1
     header_row: int = 0
 

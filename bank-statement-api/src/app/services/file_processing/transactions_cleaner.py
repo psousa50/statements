@@ -45,7 +45,9 @@ class TransactionsCleaner:
             result_df["amount"] = self._normalize_amount_column(result_df["amount"])
 
         if "balance" in result_df.columns:
-            result_df["balance"] = self._normalize_amount_column(result_df["balance"])
+            result_df["balance"] = self._normalize_amount_column(
+                result_df["balance"], na_value=np.nan
+            )
 
         return result_df
 
@@ -81,10 +83,12 @@ class TransactionsCleaner:
         result_df = result_df.drop(columns=[debit_col, credit_col])
         return result_df
 
-    def _normalize_amount_column(self, amount_series: pd.Series) -> pd.Series:
+    def _normalize_amount_column(
+        self, amount_series: pd.Series, na_value: float = 0.0
+    ) -> pd.Series:
         def normalize(val):
             if pd.isna(val):
-                return 0.0
+                return na_value
             s = str(val).replace(",", "").strip()
             if s in {"", "00.00", "0.00", "0", "00"}:
                 return 0.0

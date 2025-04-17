@@ -99,13 +99,14 @@ class StatementUploadService:
             )
 
             # Prepare the schema data in the format expected by the repository
+            column_names = cleaned_df.columns.tolist()
             schema_data = {
                 "id": spec.statement_schema.id,
                 "statement_hash": _calculate_statement_hash(
-                    spec.statement_schema.column_names,
+                    column_names,
                     spec.statement_schema.file_type,
                 ),
-                "schema_data": jsonable_encoder(spec.statement_schema)
+                "schema_data": jsonable_encoder(spec.statement_schema),
             }
 
             # Update the schema
