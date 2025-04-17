@@ -460,10 +460,21 @@ const UploadPage: React.FC = () => {
 
   // Handle column mapping change
   const handleColumnMappingChange = useCallback((columnName: string, mappingType: string) => {
-    setColumnMappings(prev => ({
-      ...prev,
-      [columnName]: mappingType
-    }));
+    setColumnMappings(prevMappings => {
+      // If mappingType is 'ignore', just update this column and don't swap
+      if (mappingType === 'ignore') {
+        return { ...prevMappings, [columnName]: 'ignore' };
+      }
+      const prevAssignment = prevMappings[columnName];
+      const existingColumn = Object.entries(prevMappings).find(
+        ([col, type]) => type === mappingType
+      )?.[0];
+      const newMappings = { ...prevMappings, [columnName]: mappingType };
+      if (existingColumn && existingColumn !== columnName) {
+        newMappings[existingColumn] = prevAssignment || 'ignore';
+      }
+      return newMappings;
+    });
   }, []);
 
   // Handle start row change
