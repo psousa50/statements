@@ -17,3 +17,4 @@ def test_statement_schema_definition_fields():
     assert schema.file_type == "CSV"
     assert schema.column_mapping.date == "Date"
     assert schema.column_mapping.amount == "Amount"
+    assert not hasattr(schema, "column_names")

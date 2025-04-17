@@ -22,6 +22,9 @@ class TransactionCategorizationService:
         self.categories_repository = categories_repository
         self.transactions_repository = transactions_repository
         self.categorizer = categorizer
+        self.is_async_categorizer = inspect.iscoroutinefunction(
+            categorizer.categorize_transaction
+        )
 
     async def categorize_pending_transactions(self, batch_size: int = 10) -> int:
         categorized_count = 0

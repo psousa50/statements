@@ -158,12 +158,8 @@ const ColumnMappingTable: React.FC<{
   headerRow: number;
   onHeaderRowChange: (headerRow: number) => void;
 }> = ({ analysis, columnMappings, onColumnMappingChange, startRow, onStartRowChange, headerRow, onHeaderRowChange }) => {
-  // Use column_names from the statement schema if available, otherwise fall back to preview rows
-  const originalColumns = analysis.statement_schema.column_names.length > 0
-    ? analysis.statement_schema.column_names
-    : analysis.preview_rows.length > 0
-      ? analysis.preview_rows[0].map((_, index) => `Column ${index + 1}`)
-      : [];
+  // Use the first row of preview_rows as the original columns
+  const columns = analysis.preview_rows.length > 0 && analysis.preview_rows[headerRow] ? analysis.preview_rows[headerRow] : [];
 
   // Column mapping options
   const columnOptions = [
@@ -184,8 +180,9 @@ const ColumnMappingTable: React.FC<{
         <h5 className="mb-0">Column Mapping</h5>
         <div className="d-flex gap-3">
           <Form.Group className="mb-0 d-flex align-items-center">
-            <Form.Label className="me-2 mb-0">Header row:</Form.Label>
+            <Form.Label htmlFor="header-row-input" className="me-2 mb-0">Header row:</Form.Label>
             <Form.Control
+              id="header-row-input"
               type="number"
               min="0"
               value={headerRow}
@@ -194,8 +191,9 @@ const ColumnMappingTable: React.FC<{
             />
           </Form.Group>
           <Form.Group className="mb-0 d-flex align-items-center">
-            <Form.Label className="me-2 mb-0">Data starts at row:</Form.Label>
+            <Form.Label htmlFor="start-row-input" className="me-2 mb-0">Data starts at row:</Form.Label>
             <Form.Control
+              id="start-row-input"
               type="number"
               min="0"
               value={startRow}
@@ -210,8 +208,7 @@ const ColumnMappingTable: React.FC<{
           <Table bordered hover className={styles['table-sm']}>
             <thead>
               <tr>
-                <th style={{ width: '60px' }} className="text-center">Row</th>
-                {originalColumns.map((column, index) => (
+                {columns.map((column, index) => (
                   <th key={index} className={`text-center ${columnMappings[column] !== 'ignore' ? 'bg-info bg-opacity-25 fw-bold' : ''}`}>
                     <Form.Select
                       size="sm"
@@ -237,29 +234,7 @@ const ColumnMappingTable: React.FC<{
                 const isSpecialRow = rowIndex === headerRow || rowIndex === startRow;
                 return (
                   <tr key={rowIndex}>
-                    <td className={`text-center align-middle ${isSpecialRow ? 'bg-info bg-opacity-25' : ''}`}>
-                      <div className="d-flex flex-row gap-2 justify-content-center">
-                        <Form.Check
-                          type="radio"
-                          name="headerRow"
-                          id={`header-row-${rowIndex}`}
-                          checked={rowIndex === headerRow}
-                          onChange={() => onHeaderRowChange(rowIndex)}
-                          label="H"
-                          title="Set as header row"
-                        />
-                        <Form.Check
-                          type="radio"
-                          name="startRow"
-                          id={`start-row-${rowIndex}`}
-                          checked={rowIndex === startRow}
-                          onChange={() => onStartRowChange(rowIndex)}
-                          label="D"
-                          title="Set as data start row"
-                        />
-                      </div>
-                    </td>
-                    {originalColumns.map((column, colIndex) => {
+                    {columns.map((column, colIndex) => {
                       const value = colIndex < row.length ? row[colIndex] : '';
                       const isAssignedColumn = columnMappings[column] !== 'ignore';
                       const mappingType = columnMappings[column];
@@ -399,42 +374,32 @@ const UploadPage: React.FC = () => {
     setIsAnalyzing(true);
     setAnalysisResult(null);
     setUploadResult(null);
-
     try {
-      // Convert file to base64
       const fileContent = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64 = reader.result as string;
-          // Remove the data:application/octet-stream;base64, prefix
           const base64Content = base64.split(',')[1];
           resolve(base64Content);
         };
         reader.readAsDataURL(selectedFile);
       });
 
-      // Call the analyze endpoint using the mutation
       analyzeFileMutation(
         { fileContent, fileName: selectedFile.name },
         {
           onSuccess: (data) => {
             setAnalysisResult(data);
-
-            // Initialize column mappings from the response
+            const headerRow = data.statement_schema.header_row;
             const initialMappings: Record<string, string> = {};
 
-            // Use the column_names from the statement schema
-            const columnNames = data.statement_schema.column_names;
-
-            // Map columns based on the analysis response
+            const columnNames = data.preview_rows.length > headerRow && data.preview_rows[headerRow] ? data.preview_rows[headerRow] : [];
             const columnMap = data.statement_schema.column_mapping;
 
-            // Initialize all columns to 'ignore' by default
             for (const column of columnNames) {
               initialMappings[column] = 'ignore';
             }
 
-            // Set mappings based on exact matches with column_map values
             if (columnMap.date && columnNames.includes(columnMap.date)) {
               initialMappings[columnMap.date] = 'date';
             }
@@ -508,8 +473,19 @@ const UploadPage: React.FC = () => {
 
   // Handle header row change
   const handleHeaderRowChange = useCallback((newHeaderRow: number) => {
+    if (Number.isNaN(newHeaderRow)) return;
+
+    const originalColumnName = (column_name: string) => {
+      const index = analysisResult?.preview_rows[headerRow].findIndex((col) => col === column_name);
+      return index !== undefined ? analysisResult?.preview_rows[newHeaderRow][index] : column_name;
+    }
+
     setHeaderRow(newHeaderRow);
-  }, []);
+    const newColumnMappings = Object.fromEntries(
+      Object.entries(columnMappings).map(([key, value]) => [originalColumnName(key), value])
+    );
+    setColumnMappings(newColumnMappings);
+  }, [analysisResult, headerRow, columnMappings]);
 
   // Handle source change
   const handleSourceChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -556,18 +532,28 @@ const UploadPage: React.FC = () => {
 
     setIsUploading(true);
 
-    // Create a copy of the statement schema with the updated start_row
+    // Pick column names from the header row selected by the user
+    let headerColumns: string[] = [];
+    if (analysisResult.preview_rows && analysisResult.preview_rows.length > headerRow) {
+      headerColumns = analysisResult.preview_rows[headerRow];
+    } else if (analysisResult.preview_rows.length > 0) {
+      headerColumns = analysisResult.preview_rows[0];
+    }
+
+    // Build the updated column mapping: for each type, find the index of the column in the previous header row that was mapped to it, and assign the column at that index in the new header row
+    const reversedColumnMappings = Object.entries(columnMappings)
+      .map(([columnName, mappingType]) => [mappingType, columnName])
+    const updatedMapping = Object.fromEntries(reversedColumnMappings);
     const updatedSchema = {
       ...analysisResult.statement_schema,
-      start_row: startRow, // Use the current startRow value from the UI
-      header_row: headerRow, // Use the current headerRow value from the UI
-      source_id: sourceId || analysisResult.statement_schema.source_id
+      start_row: startRow,
+      header_row: headerRow,
+      source_id: sourceId || analysisResult.statement_schema.source_id,
+      column_mapping: updatedMapping
     };
-
-    // Create the request payload with the updated structure
     const payload = {
       statementSchema: updatedSchema,
-      statement_id: analysisResult.file_id // Include the file_id from the analysis result
+      statement_id: analysisResult.file_id
     };
 
     uploadFileMutation(
@@ -596,7 +582,7 @@ const UploadPage: React.FC = () => {
         }
       }
     );
-  }, [analysisResult, sourceId, uploadFileMutation, isValid, startRow, headerRow]);
+  }, [analysisResult, sourceId, uploadFileMutation, isValid, startRow, headerRow, columnMappings, file]);
 
   // Reset the form
   const handleReset = useCallback(() => {
@@ -625,8 +611,9 @@ const UploadPage: React.FC = () => {
           <AnalysisSummary analysis={analysisResult} selectedSource={selectedSource} />
 
           <Form.Group className="mb-4 d-flex align-items-center gap-2">
-            <Form.Label className="mb-0">Source <span className="text-danger">*</span></Form.Label>
+            <Form.Label htmlFor="source-select" className="mb-0">Source <span className="text-danger">*</span></Form.Label>
             <Form.Select
+              id="source-select"
               value={sourceId || ''}
               onChange={handleSourceChange}
               disabled={isLoadingSources}

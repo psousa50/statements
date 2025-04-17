@@ -1,6 +1,9 @@
 import logging.config
 import os
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_DIR = os.path.join(BASE_DIR, "../../..", "logs")
+
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -13,12 +16,12 @@ LOGGING_CONFIG = {
             "class": "src.app.logging.dynamic_file_handler.DynamicContentFileHandler",
             "level": "DEBUG",
             "formatter": "raw",
-            "directory": "logs/files",
+            "directory": os.path.join(LOG_DIR, "files"),
         },
         "file": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
-            "filename": "logs/app.log",
+            "filename": os.path.join(LOG_DIR, "app.log"),
             "formatter": "standard",
         },
         "console": {
@@ -35,5 +38,5 @@ LOGGING_CONFIG = {
 
 
 def init_logging():
-    os.makedirs("logs", exist_ok=True)
+    os.makedirs(LOG_DIR, exist_ok=True)
     logging.config.dictConfig(LOGGING_CONFIG)
