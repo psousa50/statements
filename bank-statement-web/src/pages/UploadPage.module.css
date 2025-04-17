@@ -6,3 +6,7 @@
 .table-sm {
   font-size: 0.93rem;
 }
+
+.header-row-highlight {
+  background-color: #ffb347 !important; /* deeper orange */
+}

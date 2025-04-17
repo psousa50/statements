@@ -260,7 +260,7 @@ const ColumnMappingTable: React.FC<{
                       return (
                         <td
                           key={colIndex}
-                          className={`${isSpecialRow ? 'bg-info bg-opacity-25' : isAssignedColumn ? 'bg-info bg-opacity-10' : ''} ${isAssignedColumn ? 'fw-bold' : ''} ${amountClass} ${alignClass}`}
+                          className={`${rowIndex === headerRow ? styles['header-row-highlight'] : isAssignedColumn ? 'bg-info bg-opacity-10' : ''} ${isAssignedColumn ? 'fw-bold' : ''} ${amountClass} ${alignClass}`}
                         >
                           {displayValue}
                         </td>
