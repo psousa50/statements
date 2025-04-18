@@ -116,8 +116,18 @@ const UploadPage: React.FC = () => {
 
   const handleHeaderRowChange = useCallback((newHeaderRow: number) => {
     if (Number.isNaN(newHeaderRow)) return;
+
+    const originalColumnName = (column_name: string) => {
+      const index = analysisResult?.preview_rows[headerRow].findIndex((col) => col === column_name);
+      return index !== undefined ? analysisResult?.preview_rows[newHeaderRow][index] : column_name;
+    }
+
     setHeaderRow(newHeaderRow);
-  }, []);
+    const newColumnMappings = Object.fromEntries(
+      Object.entries(columnMappings).map(([key, value]) => [originalColumnName(key), value])
+    );
+    setColumnMappings(newColumnMappings);
+  }, [analysisResult, headerRow, columnMappings]);
 
   const handleSourceChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;

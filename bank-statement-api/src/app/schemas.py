@@ -1,3 +1,4 @@
+from decimal import Decimal
 from datetime import date
 from typing import List, Literal, Optional
 
@@ -102,3 +103,10 @@ class FileAnalysisResponse(BaseModel):
 class UploadFileSpec(BaseModel):
     statement_id: str
     statement_schema: StatementSchemaDefinition
+
+
+class StatementTransaction(BaseModel):
+    date: date
+    description: str
+    amount: Decimal
+    currency: str

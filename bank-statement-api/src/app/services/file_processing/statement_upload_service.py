@@ -112,7 +112,9 @@ class StatementUploadService:
                 },
             )
 
-            duplicates = self.transactions_repository.find_duplicates(transactions)
+            duplicates = self.transactions_repository.find_duplicates(
+                transactions, spec.statement_schema.source_id
+            )
             unique_transactions = [t for t in transactions if t not in duplicates]
 
             transaction_creates = self._create_transaction_models(
@@ -130,7 +132,6 @@ class StatementUploadService:
                 },
             )
 
-            # Prepare the schema data in the format expected by the repository
             column_names = cleaned_df.columns.tolist()
             schema_data = {
                 "id": spec.statement_schema.id,

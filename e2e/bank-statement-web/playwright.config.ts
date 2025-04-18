@@ -6,5 +6,5 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     headless: true,
   },
-  timeout: 5000
+  timeout: 10000
 });

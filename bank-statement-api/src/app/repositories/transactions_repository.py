@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..models import Transaction
 from ..schemas import TransactionCreate
+from ..schemas import StatementTransaction
 
 
 @dataclass
@@ -148,22 +149,15 @@ class TransactionsRepository:
 
         return [(result[0], result[1]) for result in query.all()]
 
-    def find_duplicates(self, transactions: List) -> List:
-        """
-        Find transactions that already exist in the database.
-
-        Args:
-            transactions: List of transaction objects with date, description, and amount attributes
-
-        Returns:
-            List of transactions that are duplicates
-        """
+    def find_duplicates(
+        self, transactions: List[StatementTransaction], source_id: int
+    ) -> List[StatementTransaction]:
         duplicates = []
 
         for transaction in transactions:
-            # Check if a transaction with the same date, description, and amount exists
             existing = (
                 self.db.query(Transaction)
+                .filter(Transaction.source_id == source_id)
                 .filter(Transaction.date == transaction.date)
                 .filter(Transaction.description == transaction.description)
                 .filter(Transaction.amount == transaction.amount)
@@ -176,15 +170,6 @@ class TransactionsRepository:
         return duplicates
 
     def create_many(self, transactions: List[TransactionCreate]) -> List[Transaction]:
-        """
-        Create multiple transactions in the database.
-
-        Args:
-            transactions: List of TransactionCreate objects
-
-        Returns:
-            List of created Transaction objects
-        """
         db_transactions = []
 
         for transaction_data in transactions:
