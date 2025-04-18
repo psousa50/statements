@@ -110,4 +110,30 @@ test.describe('Upload Page', () => {
       // expect(Number(t.balance)).toBe(Number(exp.balance));
     }
   });
+
+  test('shows loading indicator while analyzing file', async ({ page }) => {
+    await page.goto(`${FRONTEND_URL}/upload`);
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: /Browse Files/i }).click();
+    const fileChooser = await fileChooserPromise;
+    const csvContent = [
+      'Date,Description,Amount',
+      '2020-01-01,desc,10',
+    ].join('\n');
+    const filePayload = {
+      name: 'TestFile.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(csvContent, 'utf-8'),
+    };
+    // Intercept and delay the analysis request
+    await page.route('**/statements/analyze', async (route) => {
+      await new Promise((r) => setTimeout(r, 1500));
+      route.continue();
+    });
+    await fileChooser.setFiles(filePayload);
+    // Assert loading indicator appears
+    await expect(
+      page.locator('[role="status"], .spinner, .progress, [data-testid="loading"], [aria-busy="true"]')
+    ).toBeVisible({ timeout: 1000 });
+  });
 });

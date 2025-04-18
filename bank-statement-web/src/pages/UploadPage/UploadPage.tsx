@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Container, Button, Alert, Form } from 'react-bootstrap';
+import { Container, Button, Alert, Form, Spinner } from 'react-bootstrap';
 import { useStatementUpload, useStatementAnalysis, useSources } from '../../hooks/useQueries';
 import { FileAnalysisResponse } from '../../types';
 import type { Source } from '../../types';
@@ -219,6 +219,11 @@ const UploadPage: React.FC = () => {
 
   return (
     <Container className={styles.uploadPageContainer}>
+      {isAnalyzing && (
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+          <Spinner animation="border" role="status" aria-busy="true" data-testid="loading" style={{ width: 48, height: 48 }} />
+        </div>
+      )}
       {!file && !analysisResult && !uploadResult && (
         <FileUploadZone onFileSelected={handleFileSelected} isLoading={isAnalyzing} />
       )}
