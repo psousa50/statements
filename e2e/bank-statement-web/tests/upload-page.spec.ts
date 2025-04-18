@@ -1,8 +1,20 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, request } from '@playwright/test';
+import { ApiClient, SourcesApi } from './apiClient';
+
+const FRONTEND_URL = process.env.PLAYWRIGHT_FRONTEND_URL || 'http://localhost:3000';
+const BACKEND_URL = process.env.PLAYWRIGHT_BACKEND_URL || 'http://localhost:8000';
+
+let ab7Source: { id: number; name: string };
 
 test.describe('Upload Page', () => {
+  test.beforeAll(async ({ request }) => {
+    const apiClient = new ApiClient(request, BACKEND_URL);
+    const sourcesApi = new SourcesApi(apiClient);
+    ab7Source = await sourcesApi.ensureExists('AB7');
+  });
+
   test('can upload, reassign, and submit with correct payload', async ({ page }) => {
-    await page.goto('http://localhost:3000/upload');
+    await page.goto(`${FRONTEND_URL}/upload`);
     const fileChooserPromise = page.waitForEvent('filechooser');
     await page.getByRole('button', { name: /Browse Files/i }).click();
     const fileChooser = await fileChooserPromise;
@@ -24,7 +36,7 @@ test.describe('Upload Page', () => {
         statement_id: expect.any(String),
         statement_schema: {
           id: expect.any(String),
-          source_id: 2,
+          source_id: ab7Source.id,
           file_type: 'CSV',
           column_mapping: {
             amount: 'Amount2',
