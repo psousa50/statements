@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from 'react-bootstrap';
 import type { Source } from '../../types';
 
@@ -7,7 +7,6 @@ type Props = {
   selectedSource?: Source;
   sourceId?: number;
   sourcePopupOpen: boolean;
-  hoveredSource: number | null;
   onButtonClick: () => void;
   onOptionClick: (id: number) => void;
   onMouseEnter: (id: number) => void;
@@ -19,12 +18,13 @@ export default function SourceSelector({
   selectedSource,
   sourceId,
   sourcePopupOpen,
-  hoveredSource,
   onButtonClick,
   onOptionClick,
   onMouseEnter,
   onMouseLeave,
 }: Props) {
+  const [hoveredSource, setHoveredSource] = useState<number | null>(null);
+
   return (
     <div data-testid="source-selector-panel" style={{
       width: '100%',
@@ -86,8 +86,8 @@ export default function SourceSelector({
                   width: '100%',
                   textAlign: 'left',
                 }}
-                onMouseEnter={() => onMouseEnter(source.id)}
-                onMouseLeave={onMouseLeave}
+                onMouseEnter={() => setHoveredSource(source.id)}
+                onMouseLeave={() => setHoveredSource(null)}
                 onClick={() => onOptionClick(source.id)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onOptionClick(source.id); }}
                 className={hoveredSource === source.id ? 'highlighted' : ''}
