@@ -27,7 +27,9 @@ class StatementSchemaRepository:
 
         return schema_id
 
-    def find_by_statement_hash(self, statement_hash: str) -> Optional[StatementSchemaMapping]:
+    def find_by_statement_hash(
+        self, statement_hash: str
+    ) -> Optional[StatementSchemaMapping]:
         return (
             self.db.query(StatementSchemaMapping)
             .filter(StatementSchemaMapping.statement_hash == statement_hash)
@@ -50,7 +52,9 @@ class StatementSchemaRepository:
             .all()
         )
 
-    def update(self, statement_id: str, schema_data: Dict) -> Optional[StatementSchemaMapping]:
+    def update(
+        self, statement_id: str, schema_data: Dict
+    ) -> Optional[StatementSchemaMapping]:
         schema = self.get_by_id(statement_id)
 
         if not schema:

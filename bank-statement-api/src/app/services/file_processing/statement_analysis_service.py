@@ -1,11 +1,11 @@
-from fastapi.encoders import jsonable_encoder
-import json
 import hashlib
+import json
 import logging
 import uuid
 from typing import Dict, List
 
 import pandas as pd
+from fastapi.encoders import jsonable_encoder
 
 from src.app.repositories.statement_repository import StatementRepository
 from src.app.repositories.statement_schema_repository import StatementSchemaRepository

@@ -17,7 +17,6 @@ from src.app.services.file_processing.file_type_detector import (
 )
 from src.app.services.file_processing.statement_upload_service import (
     StatementUploadService,
-    _calculate_statement_hash,
 )
 from src.app.services.file_processing.transactions_builder import (
     StatementTransaction,

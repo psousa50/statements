@@ -113,9 +113,7 @@ class TestStatementSchemaRepository:
 
     def test_statement_schema_mapping_has_statement_hash(self):
         schema = StatementSchemaMapping(
-            id="test_id",
-            statement_hash="test_hash",
-            schema_data={}
+            id="test_id", statement_hash="test_hash", schema_data={}
         )
         assert hasattr(schema, "statement_hash")
         assert schema.statement_hash == "test_hash"

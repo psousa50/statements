@@ -25,9 +25,6 @@ from src.app.services.file_processing.statement_analysis_service import (
 )
 from src.app.services.file_processing.statement_statistics_calculator import (
     StatementStatistics,
-)
-
-from src.app.services.file_processing.statement_statistics_calculator import (
     StatementStatisticsCalculator,
 )
 from src.app.services.file_processing.transactions_builder import (

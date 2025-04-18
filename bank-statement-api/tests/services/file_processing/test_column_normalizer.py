@@ -1,5 +1,5 @@
-import pytest
 import pandas as pd
+import pytest
 
 from src.app.ai.gemini_ai import GeminiAI
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer

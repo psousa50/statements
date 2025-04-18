@@ -5,8 +5,7 @@ from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
 
 from ..models import Transaction
-from ..schemas import TransactionCreate
-from ..schemas import StatementTransaction
+from ..schemas import StatementTransaction, TransactionCreate
 
 
 @dataclass
