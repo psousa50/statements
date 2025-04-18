@@ -2,12 +2,21 @@ import React from 'react';
 
 type Props = {
   analysisResult: any;
-  fullWidthPanelStyle: React.CSSProperties;
 };
 
-export default function StatisticsPanel({ analysisResult, fullWidthPanelStyle }: Props) {
+export default function StatisticsPanel({ analysisResult }: Props) {
   return (
-    <div data-testid="analysis-summary-panel" style={fullWidthPanelStyle}>
+    <div data-testid="analysis-summary-panel" style={{
+      width: '100%',
+      border: '1px solid #ccc',
+      padding: '1.2rem 2rem',
+      marginBottom: '1.5rem',
+      background: '#fff',
+      boxSizing: 'border-box',
+      fontSize: '1.1rem',
+      fontFamily: 'inherit',
+      height: '100%',
+    }}>
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
         <span>Number of Transactions:</span>
         <span>{analysisResult.num_transactions?.toLocaleString?.() ?? analysisResult.analysis?.num_transactions?.toLocaleString?.() ?? ''}</span>

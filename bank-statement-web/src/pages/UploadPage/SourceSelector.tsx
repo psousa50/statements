@@ -12,9 +12,6 @@ type Props = {
   onOptionClick: (id: number) => void;
   onMouseEnter: (id: number) => void;
   onMouseLeave: () => void;
-  menuStyle: React.CSSProperties;
-  menuItemStyle: (highlighted: boolean) => React.CSSProperties;
-  fullWidthPanelStyle: React.CSSProperties;
 };
 
 export default function SourceSelector({
@@ -27,12 +24,22 @@ export default function SourceSelector({
   onOptionClick,
   onMouseEnter,
   onMouseLeave,
-  menuStyle,
-  menuItemStyle,
-  fullWidthPanelStyle,
 }: Props) {
   return (
-    <div data-testid="source-selector-panel" style={{ ...fullWidthPanelStyle, height: '100%', display: 'flex', alignItems: 'stretch', justifyContent: 'center', padding: 0 }}>
+    <div data-testid="source-selector-panel" style={{
+      width: '100%',
+      border: '1px solid #ccc',
+      padding: '1.2rem 2rem',
+      marginBottom: '1.5rem',
+      background: '#fff',
+      boxSizing: 'border-box',
+      fontSize: '1.1rem',
+      fontFamily: 'inherit',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'stretch',
+      justifyContent: 'center',
+    }}>
       <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Button
           data-testid="source-selector-btn"
@@ -40,7 +47,7 @@ export default function SourceSelector({
           aria-haspopup="menu"
           aria-expanded={sourcePopupOpen}
           onClick={onButtonClick}
-          style={{ minWidth: 180, }}
+          style={{ minWidth: 180 }}
         >
           {`Source: ${selectedSource ? selectedSource.name : ''}`}
         </Button>
@@ -48,7 +55,19 @@ export default function SourceSelector({
           <ul
             data-testid="source-selector-menu"
             role="menu"
-            style={menuStyle}
+            style={{
+              position: 'absolute',
+              left: '100%',
+              top: 0,
+              minWidth: 180,
+              background: '#fff',
+              border: '1px solid #ccc',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              zIndex: 100,
+              padding: 0,
+              margin: 0,
+              listStyle: 'none',
+            }}
           >
             {sources?.map((source) => (
               <li
@@ -56,7 +75,17 @@ export default function SourceSelector({
                 role="menuitem"
                 aria-selected={sourceId === source.id}
                 tabIndex={0}
-                style={menuItemStyle(hoveredSource === source.id)}
+                style={{
+                  padding: '0.7rem 1.5rem',
+                  background: hoveredSource === source.id ? '#f0f4fa' : '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                  color: '#222',
+                  border: 'none',
+                  outline: 'none',
+                  width: '100%',
+                  textAlign: 'left',
+                }}
                 onMouseEnter={() => onMouseEnter(source.id)}
                 onMouseLeave={onMouseLeave}
                 onClick={() => onOptionClick(source.id)}

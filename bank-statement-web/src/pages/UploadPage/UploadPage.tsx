@@ -1,20 +1,20 @@
 import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { Container, Button, Alert, Form, Spinner } from 'react-bootstrap';
+import { Container, Alert, Form, Spinner } from 'react-bootstrap';
 import { useSources, useStatementAnalysis, useStatementUpload } from '../../hooks/useQueries';
+import { Button } from 'react-bootstrap';
 import { FileAnalysisResponse } from '../../types';
 import type { Source } from '../../types';
 import FileUploadZone from './FileUploadZone';
 import AnalysisSummary from './AnalysisSummary';
 import ColumnMappingTable from './ColumnMappingTable';
 import ValidationMessages from './ValidationMessages';
-import SourceSelector from './SourceSelector';
-import StatisticsPanel from './StatisticsPanel';
+import ActionButtons from './ActionButtons';
 import styles from './UploadPage.module.css';
 
 const UploadPage: React.FC = () => {
   const { mutate: uploadFileMutation } = useStatementUpload();
   const { mutate: analyzeFileMutation } = useStatementAnalysis();
-  const { data: sources, isLoading: isLoadingSources } = useSources();
+  const { data: sources } = useSources();
 
   const [file, setFile] = useState<File | undefined>(undefined);
   const [sourceId, setSourceId] = useState<number | undefined>(undefined);
@@ -224,44 +224,8 @@ const UploadPage: React.FC = () => {
     setStartRow(0);
   }, []);
 
-  const fullWidthPanelStyle: React.CSSProperties = {
-    width: '100%',
-    border: '1px solid #ccc',
-    padding: '1.2rem 2rem',
-    marginBottom: '1.5rem',
-    background: '#fff',
-    boxSizing: 'border-box',
-    fontSize: '1.1rem',
-    fontFamily: 'inherit',
-  };
-  const menuStyle: React.CSSProperties = {
-    position: 'absolute',
-    left: '100%',
-    top: 0,
-    minWidth: 180,
-    background: '#fff',
-    border: '1px solid #ccc',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    zIndex: 100,
-    padding: 0,
-    margin: 0,
-    listStyle: 'none',
-  };
-  const menuItemStyle = (highlighted: boolean): React.CSSProperties => ({
-    padding: '0.7rem 1.5rem',
-    background: highlighted ? '#f0f4fa' : '#fff',
-    cursor: 'pointer',
-    fontWeight: 500,
-    color: '#222',
-    border: 'none',
-    outline: 'none',
-    width: '100%',
-    textAlign: 'left',
-  });
 
   const [hoveredSource, setHoveredSource] = useState<number | null>(null);
-
-  const rowRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <Container className={styles.uploadPageContainer}>
@@ -286,37 +250,24 @@ const UploadPage: React.FC = () => {
             onSourceOptionClick={handleSourceOptionClick}
             onSourceMouseEnter={setHoveredSource}
             onSourceMouseLeave={() => setHoveredSource(null)}
-            menuStyle={menuStyle}
-            menuItemStyle={menuItemStyle}
-            fullWidthPanelStyle={fullWidthPanelStyle}
-          />
-          <ColumnMappingTable
-            analysis={analysisResult}
             columnMappings={columnMappings}
             onColumnMappingChange={handleColumnMappingChange}
             startRow={startRow}
             onStartRowChange={handleStartRowChange}
             headerRow={headerRow}
             onHeaderRowChange={handleHeaderRowChange}
+            isValid={isValid}
+            onStartOver={handleReset}
+            onFinalize={handleFinalUpload}
+            isUploading={isUploading}
           />
           <ValidationMessages columnMappings={columnMappings} isValid={isValid} />
-          <div className="d-flex justify-content-between mb-4">
-            <Button
-              variant="outline-secondary"
-              onClick={handleReset}
-            >
-              Start Over
-            </Button>
-            <div className="ms-auto">
-              <Button
-                variant="primary"
-                onClick={handleFinalUpload}
-                disabled={!isValid || isUploading}
-              >
-                {isUploading ? 'Uploading...' : 'Finalize Upload'}
-              </Button>
-            </div>
-          </div>
+          <ActionButtons
+            onStartOver={handleReset}
+            onFinalize={handleFinalUpload}
+            isUploading={isUploading}
+            isValid={isValid}
+          />
           {uploadResult && (
             <Alert variant={uploadResult.success ? 'success' : 'danger'} className="mb-0">
               {uploadResult.message} Processed: {uploadResult.processed} Skipped: {uploadResult.skipped}
