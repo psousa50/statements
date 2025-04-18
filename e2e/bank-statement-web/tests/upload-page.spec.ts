@@ -44,7 +44,8 @@ test.describe('Upload Page', () => {
     };
     await fileChooser.setFiles(filePayload);
 
-    await page.getByLabel(/source/i).selectOption({ label: sourceForTest.name });
+    await page.getByRole('button', { name: /^Source:/i }).click();
+    await page.getByRole('menuitem', { name: sourceForTest.name }).click();
 
     const columnSelects = page.locator('table select');
 

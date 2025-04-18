@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Container, Button, Alert, Form, Spinner } from 'react-bootstrap';
-import { useStatementUpload, useStatementAnalysis, useSources } from '../../hooks/useQueries';
+import { useSources, useStatementAnalysis, useStatementUpload } from '../../hooks/useQueries';
 import { FileAnalysisResponse } from '../../types';
 import type { Source } from '../../types';
 import FileUploadZone from './FileUploadZone';
@@ -10,6 +10,10 @@ import ValidationMessages from './ValidationMessages';
 import styles from './UploadPage.module.css';
 
 const UploadPage: React.FC = () => {
+  const { mutate: uploadFileMutation } = useStatementUpload();
+  const { mutate: analyzeFileMutation } = useStatementAnalysis();
+  const { data: sources, isLoading: isLoadingSources } = useSources();
+
   const [file, setFile] = useState<File | undefined>(undefined);
   const [sourceId, setSourceId] = useState<number | undefined>(undefined);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -25,9 +29,7 @@ const UploadPage: React.FC = () => {
     skipped: number;
   } | null>(null);
 
-  const { mutate: uploadFileMutation } = useStatementUpload();
-  const { mutate: analyzeFileMutation } = useStatementAnalysis();
-  const { data: sources, isLoading: isLoadingSources } = useSources();
+  const [sourcePopupOpen, setSourcePopupOpen] = useState(false);
 
   const selectedSource = sources?.find((s: Source) => s.id === sourceId);
 
@@ -129,10 +131,13 @@ const UploadPage: React.FC = () => {
     setColumnMappings(newColumnMappings);
   }, [analysisResult, headerRow, columnMappings]);
 
-  const handleSourceChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    const parsedValue = value ? parseInt(value) : undefined;
-    setSourceId(parsedValue);
+  const handleSourceButtonClick = useCallback(() => {
+    setSourcePopupOpen((open) => !open);
+  }, []);
+
+  const handleSourceOptionClick = useCallback((id: number) => {
+    setSourceId(id);
+    setSourcePopupOpen(false);
   }, []);
 
   const isValid = useMemo(() => {
@@ -217,6 +222,43 @@ const UploadPage: React.FC = () => {
     setStartRow(0);
   }, []);
 
+  const fullWidthPanelStyle: React.CSSProperties = {
+    width: '100%',
+    border: '1px solid #ccc',
+    padding: '1.2rem 2rem',
+    marginBottom: '1.5rem',
+    background: '#fff',
+    boxSizing: 'border-box',
+    fontSize: '1.1rem',
+    fontFamily: 'inherit',
+  };
+  const menuStyle: React.CSSProperties = {
+    position: 'absolute',
+    left: '100%',
+    top: 0,
+    minWidth: 180,
+    background: '#fff',
+    border: '1px solid #ccc',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    zIndex: 100,
+    padding: 0,
+    margin: 0,
+    listStyle: 'none',
+  };
+  const menuItemStyle = (highlighted: boolean): React.CSSProperties => ({
+    padding: '0.7rem 1.5rem',
+    background: highlighted ? '#f0f4fa' : '#fff',
+    cursor: 'pointer',
+    fontWeight: 500,
+    color: '#222',
+    border: 'none',
+    outline: 'none',
+    width: '100%',
+    textAlign: 'left',
+  });
+
+  const [hoveredSource, setHoveredSource] = useState<number | null>(null);
+
   return (
     <Container className={styles.uploadPageContainer}>
       {isAnalyzing && (
@@ -228,17 +270,58 @@ const UploadPage: React.FC = () => {
         <FileUploadZone onFileSelected={handleFileSelected} isLoading={isAnalyzing} />
       )}
       {analysisResult && (
-        <>
-          <Form.Group className="mb-3">
-            <Form.Label htmlFor="source-select" className="mb-0">Source <span className="text-danger">*</span></Form.Label>
-            <Form.Select id="source-select" value={sourceId ?? ''} onChange={handleSourceChange} disabled={isLoadingSources}>
-              <option value="">Select a source</option>
-              {sources?.map((source: Source) => (
-                <option key={source.id} value={source.id}>{source.name}</option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-          <AnalysisSummary analysis={analysisResult} selectedSource={selectedSource} />
+        <div>
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.2rem', marginBottom: '2.5rem' }}>
+            <div data-testid="source-selector-panel" style={fullWidthPanelStyle}>
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <Button
+                  data-testid="source-selector-btn"
+                  variant="outline-secondary"
+                  aria-haspopup="menu"
+                  aria-expanded={sourcePopupOpen}
+                  onClick={handleSourceButtonClick}
+                  style={{ minWidth: 180 }}
+                >
+                  Source: {selectedSource ? selectedSource.name : ''}
+                </Button>
+                {sourcePopupOpen && (
+                  <ul
+                    data-testid="source-selector-menu"
+                    role="menu"
+                    style={menuStyle}
+                  >
+                    {sources?.map((source: Source) => (
+                      <li
+                        key={source.id}
+                        role="menuitem"
+                        aria-selected={sourceId === source.id}
+                        tabIndex={0}
+                        style={menuItemStyle(hoveredSource === source.id)}
+                        onMouseEnter={() => setHoveredSource(source.id)}
+                        onMouseLeave={() => setHoveredSource(null)}
+                        onClick={() => handleSourceOptionClick(source.id)}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleSourceOptionClick(source.id); }}
+                        className={hoveredSource === source.id ? 'highlighted' : ''}
+                      >
+                        {source.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+            <div data-testid="analysis-summary-panel" style={fullWidthPanelStyle}>
+              <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                <span>Number of Transactions:</span>
+                <span>{(analysisResult as any).num_transactions?.toLocaleString?.() ?? (analysisResult as any).analysis?.num_transactions?.toLocaleString?.() ?? ''}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                <span>Total amount</span>
+                <span>: {(analysisResult as any).currency ?? (analysisResult as any).analysis?.currency ?? ''} {(analysisResult as any).total_amount ?? (analysisResult as any).analysis?.total_amount ?? ''}</span>
+              </div>
+              <div style={{ marginTop: 10 }}>From {(analysisResult as any).start_date ?? (analysisResult as any).analysis?.start_date ?? ''} to {(analysisResult as any).end_date ?? (analysisResult as any).analysis?.end_date ?? ''}</div>
+            </div>
+          </div>
           <ColumnMappingTable
             analysis={analysisResult}
             columnMappings={columnMappings}
@@ -271,7 +354,7 @@ const UploadPage: React.FC = () => {
               {uploadResult.message} Processed: {uploadResult.processed} Skipped: {uploadResult.skipped}
             </Alert>
           )}
-        </>
+        </div>
       )}
       {uploadResult && !analysisResult && (
         <Alert variant={uploadResult.success ? 'success' : 'danger'} className="mb-4" role="alert">
