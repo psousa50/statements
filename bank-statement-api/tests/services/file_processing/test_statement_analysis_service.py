@@ -55,7 +55,7 @@ class TestFileAnalysisService:
         result = service.analyze_statement(file_content, file_name)
 
         assert isinstance(result, FileAnalysisResponse)
-        assert result.file_id is not None
+        assert result.statement_id is not None
         assert result.total_transactions == 2
         assert result.total_amount == 950.00
         assert result.date_range_start == date(2023, 1, 1)
@@ -87,7 +87,7 @@ class TestFileAnalysisService:
         result = service.analyze_statement(file_content, file_name)
 
         assert isinstance(result, FileAnalysisResponse)
-        assert result.file_id is not None
+        assert result.statement_id is not None
         assert result.statement_schema.source_id == 1
 
     def test_analyze_file_with_header_row_at_first(self):
@@ -178,7 +178,7 @@ class TestFileAnalysisService:
         result = service.analyze_statement(file_content, file_name)
 
         assert isinstance(result, FileAnalysisResponse)
-        assert result.file_id is not None
+        assert result.statement_id is not None
         assert isinstance(result.statement_schema.column_mapping, ColumnMapping)
         assert result.statement_schema.column_mapping.date == "Date"
         assert result.statement_schema.column_mapping.description == "Description"

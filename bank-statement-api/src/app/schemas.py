@@ -90,13 +90,13 @@ class StatementSchemaDefinition(BaseModel):
 
 
 class FileAnalysisResponse(BaseModel):
+    statement_id: str
     statement_schema: StatementSchemaDefinition
-    preview_rows: List[List[str]] = []
     total_transactions: int
     total_amount: float
     date_range_start: Optional[date] = None
     date_range_end: Optional[date] = None
-    file_id: str
+    preview_rows: List[List[str]] = []
 
 
 class UploadFileSpec(BaseModel):

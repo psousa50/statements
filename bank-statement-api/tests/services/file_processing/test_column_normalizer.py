@@ -1,9 +1,11 @@
+import pytest
 import pandas as pd
 
 from src.app.ai.gemini_ai import GeminiAI
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 
 
+@pytest.mark.integration
 class TestColumnNormalizer:
     def test_normalize_standard_columns(self):
         data = {

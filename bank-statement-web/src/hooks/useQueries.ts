@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsApi, categoriesApi, sourcesApi, uploadApi } from '../api/api';
-import type { FileUploadResponse, Transaction, StatementSchema, FileAnalysisResponse } from '../types';
+import type { FileUploadResponse, Transaction, StatementSchemaDefinition, FileAnalysisResponse } from '../types';
 
-// Transaction queries
 export const useTransactions = (params?: {
   start_date?: string;
   end_date?: string;
@@ -26,7 +25,6 @@ export const useTransaction = (id: number) => {
   });
 };
 
-// Category queries
 export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
@@ -54,7 +52,6 @@ export const useCreateCategory = () => {
   });
 };
 
-// Source queries
 export const useSources = (params?: { skip?: number; limit?: number }) => {
   return useQuery({
     queryKey: ['sources', params],
@@ -105,7 +102,6 @@ export const useDeleteSource = () => {
   });
 };
 
-// Transaction category update
 export const useUpdateTransactionCategory = () => {
   const queryClient = useQueryClient();
 
@@ -113,10 +109,8 @@ export const useUpdateTransactionCategory = () => {
     mutationFn: ({ transactionId, categoryId }: { transactionId: number; categoryId: number }) =>
       transactionsApi.updateCategory(transactionId, categoryId),
     onSuccess: (updatedTransaction) => {
-      // Invalidate the specific transaction query
       queryClient.invalidateQueries({ queryKey: ['transaction', updatedTransaction.id] });
 
-      // Update the transaction in the transactions list cache
       queryClient.setQueryData(['transactions'], (oldData: any) => {
         if (!oldData) return undefined;
 
@@ -128,27 +122,7 @@ export const useUpdateTransactionCategory = () => {
   });
 };
 
-// File upload mutation
-export const useFileUpload = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      statementSchema,
-      statement_id
-    }: {
-      statementSchema?: StatementSchema;
-      statement_id?: string;
-    }): Promise<FileUploadResponse> =>
-      uploadApi.uploadFile(statementSchema, statement_id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-    },
-  });
-};
-
-// File analysis mutation
-export const useFileAnalysis = () => {
+export const useStatementAnalysis = () => {
   return useMutation<FileAnalysisResponse, Error, {
     fileContent: string;
     fileName: string;
@@ -159,3 +133,22 @@ export const useFileAnalysis = () => {
     }) => uploadApi.analyzeFile(fileContent, fileName)
   });
 };
+
+export const useStatementUpload = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      statementSchema,
+      statement_id
+    }: {
+      statementSchema?: StatementSchemaDefinition;
+      statement_id?: string;
+    }): Promise<FileUploadResponse> =>
+      uploadApi.uploadFile(statementSchema, statement_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
+};
+

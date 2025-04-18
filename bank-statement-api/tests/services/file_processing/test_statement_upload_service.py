@@ -134,7 +134,7 @@ class TestStatementUploadService:
             transactions_builder=transactions_builder,
             statement_repository=statement_repository,
             transactions_repository=transactions_repository,
-            statement_schema_repository=statement_schema_repository
+            statement_schema_repository=statement_schema_repository,
         )
 
         # Create upload spec
@@ -149,8 +149,8 @@ class TestStatementUploadService:
                     "column_mapping": column_mapping,
                     "source_id": 1,
                     "start_row": 1,
-                    "file_type": "CSV"
-                }
+                    "file_type": "CSV",
+                },
             ),
         )
 
@@ -270,7 +270,7 @@ class TestStatementUploadService:
             transactions_builder=transactions_builder,
             statement_repository=statement_repository,
             transactions_repository=transactions_repository,
-            statement_schema_repository=statement_schema_repository
+            statement_schema_repository=statement_schema_repository,
         )
 
         # Create upload spec
@@ -285,8 +285,8 @@ class TestStatementUploadService:
                     "column_mapping": column_mapping,
                     "source_id": 1,
                     "start_row": 1,
-                    "file_type": "CSV"
-                }
+                    "file_type": "CSV",
+                },
             ),
         )
 
@@ -302,25 +302,3 @@ class TestStatementUploadService:
         # Verify interactions with dependencies
         transactions_repository.find_duplicates.assert_called_once()
         transactions_repository.create_many.assert_called_once()  # Only non-duplicate transactions created
-
-    def test_statement_hash_calculation(self):
-        # Arrange
-        schema = StatementSchemaDefinition(
-            id="test-id",
-            file_type="CSV",
-            column_mapping=ColumnMapping(
-                date="Date",
-                description="Description",
-                amount="Amount",
-                currency="Currency",
-                balance="Balance",
-            ),
-            column_names=["Date", "Description", "Amount", "Currency", "Balance"],
-            start_row=1,
-            header_row=0,
-        )
-        # Act
-        result_hash = _calculate_statement_hash(schema.column_names, schema.file_type)
-        # Assert
-        assert isinstance(result_hash, str)
-        assert len(result_hash) > 0

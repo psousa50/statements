@@ -176,11 +176,11 @@ class StatementAnalysisService:
 
             response = FileAnalysisResponse(
                 statement_schema=statement_schema,
+                statement_id=statement_id,
                 total_transactions=statistics.total_transactions,
                 total_amount=float(statistics.total_amount),
                 date_range_start=statistics.date_range_start,
                 date_range_end=statistics.date_range_end,
-                file_id=statement_id,
                 preview_rows=preview_rows,
             )
 

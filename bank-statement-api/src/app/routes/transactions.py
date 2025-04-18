@@ -183,11 +183,6 @@ class TransactionRouter:
             statement_id = body.get("statement_id")
             statement_schema_data = body.get("statement_schema")
 
-            # Debug logging
-            logger = logging.getLogger("app")
-            logger.info(f"Received upload request with statement_id: {statement_id}")
-            logger.info(f"Statement schema data: {statement_schema_data}")
-
             if not statement_id:
                 raise HTTPException(status_code=400, detail="statement_id is required")
 

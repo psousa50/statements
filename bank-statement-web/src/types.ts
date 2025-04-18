@@ -38,22 +38,21 @@ export interface ColumnMapping {
   balance?: string;
 }
 
-export interface StatementSchema {
+export interface StatementSchemaDefinition {
   id: string;
   source_id: number | null;
   file_type: string;
   column_mapping: ColumnMapping;
   start_row: number;
   header_row: number;
-  column_names: string[];
 }
 
 export interface FileAnalysisResponse {
-  statement_schema: StatementSchema;
+  statement_id: string;
+  statement_schema: StatementSchemaDefinition;
   total_transactions: number;
   total_amount: number;
   date_range_start: string | null;
   date_range_end: string | null;
-  file_id: string;
   preview_rows: any[][];
 }

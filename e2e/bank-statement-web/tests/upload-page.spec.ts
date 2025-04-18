@@ -32,13 +32,6 @@ test.describe('Upload Page', () => {
             date: 'Date2',
             description: 'Another Description2',
           },
-          column_names: [
-            'Date',
-            'Description',
-            'Another Description',
-            'Amount',
-            'Balance',
-          ],
           header_row: 1,
           start_row: 3,
         },
@@ -47,5 +40,7 @@ test.describe('Upload Page', () => {
     });
 
     await page.getByRole('button', { name: /finalize upload/i }).click();
+
+    await expect(page.getByRole('alert')).toHaveClass(/alert-success/);
   });
 });
