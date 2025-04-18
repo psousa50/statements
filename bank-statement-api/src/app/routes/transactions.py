@@ -1,3 +1,4 @@
+import json
 import base64
 import logging
 from datetime import date
@@ -13,19 +14,11 @@ from ..repositories.transactions_repository import (
     TransactionsRepository,
 )
 from ..schemas import (
-    Category,
-    CategoryCreate,
-    ColumnMapping,
     FileAnalysisResponse,
     FileUploadResponse,
-    Source,
-    SourceCreate,
     StatementSchemaDefinition,
 )
 from ..schemas import Transaction as TransactionSchema
-from ..schemas import (
-    TransactionCreate,
-)
 from ..services.file_processing.statement_analysis_service import (
     StatementAnalysisService,
 )
@@ -68,6 +61,12 @@ class TransactionRouter:
             self.get_transaction,
             methods=["GET"],
             response_model=TransactionSchema,
+        )
+        self.router.add_api_route(
+            "/{transaction_id}",
+            self.delete_transaction,
+            methods=["DELETE"],
+            response_model=None,
         )
         self.router.add_api_route(
             "/{transaction_id}/categorize",
@@ -125,6 +124,16 @@ class TransactionRouter:
             raise HTTPException(status_code=404, detail="Transaction not found")
         return transaction
 
+    async def delete_transaction(
+        self,
+        transaction_id: int,
+    ):
+        transaction = self.transaction_repository.get_by_id(transaction_id)
+        if transaction is None:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        self.transaction_repository.delete(transaction)
+        return {"detail": "Transaction deleted"}
+
     async def categorize_transaction(
         self,
         transaction_id: int,
@@ -157,7 +166,7 @@ class TransactionRouter:
             )
 
             logger_content.debug(
-                jsonable_encoder(response),
+                json.dumps(jsonable_encoder(response)),
                 extra={
                     "prefix": "statement_analysis_service.analyze_file.response",
                     "ext": "json",

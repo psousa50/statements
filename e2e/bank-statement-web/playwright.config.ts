@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: './tests',
   use: {
     baseURL: 'http://localhost:3000',
-    headless: true
-  }
+    headless: true,
+  },
+  timeout: 5000
 });

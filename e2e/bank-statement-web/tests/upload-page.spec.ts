@@ -1,16 +1,27 @@
 import { test, expect, request } from '@playwright/test';
-import { ApiClient, SourcesApi } from './apiClient';
+import { ApiClient, SourcesApi, TransactionsApi } from './apiClient';
 
 const FRONTEND_URL = process.env.PLAYWRIGHT_FRONTEND_URL || 'http://localhost:3000';
 const BACKEND_URL = process.env.PLAYWRIGHT_BACKEND_URL || 'http://localhost:8000';
 
-let ab7Source: { id: number; name: string };
+let sourceForTestName: string;
+let sourceForTestId: { id: number; name: string };
 
 test.describe('Upload Page', () => {
   test.beforeAll(async ({ request }) => {
     const apiClient = new ApiClient(request, BACKEND_URL);
     const sourcesApi = new SourcesApi(apiClient);
-    ab7Source = await sourcesApi.ensureExists('AB7');
+    sourceForTestName = `Test Source ${Math.random().toString(36).slice(2, 10)}`
+    sourceForTestId = await sourcesApi.ensureExists(sourceForTestName);
+  });
+
+  test.beforeEach(async ({ request }) => {
+    const apiClient = new ApiClient(request, BACKEND_URL);
+    const transactionsApi = new TransactionsApi(apiClient);
+    const txs = await transactionsApi.list({ source_id: sourceForTestId.id, skip: 0, limit: 100 });
+    for (const tx of txs) {
+      await transactionsApi.delete(tx.id);
+    }
   });
 
   test('can upload, reassign, and submit with correct payload', async ({ page }) => {
@@ -18,9 +29,22 @@ test.describe('Upload Page', () => {
     const fileChooserPromise = page.waitForEvent('filechooser');
     await page.getByRole('button', { name: /Browse Files/i }).click();
     const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles('fixtures/ForUpload.csv');
 
-    await page.getByLabel(/source/i).selectOption({ label: 'AB7' });
+    const randomColName = `RandomCol_${Math.random().toString(36).slice(2, 10)}`;
+    const csvContent = [
+      `Date,Description,Another Description,Amount,Balance,${randomColName}`,
+      `20-Aug-2020,desc 1,another desc 1,10,100,someval1`,
+      `21-Aug-2020,desc 2,another desc 2,20,200,someval2`,
+      `22-Aug-2020,desc 2,another desc 3,30,300,someval3`,
+    ].join('\n');
+    const filePayload = {
+      name: 'ForUpload.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(csvContent, 'utf-8')
+    };
+    await fileChooser.setFiles(filePayload);
+
+    await page.getByLabel(/source/i).selectOption({ label: sourceForTestName });
 
     const columnSelects = page.locator('table select');
 
@@ -36,13 +60,13 @@ test.describe('Upload Page', () => {
         statement_id: expect.any(String),
         statement_schema: {
           id: expect.any(String),
-          source_id: ab7Source.id,
+          source_id: sourceForTestId.id,
           file_type: 'CSV',
           column_mapping: {
-            amount: 'Amount2',
-            balance: 'Balance2',
-            date: 'Date2',
-            description: 'Another Description2',
+            amount: 'Amount',
+            balance: 'Balance',
+            date: 'Date',
+            description: 'Description',
           },
           header_row: 1,
           start_row: 3,
@@ -54,5 +78,36 @@ test.describe('Upload Page', () => {
     await page.getByRole('button', { name: /finalize upload/i }).click();
 
     await expect(page.getByRole('alert')).toHaveClass(/alert-success/);
+
+    const apiRequestContext = await request.newContext({ baseURL: BACKEND_URL });
+    const apiClient = new ApiClient(apiRequestContext, BACKEND_URL);
+    const transactionsApi = new TransactionsApi(apiClient);
+    const transactions = await transactionsApi.list({ source_id: sourceForTestId.id, skip: 0, limit: 10 });
+    expect(transactions.length).toBe(2);
+    const sortedTransactions = transactions
+      .slice(0, 2)
+      .sort((a, b) => a.id - b.id);
+    const expected = [
+      {
+        date: '2020-08-21',
+        description: 'another desc 2',
+        amount: 20,
+        balance: 200
+      },
+      {
+        date: '2020-08-22',
+        description: 'another desc 3',
+        amount: 30,
+        balance: 300
+      }
+    ];
+    for (let i = 0; i < expected.length; i++) {
+      const t = sortedTransactions[i];
+      const exp = expected[i];
+      expect(t.date).toBe(exp.date);
+      expect(t.normalized_description || t.description).toBe(exp.description);
+      expect(Number(t.amount)).toBe(Number(exp.amount));
+      expect(Number(t.balance)).toBe(Number(exp.balance));
+    }
   });
 });

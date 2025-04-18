@@ -1,3 +1,5 @@
+from fastapi.encoders import jsonable_encoder
+import json
 import hashlib
 import logging
 import uuid
@@ -65,7 +67,7 @@ class StatementAnalysisService:
             conversion_model = self.column_normalizer.normalize_columns(df)
 
             logger_content.debug(
-                conversion_model,
+                json.dumps(jsonable_encoder(conversion_model)),
                 extra={
                     "prefix": "statement_analysis_service.conversion_model",
                     "ext": "json",

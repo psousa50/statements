@@ -23,7 +23,7 @@ class ColumnNormalizer:
         )
         json_result = sanitize_json(response)
         logger_content.debug(
-            json_result,
+            json.dumps(json_result),
             extra={"prefix": "column_normalizer.json_result", "ext": "json"},
         )
         if not json_result:

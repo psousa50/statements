@@ -20,6 +20,12 @@ export class ApiClient {
     if (!res.ok()) throw new Error(`POST ${path} failed: ${res.status()}`);
     return res.json();
   }
+
+  async delete<T>(path: string): Promise<T> {
+    const res = await this.request.delete(`${this.baseUrl}${path}`);
+    if (!res.ok()) throw new Error(`DELETE ${path} failed: ${res.status()}`);
+    return res.json();
+  }
 }
 
 export class SourcesApi {
@@ -43,5 +49,28 @@ export class SourcesApi {
       found = await this.create(name);
     }
     return found;
+  }
+}
+
+export class TransactionsApi {
+  private readonly api: ApiClient;
+  constructor(api: ApiClient) {
+    this.api = api;
+  }
+
+  async list(params?: Record<string, unknown>) {
+    let query = '';
+    if (params) {
+      const usp = new URLSearchParams();
+      for (const [k, v] of Object.entries(params)) {
+        if (v !== undefined && v !== null) usp.append(k, String(v));
+      }
+      query = '?' + usp.toString();
+    }
+    return this.api.get<any[]>(`/transactions${query}`);
+  }
+
+  async delete(id: number) {
+    return this.api.delete(`/transactions/${id}`);
   }
 }

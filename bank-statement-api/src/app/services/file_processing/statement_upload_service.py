@@ -1,3 +1,4 @@
+import json
 import hashlib
 import json
 import logging
@@ -51,6 +52,13 @@ class StatementUploadService:
 
     def upload_statement(self, spec: UploadFileSpec) -> FileUploadResponse:
         try:
+            logger_content.debug(
+                json.dumps(jsonable_encoder(spec.statement_schema)),
+                extra={
+                    "prefix": "statement_upload_service.upload_statement.statement_schema",
+                    "ext": "json",
+                },
+            )
             statement = self.statement_repository.get_by_id(spec.statement_id)
             if not statement:
                 raise ValueError(f"Statement with ID {spec.statement_id} not found")
@@ -76,9 +84,33 @@ class StatementUploadService:
                 spec.statement_schema.header_row,
             )
 
+            logger_content.debug(
+                json.dumps(conversion_model.__dict__),
+                extra={
+                    "prefix": "statement_upload_service.upload_statement.conversion_model",
+                    "ext": "json",
+                },
+            )
+
             cleaned_df = self.transaction_cleaner.clean(df, conversion_model)
 
+            logger_content.debug(
+                cleaned_df.to_csv(index=False),
+                extra={
+                    "prefix": "statement_upload_service.upload_statement.cleaned_df",
+                    "ext": "csv",
+                },
+            )
+
             transactions = self.transactions_builder.build_transactions(cleaned_df)
+
+            logger_content.debug(
+                json.dumps(jsonable_encoder(transactions)),
+                extra={
+                    "prefix": "statement_upload_service.upload_statement.transactions",
+                    "ext": "json",
+                },
+            )
 
             duplicates = self.transactions_repository.find_duplicates(transactions)
             unique_transactions = [t for t in transactions if t not in duplicates]

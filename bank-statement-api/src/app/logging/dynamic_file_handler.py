@@ -8,10 +8,10 @@ class DynamicContentFileHandler(logging.Handler):
     def __init__(self, directory="logs/files"):
         super().__init__()
         self.directory = directory
-        os.makedirs(directory, exist_ok=True)
 
     def emit(self, record):
         try:
+            os.makedirs(self.directory, exist_ok=True)
             prefix = getattr(record, "prefix", "log")
             ext = getattr(record, "ext", "log")
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S.%f")

@@ -1,25 +1,13 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Container, Button, Alert, Spinner, Form } from 'react-bootstrap';
+import { Container, Button, Alert, Form } from 'react-bootstrap';
 import { useStatementUpload, useStatementAnalysis, useSources } from '../../hooks/useQueries';
 import { FileAnalysisResponse } from '../../types';
-import type { Source, ColumnMapping } from '../../types';
+import type { Source } from '../../types';
 import FileUploadZone from './FileUploadZone';
 import AnalysisSummary from './AnalysisSummary';
 import ColumnMappingTable from './ColumnMappingTable';
 import ValidationMessages from './ValidationMessages';
 import styles from './UploadPage.module.css';
-
-const ensureColumnMapping = (mapping: Record<string, string>): ColumnMapping => {
-  return {
-    date: mapping.date || '',
-    description: mapping.description || '',
-    amount: mapping.amount || '',
-    debit_amount: mapping.debit_amount,
-    credit_amount: mapping.credit_amount,
-    currency: mapping.currency,
-    balance: mapping.balance
-  };
-};
 
 const UploadPage: React.FC = () => {
   const [file, setFile] = useState<File | undefined>(undefined);
@@ -167,12 +155,6 @@ const UploadPage: React.FC = () => {
       return;
     }
     setIsUploading(true);
-    let headerColumns: string[] = [];
-    if (analysisResult.preview_rows && analysisResult.preview_rows.length > headerRow) {
-      headerColumns = analysisResult.preview_rows[headerRow];
-    } else if (analysisResult.preview_rows.length > 0) {
-      headerColumns = analysisResult.preview_rows[0];
-    }
     const reversedColumnMappings = Object.entries(columnMappings)
       .map(([columnName, mappingType]) => [mappingType, columnName]);
     const updatedMapping = Object.fromEntries(reversedColumnMappings);
