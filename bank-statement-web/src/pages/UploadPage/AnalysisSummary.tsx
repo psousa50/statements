@@ -1,64 +1,61 @@
 import React from 'react';
-import { Card, Row, Col } from 'react-bootstrap';
+import SourceSelector from './SourceSelector';
+import StatisticsPanel from './StatisticsPanel';
 import { FileAnalysisResponse } from '../../types';
+import type { Source } from '../../types';
 
 interface AnalysisSummaryProps {
   analysis: FileAnalysisResponse;
-  selectedSource: { name: string } | undefined;
+  selectedSource: Source | undefined;
+  sources: Source[];
+  sourceId?: number;
+  sourcePopupOpen: boolean;
+  hoveredSource: number | null;
+  onSourceButtonClick: () => void;
+  onSourceOptionClick: (id: number) => void;
+  onSourceMouseEnter: (id: number) => void;
+  onSourceMouseLeave: () => void;
+  menuStyle: React.CSSProperties;
+  menuItemStyle: (highlighted: boolean) => React.CSSProperties;
+  fullWidthPanelStyle: React.CSSProperties;
 }
 
-function formatDateVertical(dateStr?: string | null) {
-  if (!dateStr) return 'N/A';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+export default function AnalysisSummary({
+  analysis,
+  selectedSource,
+  sources,
+  sourceId,
+  sourcePopupOpen,
+  hoveredSource,
+  onSourceButtonClick,
+  onSourceOptionClick,
+  onSourceMouseEnter,
+  onSourceMouseLeave,
+  menuStyle,
+  menuItemStyle,
+  fullWidthPanelStyle,
+}: AnalysisSummaryProps) {
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'row', gap: '2rem', marginBottom: '2.5rem', alignItems: 'stretch', minHeight: 120 }}>
+      <div style={{ flex: 2, display: 'flex', flexDirection: 'column', justifyContent: 'stretch', height: '100%' }}>
+        <SourceSelector
+          sources={sources}
+          selectedSource={selectedSource}
+          sourceId={sourceId}
+          sourcePopupOpen={sourcePopupOpen}
+          hoveredSource={hoveredSource}
+          onButtonClick={onSourceButtonClick}
+          onOptionClick={onSourceOptionClick}
+          onMouseEnter={onSourceMouseEnter}
+          onMouseLeave={onSourceMouseLeave}
+          menuStyle={menuStyle}
+          menuItemStyle={menuItemStyle}
+          fullWidthPanelStyle={{ ...fullWidthPanelStyle, height: '100%' }}
+        />
+      </div>
+      <div style={{ flex: 4, display: 'flex', flexDirection: 'column', justifyContent: 'stretch', height: '100%' }}>
+        <StatisticsPanel analysisResult={analysis} fullWidthPanelStyle={{ ...fullWidthPanelStyle, height: '100%' }} />
+      </div>
+    </div>
+  );
 }
-
-const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({ analysis, selectedSource }) => (
-  <Card className="mb-4">
-    <Card.Header>
-      <h5 className="mb-0">Analysis Summary</h5>
-    </Card.Header>
-    <Card.Body>
-      <Row>
-        <Col md={3} className="mb-3">
-          <Card className="h-100">
-            <Card.Body className="text-center">
-              <h6 className="text-muted">Source</h6>
-              <h4>{selectedSource ? selectedSource.name : <span className="text-muted">No source selected</span>}</h4>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3} className="mb-3">
-          <Card className="h-100">
-            <Card.Body className="text-center">
-              <h6 className="text-muted">Transactions</h6>
-              <h4>{analysis.total_transactions}</h4>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3} className="mb-3">
-          <Card className="h-100">
-            <Card.Body className="text-center">
-              <h6 className="text-muted">Total Amount</h6>
-              <h4>{analysis.total_amount.toFixed(2)}</h4>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3} className="mb-3">
-          <Card className="h-100">
-            <Card.Body className="text-center">
-              <h6 className="text-muted">Date Range</h6>
-              <div style={{ fontSize: 20, fontWeight: 500, lineHeight: 1.2 }}>
-                <div>{formatDateVertical(analysis.date_range_start ?? undefined)}</div>
-                <div style={{ fontSize: 16, color: '#888' }}>to</div>
-                <div>{formatDateVertical(analysis.date_range_end ?? undefined)}</div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Card.Body>
-  </Card>
-);
-
-export default AnalysisSummary;
