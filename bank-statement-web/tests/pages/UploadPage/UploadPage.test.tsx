@@ -3,14 +3,17 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ApiContext, ApiContextType } from '../../../src/api/ApiContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import UploadPage from '../../../src/pages/UploadPage/UploadPage';
+import { FileAnalysisResponse } from '../../../src/types';
 
-const analysisResult = {
-  num_transactions: 2354,
+const analysisResult: FileAnalysisResponse = {
+  statement_id: 'abc123',
+  total_transactions: 2354,
   total_amount: 223,
-  currency: 'Eur',
-  start_date: '2023-03-02',
-  end_date: '2024-04-23',
+  date_range_start: '2023-03-02',
+  date_range_end: '2024-04-23',
   statement_schema: {
+    id: '1',
+    file_type: 'CSV',
     column_mapping: {
       date: 'Date',
       description: 'Description',
@@ -85,7 +88,7 @@ describe('UploadPage analysis summary and source selector', () => {
     expect(screen.getByText(/Number of Transactions/i)).toBeInTheDocument();
     expect(screen.getByText(/2,354/)).toBeInTheDocument();
     expect(screen.getByText(/Total amount/i)).toBeInTheDocument();
-    expect(screen.getByText(/Eur 223/)).toBeInTheDocument();
+    expect(screen.getByText(/EUR 223/)).toBeInTheDocument();
     expect(screen.getByText(/From 2023-03-02 to 2024-04-23/)).toBeInTheDocument();
   });
 

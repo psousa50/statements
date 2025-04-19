@@ -4,7 +4,7 @@ import { FileAnalysisResponse } from '../../types';
 import styles from './UploadPage.module.css';
 
 interface ColumnMappingTableProps {
-  analysis: FileAnalysisResponse;
+  analysisResult: FileAnalysisResponse;
   columnMappings: Record<string, string>;
   onColumnMappingChange: (columnName: string, mappingType: string) => void;
   startRow: number;
@@ -13,7 +13,7 @@ interface ColumnMappingTableProps {
   onHeaderRowChange: (headerRow: number) => void;
 }
 
-const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({ analysis, columnMappings, onColumnMappingChange, startRow, onStartRowChange, headerRow, onHeaderRowChange }) => {
+const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({ analysisResult: analysis, columnMappings, onColumnMappingChange, startRow, onStartRowChange, headerRow, onHeaderRowChange }) => {
   const columns = analysis.preview_rows.length > 0 && analysis.preview_rows[headerRow] ? analysis.preview_rows[headerRow] : [];
 
   const columnOptions = [
@@ -85,7 +85,6 @@ const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({ analysis, colum
             </thead>
             <tbody>
               {analysis.preview_rows.map((row, rowIndex) => {
-                const isSpecialRow = rowIndex === headerRow || rowIndex === startRow;
                 return (
                   <tr key={rowIndex}>
                     {columns.map((column, colIndex) => {

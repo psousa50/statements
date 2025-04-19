@@ -40,7 +40,7 @@ export interface ColumnMapping {
 
 export interface StatementSchemaDefinition {
   id: string;
-  source_id: number | null;
+  source_id?: number;
   file_type: string;
   column_mapping: ColumnMapping;
   start_row: number;
@@ -52,7 +52,14 @@ export interface FileAnalysisResponse {
   statement_schema: StatementSchemaDefinition;
   total_transactions: number;
   total_amount: number;
-  date_range_start: string | null;
-  date_range_end: string | null;
+  date_range_start: string;
+  date_range_end: string;
   preview_rows: any[][];
+}
+
+export interface UploadResult {
+  success: boolean;
+  message: string;
+  processed: number;
+  skipped: number;
 }

@@ -3,11 +3,11 @@ import { Button } from 'react-bootstrap';
 type Props = {
   onStartOver: () => void;
   onFinalize: () => void;
-  isUploading: boolean;
+  isLoading: boolean;
   isValid: boolean;
 };
 
-export default function ActionButtons({ onStartOver, onFinalize, isUploading, isValid }: Props) {
+export default function ActionButtons({ onStartOver, onFinalize, isLoading: isUploading, isValid }: Props) {
   return (
     <div className="d-flex justify-content-between mb-4">
       <Button

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, UseMutationResult } from '@tanstack/react-query';
 import { useApiContext } from '../api/ApiContext';
 import type { FileUploadResponse, Transaction, StatementSchemaDefinition, FileAnalysisResponse } from '../types';
 
@@ -119,20 +119,34 @@ export const useUpdateTransactionCategory = () => {
   });
 };
 
+type AnalyzeFileParams = {
+  fileContent: string;
+  fileName: string;
+};
+
+export type StatementAnalysisMutation = UseMutationResult<FileAnalysisResponse, Error, AnalyzeFileParams>;
+
 export const useStatementAnalysis = () => {
   const { uploadApi } = useApiContext();
-  return useMutation<FileAnalysisResponse, Error, { fileContent: string; fileName: string }>({
+  return useMutation<FileAnalysisResponse, Error, AnalyzeFileParams>({
     mutationFn: ({ fileContent, fileName }) => uploadApi.analyzeFile(fileContent, fileName),
   });
 };
 
+export interface UploadFileParams {
+  statement_id: string;
+  statement_schema: StatementSchemaDefinition;
+}
+
+export type UploadFileMutation = UseMutationResult<FileUploadResponse, Error, UploadFileParams>;
+
 export const useStatementUpload = () => {
   const queryClient = useQueryClient();
   const { uploadApi } = useApiContext();
-  return useMutation<FileUploadResponse, Error, { statementSchema?: StatementSchemaDefinition; statement_id?: string }>({
-    mutationFn: ({ statementSchema, statement_id }) => uploadApi.uploadFile(statementSchema, statement_id),
+  return useMutation<FileUploadResponse, Error, UploadFileParams>({
+    mutationFn: ({ statement_schema, statement_id }) => uploadApi.uploadFile(statement_schema, statement_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
   });
-};
+}; 

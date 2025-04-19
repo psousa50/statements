@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Card, Button, Spinner } from 'react-bootstrap';
-import styles from './UploadPage.module.css';
 
 interface FileUploadZoneProps {
   onFileSelected: (file: File) => void;
