@@ -148,7 +148,7 @@ def test_categorize_transaction():
     )
 
     assert response.status_code == 200
-    assert response.json()["category_id"] == category.id
+    assert response.json()["categoryId"] == category.id
 
     updated_transaction = transactions_repository.get_by_id(transaction.id)
     assert updated_transaction.category_id == category.id

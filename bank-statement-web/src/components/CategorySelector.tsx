@@ -7,20 +7,20 @@ interface CategorySelectorProps {
   currentCategoryId: number | null;
 }
 
-export const CategorySelector: React.FC<CategorySelectorProps> = ({ 
-  transactionId, 
-  currentCategoryId 
+export const CategorySelector: React.FC<CategorySelectorProps> = ({
+  transactionId,
+  currentCategoryId
 }) => {
   const { data: categories, isLoading: categoriesLoading } = useCategories();
   const updateCategory = useUpdateTransactionCategory();
-  
+
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCategoryId = parseInt(e.target.value, 10);
-    
+
     updateCategory.mutate(
-      { 
-        transactionId, 
-        categoryId: newCategoryId 
+      {
+        transactionId,
+        categoryId: newCategoryId
       },
       {
         onError: (error) => {
@@ -29,9 +29,9 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
       }
     );
   };
-  
+
   if (categoriesLoading) return <span>Loading categories...</span>;
-  
+
   return (
     <select
       value={currentCategoryId || ''}
@@ -42,7 +42,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
       <option value="">Select a category</option>
       {categories?.map((category: Category) => (
         <option key={category.id} value={category.id}>
-          {category.category_name}
+          {category.categoryName}
         </option>
       ))}
     </select>

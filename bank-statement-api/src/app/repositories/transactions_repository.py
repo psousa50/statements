@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import List, Optional, Tuple
@@ -6,6 +7,8 @@ from sqlalchemy.orm import Session
 
 from ..models import Transaction
 from ..schemas import StatementTransaction, TransactionCreate
+
+logger = logging.getLogger("app")
 
 
 @dataclass

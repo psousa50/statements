@@ -3,7 +3,7 @@ import StatisticsPanel from './StatisticsPanel';
 import ActionButtons from './ActionButtons';
 import ColumnMappingTable from './ColumnMappingTable';
 import ValidationMessages from './ValidationMessages';
-import type { FileAnalysisResponse, Source } from '../../types';
+import type { StatementAnalysisResponse, Source } from '../../types';
 import { useState } from 'react';
 import { UploadFileSpec } from './UploadPage';
 
@@ -12,7 +12,7 @@ interface AnalysisSummaryProps {
   sources: Source[];
   sourceId: number | undefined;
   setSourceId: (id: number | undefined) => void;
-  analysisResult: FileAnalysisResponse;
+  analysisResult: StatementAnalysisResponse;
   columnMappings: Record<string, string>;
   onColumnMappingChange: (column: string, type: string) => void;
   uploadFileSpec: UploadFileSpec;
@@ -66,9 +66,9 @@ export default function AnalysisSummary({
         analysisResult={analysisResult}
         columnMappings={columnMappings}
         onColumnMappingChange={onColumnMappingChange}
-        startRow={uploadFileSpec.statementSchema.start_row}
+        startRow={uploadFileSpec.statementSchema.startRow}
         onStartRowChange={onStartRowChange}
-        headerRow={uploadFileSpec.statementSchema.header_row}
+        headerRow={uploadFileSpec.statementSchema.headerRow}
         onHeaderRowChange={onHeaderRowChange}
       />
       <ValidationMessages columnMappings={columnMappings} isValid={isValid} />

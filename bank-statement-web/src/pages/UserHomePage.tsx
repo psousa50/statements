@@ -42,7 +42,7 @@ const UserHomePage: React.FC = () => {
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
     // Percentage of auto-categorized transactions
-    const categorizedCount = transactions.filter(t => t.category_id !== null).length;
+    const categorizedCount = transactions.filter(t => t.categoryId !== null).length;
     const autoCategorized = transactions.length > 0
       ? Math.round((categorizedCount / transactions.length) * 100)
       : 0;
@@ -50,10 +50,10 @@ const UserHomePage: React.FC = () => {
     // Most common category
     const categoryCounts: Record<string, number> = {};
     transactions.forEach(t => {
-      if (t.category_id && categories) {
-        const category = categories.find(c => c.id === t.category_id);
+      if (t.categoryId && categories) {
+        const category = categories.find(c => c.id === t.categoryId);
         if (category) {
-          categoryCounts[category.category_name] = (categoryCounts[category.category_name] || 0) + 1;
+          categoryCounts[category.categoryName] = (categoryCounts[category.categoryName] || 0) + 1;
         }
       }
     });
@@ -69,7 +69,7 @@ const UserHomePage: React.FC = () => {
     });
 
     // Count unique sources as a proxy for statement count
-    const uniqueSources = new Set(transactions.map(t => t.source_id)).size;
+    const uniqueSources = new Set(transactions.map(t => t.sourceId)).size;
 
     return {
       totalSpent,
@@ -86,10 +86,10 @@ const UserHomePage: React.FC = () => {
     const categoryAmounts: Record<string, number> = {};
 
     transactions.forEach(t => {
-      if (t.category_id && t.amount < 0) { // Only count expenses
-        const category = categories.find(c => c.id === t.category_id);
+      if (t.categoryId && t.amount < 0) { // Only count expenses
+        const category = categories.find(c => c.id === t.categoryId);
         if (category) {
-          categoryAmounts[category.category_name] = (categoryAmounts[category.category_name] || 0) + Math.abs(t.amount);
+          categoryAmounts[category.categoryName] = (categoryAmounts[category.categoryName] || 0) + Math.abs(t.amount);
         }
       }
     });

@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient, UseMutationResult } from '@tanstack/react-query';
 import { useApiContext } from '../api/ApiContext';
-import type { FileUploadResponse, Transaction, StatementSchemaDefinition, FileAnalysisResponse } from '../types';
+import type { StatementUploadResponse, Transaction, StatementSchemaDefinition, StatementAnalysisResponse as StatementAnalysisResponse } from '../types';
 
 export const useTransactions = (params?: {
-  start_date?: string;
-  end_date?: string;
-  category_id?: number;
-  source_id?: number;
+  startDate?: string;
+  endDate?: string;
+  categoryId?: number;
+  sourceId?: number;
   search?: string;
   skip?: number;
   limit?: number;
@@ -48,7 +48,7 @@ export const useCreateCategory = () => {
   const queryClient = useQueryClient();
   const { categoriesApi } = useApiContext();
   return useMutation({
-    mutationFn: (category: { category_name: string; parent_category_id?: number | null }) =>
+    mutationFn: (category: { categoryName: string; parentCategoryId?: number | null }) =>
       categoriesApi.create(category),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -119,32 +119,32 @@ export const useUpdateTransactionCategory = () => {
   });
 };
 
-type AnalyzeFileParams = {
+export type AnalyzeStatementParams = {
   fileContent: string;
   fileName: string;
 };
 
-export type StatementAnalysisMutation = UseMutationResult<FileAnalysisResponse, Error, AnalyzeFileParams>;
+export type StatementAnalysisMutation = UseMutationResult<StatementAnalysisResponse, Error, AnalyzeStatementParams>;
 
 export const useStatementAnalysis = () => {
   const { uploadApi } = useApiContext();
-  return useMutation<FileAnalysisResponse, Error, AnalyzeFileParams>({
-    mutationFn: ({ fileContent, fileName }) => uploadApi.analyzeFile(fileContent, fileName),
+  return useMutation<StatementAnalysisResponse, Error, AnalyzeStatementParams>({
+    mutationFn: (analyzeStatementParams) => uploadApi.analyzeFile(analyzeStatementParams),
   });
 };
 
-export interface UploadFileParams {
-  statement_id: string;
-  statement_schema: StatementSchemaDefinition;
+export interface UploadStatementRequest {
+  statementId: string;
+  statementSchema: StatementSchemaDefinition;
 }
 
-export type UploadFileMutation = UseMutationResult<FileUploadResponse, Error, UploadFileParams>;
+export type UploadStatementMutation = UseMutationResult<StatementUploadResponse, Error, UploadStatementRequest>;
 
 export const useStatementUpload = () => {
   const queryClient = useQueryClient();
   const { uploadApi } = useApiContext();
-  return useMutation<FileUploadResponse, Error, UploadFileParams>({
-    mutationFn: ({ statement_schema, statement_id }) => uploadApi.uploadFile(statement_schema, statement_id),
+  return useMutation<StatementUploadResponse, Error, UploadStatementRequest>({
+    mutationFn: (uploadStatementParams) => uploadApi.uploadStatement(uploadStatementParams),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },

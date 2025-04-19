@@ -2,17 +2,17 @@ export interface Transaction {
   id: number;
   date: string;
   description: string;
-  normalized_description: string;
+  normalizedDescription: string;
   amount: number;
-  category_id: number | null;
-  source_id: number;
-  categorization_status?: string;
+  categoryId: number | null;
+  sourceId: number;
+  categorizationStatus?: string;
 }
 
 export interface Category {
   id: number;
-  category_name: string;
-  parent_category_id: number | null;
+  categoryName: string;
+  parentCategoryId: number | null;
 }
 
 export interface Source {
@@ -21,45 +21,44 @@ export interface Source {
   description?: string;
 }
 
-export interface FileUploadResponse {
+export interface StatementUploadResponse {
   message: string;
-  transactions_processed: number;
-  transactions: Transaction[];
-  skipped_duplicates: number;
+  transactionsProcessed: number;
+  skippedDuplicates: number;
 }
 
 export interface ColumnMapping {
   date: string;
   description: string;
   amount: string;
-  debit_amount?: string;
-  credit_amount?: string;
+  debitAmount?: string;
+  creditAmount?: string;
   currency?: string;
   balance?: string;
 }
 
 export interface StatementSchemaDefinition {
   id: string;
-  source_id?: number;
-  file_type: string;
-  column_mapping: ColumnMapping;
-  start_row: number;
-  header_row: number;
+  sourceId?: number;
+  fileType: string;
+  columnMapping: ColumnMapping;
+  startRow: number;
+  headerRow: number;
 }
 
-export interface FileAnalysisResponse {
-  statement_id: string;
-  statement_schema: StatementSchemaDefinition;
-  total_transactions: number;
-  total_amount: number;
-  date_range_start: string;
-  date_range_end: string;
-  preview_rows: any[][];
+export interface StatementAnalysisResponse {
+  statementId: string;
+  statementSchema: StatementSchemaDefinition;
+  totalTransactions: number;
+  totalAmount: number;
+  dateRangeStart: string;
+  dateRangeEnd: string;
+  previewRows: any[][];
 }
 
 export interface UploadResult {
   success: boolean;
   message: string;
-  processed: number;
-  skipped: number;
+  transactionsProcessed: number;
+  skippedDuplicates: number;
 }

@@ -4,7 +4,7 @@ import logging
 from datetime import date
 from typing import Callable, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.encoders import jsonable_encoder
 
 from ..logging.utils import log_exception
@@ -14,11 +14,14 @@ from ..repositories.transactions_repository import (
     TransactionsRepository,
 )
 from ..schemas import (
-    FileAnalysisResponse,
     FileUploadResponse,
-    StatementSchemaDefinition,
+    StatementAnalysisRequest,
+    StatementAnalysisResponse,
 )
 from ..schemas import Transaction as TransactionSchema
+from ..schemas import (
+    UploadStatementRequest,
+)
 from ..services.file_processing.statement_analysis_service import (
     StatementAnalysisService,
 )
@@ -84,7 +87,7 @@ class TransactionRouter:
             "/analyze",
             self.analyze_statement,
             methods=["POST"],
-            response_model=FileAnalysisResponse,
+            response_model=StatementAnalysisResponse,
         )
 
     def _notify_change(self, action: str, transactions: List[Transaction]):
@@ -154,12 +157,11 @@ class TransactionRouter:
 
     async def analyze_statement(
         self,
-        request: Request,
+        request: StatementAnalysisRequest,
     ):
         try:
-            body = await request.json()
-            file_content = base64.b64decode(body.get("file_content", ""))
-            filename = body.get("file_name", "")
+            file_content = base64.b64decode(request.file_content)
+            filename = request.file_name
 
             response = self.statement_analysis_service.analyze_statement(
                 file_content, filename
@@ -182,15 +184,14 @@ class TransactionRouter:
 
     async def upload_statement(
         self,
-        request: Request,
+        request: UploadStatementRequest,
         auto_categorize: bool = Query(
             False, description="Automatically trigger categorization after upload"
         ),
     ):
         try:
-            body = await request.json()
-            statement_id = body.get("statement_id")
-            statement_schema_data = body.get("statement_schema")
+            statement_id = request.statement_id
+            statement_schema = request.statement_schema
 
             if not statement_id:
                 raise HTTPException(status_code=400, detail="statement_id is required")
@@ -204,13 +205,9 @@ class TransactionRouter:
                     detail=f"Statement with ID {statement_id} not found",
                 )
 
-            schema_obj = None
-            if statement_schema_data:
-                schema_obj = StatementSchemaDefinition(**statement_schema_data)
-
             spec = UploadFileSpec(
                 statement_id=statement_id,
-                statement_schema=schema_obj,
+                statement_schema=statement_schema,
             )
 
             result = self.upload_statement_service.upload_statement(spec)

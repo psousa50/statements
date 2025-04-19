@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { Transaction, Category, Source, FileUploadResponse, StatementSchemaDefinition, FileAnalysisResponse } from '../types';
+import { Transaction, Category, Source, StatementUploadResponse, StatementAnalysisResponse } from '../types';
+import { AnalyzeStatementParams, UploadStatementRequest } from '../hooks/useQueries';
 
 const API_URL = 'http://localhost:8000';
 
@@ -10,17 +11,23 @@ const api = axios.create({
   },
 });
 
+function toSnakeCase(obj?: any) {
+  return Object.fromEntries(
+    Object.entries(obj || {}).map(([key, value]) => [key.replace(/([A-Z])/g, "_$1").toLowerCase(), value])
+  );
+}
+
 export const transactionsApi = {
   getAll: async (params?: {
-    start_date?: string;
-    end_date?: string;
-    category_id?: number;
-    source_id?: number;
+    startDate?: string;
+    endDate?: string;
+    categoryId?: number;
+    sourceId?: number;
     search?: string;
     skip?: number;
     limit?: number;
   }): Promise<Transaction[]> => {
-    const response = await api.get('/transactions', { params });
+    const response = await api.get('/transactions', { params: toSnakeCase(params) });
     return response.data;
   },
 
@@ -31,7 +38,7 @@ export const transactionsApi = {
 
   updateCategory: async (transactionId: number, categoryId: number): Promise<Transaction> => {
     const response = await api.patch(`/transactions/${transactionId}`, {
-      category_id: categoryId
+      categoryId: categoryId
     });
     return response.data;
   },
@@ -48,7 +55,7 @@ export const categoriesApi = {
     return response.data;
   },
 
-  create: async (category: { category_name: string; parent_category_id?: number | null }): Promise<Category> => {
+  create: async (category: { categoryName: string; parentCategoryId?: number | null }): Promise<Category> => {
     const response = await api.post('/categories', category);
     return response.data;
   },
@@ -82,17 +89,10 @@ export const sourcesApi = {
 };
 
 export const uploadApi = {
-  uploadFile: async (
-    statementSchema?: StatementSchemaDefinition,
-    statement_id?: string
-  ): Promise<FileUploadResponse> => {
-    // Create the request body with just the statement schema
-    const body = {
-      statement_id: statement_id,
-      statement_schema: statementSchema
-    };
-
-    const response = await api.post('/transactions/upload', body, {
+  uploadStatement: async (
+    uploadStatementParams: UploadStatementRequest
+  ): Promise<StatementUploadResponse> => {
+    const response = await api.post('/transactions/upload', uploadStatementParams, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -101,13 +101,8 @@ export const uploadApi = {
     return response.data;
   },
 
-  analyzeFile: async (fileContent: string, fileName: string): Promise<FileAnalysisResponse> => {
-    const body = {
-      file_content: fileContent,
-      file_name: fileName
-    };
-
-    const response = await api.post('/transactions/analyze', body, {
+  analyzeFile: async (analyzeStatementParams: AnalyzeStatementParams): Promise<StatementAnalysisResponse> => {
+    const response = await api.post('/transactions/analyze', analyzeStatementParams, {
       headers: {
         'Content-Type': 'application/json'
       }

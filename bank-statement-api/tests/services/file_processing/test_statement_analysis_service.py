@@ -10,7 +10,7 @@ from src.app.repositories.statement_repository import StatementRepository
 from src.app.repositories.statement_schema_repository import StatementSchemaRepository
 from src.app.schemas import (
     ColumnMapping,
-    FileAnalysisResponse,
+    StatementAnalysisResponse,
 )
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
 from src.app.services.file_processing.conversion_model import ConversionModel
@@ -51,7 +51,7 @@ class TestFileAnalysisService:
         service = createStatementAnalysisService(df=df)
         result = service.analyze_statement(file_content, file_name)
 
-        assert isinstance(result, FileAnalysisResponse)
+        assert isinstance(result, StatementAnalysisResponse)
         assert result.statement_id is not None
         assert result.total_transactions == 2
         assert result.total_amount == 950.00
@@ -83,7 +83,7 @@ class TestFileAnalysisService:
         service = createStatementAnalysisService(df=df)
         result = service.analyze_statement(file_content, file_name)
 
-        assert isinstance(result, FileAnalysisResponse)
+        assert isinstance(result, StatementAnalysisResponse)
         assert result.statement_id is not None
         assert result.statement_schema.source_id == 1
 
@@ -174,7 +174,7 @@ class TestFileAnalysisService:
 
         result = service.analyze_statement(file_content, file_name)
 
-        assert isinstance(result, FileAnalysisResponse)
+        assert isinstance(result, StatementAnalysisResponse)
         assert result.statement_id is not None
         assert isinstance(result.statement_schema.column_mapping, ColumnMapping)
         assert result.statement_schema.column_mapping.date == "Date"

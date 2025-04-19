@@ -1,11 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import { Alert, Button, Container } from 'react-bootstrap';
 import { StatementAnalysisMutation, useSources, useStatementAnalysis, useStatementUpload } from '../../hooks/useQueries';
-import type { UploadResult, StatementSchemaDefinition, FileUploadResponse } from '../../types';
-import type { UploadFileMutation } from "../../hooks/useQueries";
+import type { UploadResult, StatementSchemaDefinition, StatementUploadResponse } from '../../types';
+import type { UploadStatementMutation, UploadStatementRequest } from "../../hooks/useQueries";
 import FileUploadZone from './FileUploadZone';
 import AnalysisSummary from './AnalysisSummary';
-import type { FileAnalysisResponse } from '../../types';
+import type { StatementAnalysisResponse } from '../../types';
 import styles from './UploadPage.module.css';
 
 export interface UploadFileSpec {
@@ -18,7 +18,7 @@ const UploadPage: React.FC = () => {
   const { data: sources } = useSources();
   const [sourceId, setSourceId] = useState<number | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<FileAnalysisResponse | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<StatementAnalysisResponse | null>(null);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [columnMappings, setColumnMappings] = useState<Record<string, string>>({});
   const [uploadFileSpec, setUploadFileSpec] = useState<UploadFileSpec | null>(null);
@@ -29,20 +29,20 @@ const UploadPage: React.FC = () => {
   const handleFileSelected = useCallback(async (selectedFile: File) => {
     setIsLoading(true);
     try {
-      const { analysisResult, initialMappings } = await performFileSelected(selectedFile, analyzeFileMutation);
+      const { analysisResult, initialMappings } = await performAnalyseStatement(selectedFile, analyzeFileMutation);
       setAnalysisResult(analysisResult);
       setColumnMappings(initialMappings);
       setUploadFileSpec({
-        statementId: analysisResult.statement_id,
-        statementSchema: analysisResult.statement_schema
+        statementId: analysisResult.statementId,
+        statementSchema: analysisResult.statementSchema
       });
-      setSourceId(analysisResult.statement_schema.source_id);
+      setSourceId(analysisResult.statementSchema.sourceId);
     } catch (error) {
       setUploadResult({
         success: false,
-        message: 'Error analyzing file. Please try again.',
-        processed: 0,
-        skipped: 0,
+        message: `Error analyzing file. Please try again. ${error instanceof Error ? error.message : 'An unknown error occurred'}`,
+        transactionsProcessed: 0,
+        skippedDuplicates: 0,
       });
     }
     finally {
@@ -56,7 +56,7 @@ const UploadPage: React.FC = () => {
     }
     setIsLoading(true);
     try {
-      const { message, transactions_processed, skipped_duplicates } =
+      const { message, transactionsProcessed, skippedDuplicates } =
         await performFinalizeUpload(
           analysisResult,
           uploadFileSpec,
@@ -66,15 +66,15 @@ const UploadPage: React.FC = () => {
       setUploadResult({
         success: true,
         message,
-        processed: transactions_processed,
-        skipped: skipped_duplicates,
+        transactionsProcessed,
+        skippedDuplicates,
       });
     } catch (error) {
       setUploadResult({
         success: false,
         message: error instanceof Error ? error.message : 'An error occurred during upload',
-        processed: 0,
-        skipped: 0,
+        transactionsProcessed: 0,
+        skippedDuplicates: 0,
       });
     }
     finally {
@@ -111,8 +111,8 @@ const UploadPage: React.FC = () => {
           <p>{uploadResult.message}</p>
           {uploadResult.success && (
             <>
-              <p>Transactions processed: {uploadResult.processed}</p>
-              <p>Duplicate transactions skipped: {uploadResult.skipped}</p>
+              <p>Transactions processed: {uploadResult.transactionsProcessed}</p>
+              <p>Duplicate transactions skipped: {uploadResult.skippedDuplicates}</p>
             </>
           )}
           <Button
@@ -143,7 +143,7 @@ const UploadPage: React.FC = () => {
       ...uploadFileSpec,
       statementSchema: {
         ...uploadFileSpec.statementSchema,
-        start_row: newStartRow
+        startRow: newStartRow
       }
     });
   }
@@ -155,13 +155,13 @@ const UploadPage: React.FC = () => {
       ...uploadFileSpec,
       statementSchema: {
         ...uploadFileSpec.statementSchema,
-        header_row: newHeaderRow
+        headerRow: newHeaderRow
       }
     });
 
     const originalColumnName = (column_name: string) => {
-      const index = analysisResult?.preview_rows[uploadFileSpec.statementSchema.header_row].findIndex((col) => col === column_name);
-      return index !== undefined ? analysisResult?.preview_rows[newHeaderRow][index] : column_name;
+      const index = analysisResult?.previewRows[uploadFileSpec.statementSchema.headerRow].findIndex((col) => col === column_name);
+      return index !== undefined ? analysisResult?.previewRows[newHeaderRow][index] : column_name;
     }
     const newColumnMappings = Object.fromEntries(
       Object.entries(columnMappings).map(([key, value]) => [originalColumnName(key), value])
@@ -189,9 +189,9 @@ const UploadPage: React.FC = () => {
 
 };
 
-async function performFileSelected(
+async function performAnalyseStatement(
   selectedFile: File,
-  analyzeFileMutation: StatementAnalysisMutation['mutateAsync'],
+  analyzeStatementMutation: StatementAnalysisMutation['mutateAsync'],
 ) {
   const fileContent = await new Promise<string>((resolve) => {
     const reader = new FileReader();
@@ -202,19 +202,19 @@ async function performFileSelected(
     };
     reader.readAsDataURL(selectedFile);
   });
-  const analysisResult = await analyzeFileMutation({ fileContent, fileName: selectedFile.name });
-  const headerRow = analysisResult.statement_schema.header_row;
+  const analysisResult = await analyzeStatementMutation({ fileContent, fileName: selectedFile.name });
+  const headerRow = analysisResult.statementSchema.headerRow;
   const initialMappings: Record<string, string> = {};
-  const columnNames = analysisResult.preview_rows.length > headerRow && analysisResult.preview_rows[headerRow] ? analysisResult.preview_rows[headerRow] : [];
-  const columnMap = analysisResult.statement_schema.column_mapping;
+  const columnNames = analysisResult.previewRows.length > headerRow && analysisResult.previewRows[headerRow] ? analysisResult.previewRows[headerRow] : [];
+  const columnMap = analysisResult.statementSchema.columnMapping;
   for (const column of columnNames) {
     initialMappings[column] = 'ignore';
   }
   if (columnMap.date && columnNames.includes(columnMap.date)) initialMappings[columnMap.date] = 'date';
   if (columnMap.description && columnNames.includes(columnMap.description)) initialMappings[columnMap.description] = 'description';
   if (columnMap.amount && columnNames.includes(columnMap.amount)) initialMappings[columnMap.amount] = 'amount';
-  if (columnMap.debit_amount && columnNames.includes(columnMap.debit_amount)) initialMappings[columnMap.debit_amount] = 'debit_amount';
-  if (columnMap.credit_amount && columnNames.includes(columnMap.credit_amount)) initialMappings[columnMap.credit_amount] = 'credit_amount';
+  if (columnMap.debitAmount && columnNames.includes(columnMap.debitAmount)) initialMappings[columnMap.debitAmount] = 'debit_amount';
+  if (columnMap.creditAmount && columnNames.includes(columnMap.creditAmount)) initialMappings[columnMap.creditAmount] = 'credit_amount';
   if (columnMap.currency && columnNames.includes(columnMap.currency)) initialMappings[columnMap.currency] = 'currency';
   if (columnMap.balance && columnNames.includes(columnMap.balance)) initialMappings[columnMap.balance] = 'balance';
 
@@ -225,25 +225,25 @@ async function performFileSelected(
 }
 
 async function performFinalizeUpload(
-  analysisResult: FileAnalysisResponse,
+  analysisResult: StatementAnalysisResponse,
   uploadFileSpec: UploadFileSpec,
   sourceId: number | undefined,
   columnMappings: Record<string, string>,
-  uploadFileMutation: UploadFileMutation['mutateAsync'],
-): Promise<FileUploadResponse> {
+  uploadFileMutation: UploadStatementMutation['mutateAsync'],
+): Promise<StatementUploadResponse> {
   const reversedColumnMappings = Object.entries(columnMappings)
     .map(([columnName, mappingType]) => [mappingType, columnName]);
   const updatedMapping = Object.fromEntries(reversedColumnMappings);
-  const updatedSchema = {
-    ...analysisResult.statement_schema,
-    start_row: uploadFileSpec.statementSchema.start_row,
-    header_row: uploadFileSpec.statementSchema.header_row,
-    source_id: sourceId,
-    column_mapping: updatedMapping
+  const updatedSchema: StatementSchemaDefinition = {
+    ...analysisResult.statementSchema,
+    startRow: uploadFileSpec.statementSchema.startRow,
+    headerRow: uploadFileSpec.statementSchema.headerRow,
+    sourceId,
+    columnMapping: updatedMapping
   };
-  const uploadFileParams = {
-    statement_id: uploadFileSpec.statementId,
-    statement_schema: updatedSchema
+  const uploadFileParams: UploadStatementRequest = {
+    statementId: uploadFileSpec.statementId,
+    statementSchema: updatedSchema
   };
   return await uploadFileMutation(uploadFileParams);
 }

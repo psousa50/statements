@@ -5,7 +5,28 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, ConfigDict
 
 
-class CategoryBase(BaseModel):
+def to_camel(string: str) -> str:
+    parts = string.split("_")
+    return parts[0] + "".join(word.capitalize() for word in parts[1:])
+
+
+class CamelModel(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class RequestModel(CamelModel):
+    pass
+
+
+class ResponseModel(CamelModel):
+    pass
+
+
+class CategoryBase(ResponseModel):
     category_name: str
     parent_category_id: Optional[int] = None
 
@@ -20,7 +41,7 @@ class Category(CategoryBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class SourceBase(BaseModel):
+class SourceBase(ResponseModel):
     name: str
     description: Optional[str] = None
 
@@ -35,7 +56,7 @@ class Source(SourceBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class TransactionBase(BaseModel):
+class TransactionBase(ResponseModel):
     date: date
     description: str
     amount: float
@@ -61,7 +82,7 @@ class Transaction(TransactionBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class FileUploadResponse(BaseModel):
+class FileUploadResponse(ResponseModel):
     message: str
     transactions_processed: int
     transactions: List[Transaction]
@@ -69,7 +90,7 @@ class FileUploadResponse(BaseModel):
     categorization_task_id: Optional[str] = None
 
 
-class ColumnMapping(BaseModel):
+class ColumnMapping(ResponseModel):
     date: str
     description: str
     amount: str
@@ -79,7 +100,7 @@ class ColumnMapping(BaseModel):
     balance: Optional[str] = ""
 
 
-class StatementSchemaDefinition(BaseModel):
+class StatementSchemaDefinition(RequestModel, ResponseModel):
     id: str
     source_id: Optional[int] = None
     file_type: str
@@ -90,7 +111,12 @@ class StatementSchemaDefinition(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class FileAnalysisResponse(BaseModel):
+class StatementAnalysisRequest(RequestModel):
+    file_content: bytes
+    file_name: str
+
+
+class StatementAnalysisResponse(ResponseModel):
     statement_id: str
     statement_schema: StatementSchemaDefinition
     total_transactions: int
@@ -100,7 +126,7 @@ class FileAnalysisResponse(BaseModel):
     preview_rows: List[List[str]] = []
 
 
-class UploadFileSpec(BaseModel):
+class UploadFileSpec(RequestModel, ResponseModel):
     statement_id: str
     statement_schema: StatementSchemaDefinition
 
@@ -110,3 +136,8 @@ class StatementTransaction(BaseModel):
     description: str
     amount: Decimal
     currency: str
+
+
+class UploadStatementRequest(RequestModel):
+    statement_id: str
+    statement_schema: StatementSchemaDefinition

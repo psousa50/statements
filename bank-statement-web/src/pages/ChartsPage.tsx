@@ -32,10 +32,10 @@ const ChartsPage: React.FC = () => {
 
   // Fetch data
   const { data: transactions, isLoading: isLoadingTransactions } = useTransactions({
-    start_date: startDate || undefined,
-    end_date: endDate || undefined,
-    category_id: categoryId,
-    source_id: sourceId
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+    categoryId: categoryId,
+    sourceId: sourceId
   });
   const { data: categories, isLoading: isLoadingCategories } = useCategories();
   const { data: sources, isLoading: isLoadingSources } = useSources();
@@ -48,16 +48,16 @@ const ChartsPage: React.FC = () => {
 
     // Initialize with all categories
     categories.forEach(category => {
-      categoryMap.set(category.id, { name: category.category_name, value: 0 });
+      categoryMap.set(category.id, { name: category.categoryName, value: 0 });
     });
 
     // Sum transaction amounts by category
     transactions.forEach(transaction => {
-      if (transaction.category_id && transaction.amount < 0) { // Only count expenses (negative amounts)
-        const categoryData = categoryMap.get(transaction.category_id);
+      if (transaction.categoryId && transaction.amount < 0) { // Only count expenses (negative amounts)
+        const categoryData = categoryMap.get(transaction.categoryId);
         if (categoryData) {
           categoryMap.set(
-            transaction.category_id,
+            transaction.categoryId,
             { ...categoryData, value: categoryData.value + Math.abs(transaction.amount) }
           );
         }
@@ -180,7 +180,7 @@ const ChartsPage: React.FC = () => {
                   <option value="">All Categories</option>
                   {categories?.map((category) => (
                     <option key={category.id} value={category.id}>
-                      {category.category_name}
+                      {category.categoryName}
                     </option>
                   ))}
                 </Form.Select>

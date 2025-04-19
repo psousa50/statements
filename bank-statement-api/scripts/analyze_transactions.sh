@@ -4,7 +4,7 @@ FILE=$1
 API_URL="http://localhost:8000/transactions/analyze"
 
 if [ -z "$FILE" ]; then
-  FILE="/Users/pedrosousa/Work/Personal/statements/tmp/revolut.csv"
+  FILE="/Users/pedrosousa/Work/Personal/statements/tmp/revolut_some.csv"
 fi
 
 if [ ! -f "$FILE" ]; then

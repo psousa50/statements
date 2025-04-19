@@ -12,10 +12,10 @@ import { TransactionCategoryEditor } from '../components/TransactionCategoryEdit
 
 const TransactionsPage: React.FC = () => {
   const [filters, setFilters] = useState({
-    start_date: '',
-    end_date: '',
-    category_id: '',
-    source_id: '',
+    startDate: '',
+    endDate: '',
+    categoryId: '',
+    sourceId: '',
     search: '',
     skip: 0,
     limit: 20,
@@ -23,10 +23,10 @@ const TransactionsPage: React.FC = () => {
 
   const { data: transactions, isLoading, isError } = useTransactions(
     {
-      start_date: filters.start_date || undefined,
-      end_date: filters.end_date || undefined,
-      category_id: filters.category_id ? parseInt(filters.category_id) : undefined,
-      source_id: filters.source_id ? parseInt(filters.source_id) : undefined,
+      startDate: filters.startDate || undefined,
+      endDate: filters.endDate || undefined,
+      categoryId: filters.categoryId ? parseInt(filters.categoryId) : undefined,
+      sourceId: filters.sourceId ? parseInt(filters.sourceId) : undefined,
       search: filters.search || undefined,
       skip: filters.skip,
       limit: filters.limit,
@@ -78,12 +78,12 @@ const TransactionsPage: React.FC = () => {
 
     return (
       <Pagination className="mt-3 justify-content-center">
-        <Pagination.Prev 
+        <Pagination.Prev
           onClick={() => handlePageChange(Math.max(0, filters.skip - filters.limit))}
           disabled={filters.skip === 0}
         />
         <Pagination.Item active>{currentPage}</Pagination.Item>
-        <Pagination.Next 
+        <Pagination.Next
           onClick={() => handlePageChange(filters.skip + filters.limit)}
           disabled={!hasMore}
         />
@@ -103,8 +103,8 @@ const TransactionsPage: React.FC = () => {
                 <Form.Label>Start Date</Form.Label>
                 <Form.Control
                   type="date"
-                  name="start_date"
-                  value={filters.start_date}
+                  name="startDate"
+                  value={filters.startDate}
                   onChange={handleFilterChange}
                 />
               </Form.Group>
@@ -114,8 +114,8 @@ const TransactionsPage: React.FC = () => {
                 <Form.Label>End Date</Form.Label>
                 <Form.Control
                   type="date"
-                  name="end_date"
-                  value={filters.end_date}
+                  name="endDate"
+                  value={filters.endDate}
                   onChange={handleFilterChange}
                 />
               </Form.Group>
@@ -123,15 +123,15 @@ const TransactionsPage: React.FC = () => {
             <Col md={3}>
               <Form.Group className="mb-3">
                 <Form.Label>Category</Form.Label>
-                <Form.Select 
-                  name="category_id"
-                  value={filters.category_id}
+                <Form.Select
+                  name="categoryId"
+                  value={filters.categoryId}
                   onChange={handleFilterChange}
                 >
                   <option value="">All Categories</option>
                   {categories?.map(category => (
                     <option key={category.id} value={category.id}>
-                      {category.category_name}
+                      {category.categoryName}
                     </option>
                   ))}
                 </Form.Select>
@@ -140,9 +140,9 @@ const TransactionsPage: React.FC = () => {
             <Col md={3}>
               <Form.Group className="mb-3">
                 <Form.Label>Source</Form.Label>
-                <Form.Select 
-                  name="source_id"
-                  value={filters.source_id}
+                <Form.Select
+                  name="sourceId"
+                  value={filters.sourceId}
                   onChange={handleFilterChange}
                 >
                   <option value="">All Sources</option>
@@ -198,11 +198,11 @@ const TransactionsPage: React.FC = () => {
                       {formatAmount(transaction.amount)}
                     </td>
                     <td>
-                      <TransactionCategoryEditor 
-                        transaction={transaction} 
+                      <TransactionCategoryEditor
+                        transaction={transaction}
                       />
                     </td>
-                    <td>{getSourceName(transaction.source_id)}</td>
+                    <td>{getSourceName(transaction.sourceId)}</td>
                   </tr>
                 ))
               ) : (

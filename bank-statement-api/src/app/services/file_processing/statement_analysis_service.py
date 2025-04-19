@@ -11,7 +11,7 @@ from src.app.repositories.statement_repository import StatementRepository
 from src.app.repositories.statement_schema_repository import StatementSchemaRepository
 from src.app.schemas import (
     ColumnMapping,
-    FileAnalysisResponse,
+    StatementAnalysisResponse,
     StatementSchemaDefinition,
 )
 from src.app.services.file_processing.column_normalizer import ColumnNormalizer
@@ -56,7 +56,7 @@ class StatementAnalysisService:
 
     def analyze_statement(
         self, file_content: bytes, file_name: str
-    ) -> FileAnalysisResponse:
+    ) -> StatementAnalysisResponse:
         try:
             statement_id = self.statement_repository.save(file_content, file_name)
 
@@ -176,13 +176,13 @@ class StatementAnalysisService:
                         row_values.append(str(value))
                 preview_rows.append(row_values)
 
-            response = FileAnalysisResponse(
-                statement_schema=statement_schema,
-                statement_id=statement_id,
-                total_transactions=statistics.total_transactions,
-                total_amount=float(statistics.total_amount),
-                date_range_start=statistics.date_range_start,
-                date_range_end=statistics.date_range_end,
+            response = StatementAnalysisResponse(
+                statementSchema=statement_schema,
+                statementId=statement_id,
+                totalTransactions=statistics.total_transactions,
+                totalAmount=float(statistics.total_amount),
+                dateRangeStart=statistics.date_range_start,
+                dateRangeEnd=statistics.date_range_end,
                 preview_rows=preview_rows,
             )
 

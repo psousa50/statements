@@ -10,8 +10,8 @@ import { Category } from '../types';
 const CategoriesPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [newCategory, setNewCategory] = useState({
-    category_name: '',
-    parent_category_id: null as number | null,
+    categoryName: '',
+    parentCategoryId: null as number | null,
   });
 
   const { data: categories, isLoading, isError } = useCategories();
@@ -24,23 +24,23 @@ const CategoriesPage: React.FC = () => {
     const { name, value } = e.target;
     setNewCategory(prev => ({
       ...prev,
-      [name]: name === 'parent_category_id' ? (value ? parseInt(value, 10) : null) : value,
+      [name]: name === 'parentCategoryId' ? (value ? parseInt(value, 10) : null) : value,
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     createCategory(
       {
-        category_name: newCategory.category_name,
-        parent_category_id: newCategory.parent_category_id,
+        categoryName: newCategory.categoryName,
+        parentCategoryId: newCategory.parentCategoryId,
       },
       {
         onSuccess: () => {
           setNewCategory({
-            category_name: '',
-            parent_category_id: null,
+            categoryName: '',
+            parentCategoryId: null,
           });
           handleCloseModal();
         },
@@ -51,44 +51,44 @@ const CategoriesPage: React.FC = () => {
   // Organize categories into a hierarchy
   const { mainCategories, categoriesMap } = useMemo(() => {
     if (!categories) return { mainCategories: [], categoriesMap: new Map() };
-    
+
     const map = new Map<number, Category>();
     const mains: Category[] = [];
-    
+
     // First, populate the map
     categories.forEach(category => {
       map.set(category.id, category);
     });
-    
+
     // Then, identify main categories (those without a parent)
     categories.forEach(category => {
-      if (category.parent_category_id === null) {
+      if (category.parentCategoryId === null) {
         mains.push(category);
       }
     });
-    
+
     return { mainCategories: mains, categoriesMap: map };
   }, [categories]);
 
   // Render a category row with its subcategories
   const renderCategoryRow = (category: Category, level = 0) => {
     const indent = level * 20; // 20px indentation per level
-    
+
     // Find subcategories
-    const subcategories = categories?.filter(c => c.parent_category_id === category.id) || [];
-    
+    const subcategories = categories?.filter(c => c.parentCategoryId === category.id) || [];
+
     return (
       <React.Fragment key={category.id}>
         <tr>
           <td>{category.id}</td>
           <td>
             <div style={{ paddingLeft: `${indent}px` }}>
-              {category.category_name}
+              {category.categoryName}
             </div>
           </td>
           <td>
-            {category.parent_category_id 
-              ? categoriesMap.get(category.parent_category_id)?.category_name || '-' 
+            {category.parentCategoryId
+              ? categoriesMap.get(category.parentCategoryId)?.category_name || '-'
               : '-'}
           </td>
         </tr>
@@ -141,8 +141,8 @@ const CategoriesPage: React.FC = () => {
               <Form.Label>Category Name</Form.Label>
               <Form.Control
                 type="text"
-                name="category_name"
-                value={newCategory.category_name}
+                name="categoryName"
+                value={newCategory.categoryName}
                 onChange={handleInputChange}
                 required
               />
@@ -150,14 +150,14 @@ const CategoriesPage: React.FC = () => {
             <Form.Group className="mb-3">
               <Form.Label>Parent Category</Form.Label>
               <Form.Select
-                name="parent_category_id"
-                value={newCategory.parent_category_id?.toString() || ''}
+                name="parentCategoryId"
+                value={newCategory.parentCategoryId?.toString() || ''}
                 onChange={handleInputChange}
               >
                 <option value="">None (Main Category)</option>
                 {categories?.map(category => (
                   <option key={category.id} value={category.id}>
-                    {category.category_name}
+                    {category.categoryName}
                   </option>
                 ))}
               </Form.Select>

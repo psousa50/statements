@@ -40,7 +40,10 @@ class CategoryRouter:
             response_model=CategorySchema,
         )
         self.router.add_api_route(
-            "", self.create_category, methods=["POST"], response_model=CategorySchema
+            "",
+            self.create_category,
+            methods=["POST"],
+            response_model=CategorySchema,
         )
         self.router.add_api_route(
             "/import",

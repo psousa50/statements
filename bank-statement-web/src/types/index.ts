@@ -2,11 +2,11 @@ export interface Transaction {
   id: number;
   date: string;
   description: string;
-  normalized_description: string;
+  normalizedDescription: string;
   amount: number;
   currency: string;
-  category_id: number | null;
-  source_id: number;
+  categoryId: number | null;
+  sourceId: number;
   category?: Category;
   source?: Source;
 }
@@ -25,7 +25,7 @@ export interface Source {
 
 export interface FileUploadResponse {
   message: string;
-  transactions_processed: number;
+  transactionsProcessed: number;
   transactions: Transaction[];
-  skipped_duplicates: number;
+  skippedDuplicates: number;
 }

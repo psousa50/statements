@@ -3,27 +3,27 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ApiContext, ApiContextType } from '../../../src/api/ApiContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import UploadPage from '../../../src/pages/UploadPage/UploadPage';
-import { FileAnalysisResponse } from '../../../src/types';
+import { StatementAnalysisResponse } from '../../../src/types';
 
-const analysisResult: FileAnalysisResponse = {
-  statement_id: 'abc123',
-  total_transactions: 2354,
-  total_amount: 223,
-  date_range_start: '2023-03-02',
-  date_range_end: '2024-04-23',
-  statement_schema: {
+const analysisResult: StatementAnalysisResponse = {
+  statementId: 'abc123',
+  totalTransactions: 2354,
+  totalAmount: 223,
+  dateRangeStart: '2023-03-02',
+  dateRangeEnd: '2024-04-23',
+  statementSchema: {
     id: '1',
-    file_type: 'CSV',
-    column_mapping: {
+    fileType: 'CSV',
+    columnMapping: {
       date: 'Date',
       description: 'Description',
       amount: 'Amount',
     },
-    header_row: 0,
-    start_row: 1,
-    source_id: 1,
+    headerRow: 0,
+    startRow: 1,
+    sourceId: 1,
   },
-  preview_rows: [
+  previewRows: [
     ['Date', 'Description', 'Amount'],
     ['2024-01-01', 'Test', '100'],
   ],
@@ -54,7 +54,7 @@ const mockApis: ApiContextType = {
     delete: jest.fn(),
   },
   uploadApi: {
-    uploadFile: jest.fn(),
+    uploadStatement: jest.fn(),
     analyzeFile: jest.fn().mockResolvedValue(analysisResult),
   },
 };

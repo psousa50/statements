@@ -1,10 +1,10 @@
 import React from 'react';
 import { Card, Table, Form, Badge } from 'react-bootstrap';
-import { FileAnalysisResponse } from '../../types';
+import { StatementAnalysisResponse } from '../../types';
 import styles from './UploadPage.module.css';
 
 interface ColumnMappingTableProps {
-  analysisResult: FileAnalysisResponse;
+  analysisResult: StatementAnalysisResponse;
   columnMappings: Record<string, string>;
   onColumnMappingChange: (columnName: string, mappingType: string) => void;
   startRow: number;
@@ -14,7 +14,7 @@ interface ColumnMappingTableProps {
 }
 
 const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({ analysisResult: analysis, columnMappings, onColumnMappingChange, startRow, onStartRowChange, headerRow, onHeaderRowChange }) => {
-  const columns = analysis.preview_rows.length > 0 && analysis.preview_rows[headerRow] ? analysis.preview_rows[headerRow] : [];
+  const columns = analysis.previewRows.length > 0 && analysis.previewRows[headerRow] ? analysis.previewRows[headerRow] : [];
 
   const columnOptions = [
     { value: "ignore", label: "Ignore" },
@@ -84,7 +84,7 @@ const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({ analysisResult:
               </tr>
             </thead>
             <tbody>
-              {analysis.preview_rows.map((row, rowIndex) => {
+              {analysis.previewRows.map((row, rowIndex) => {
                 return (
                   <tr key={rowIndex}>
                     {columns.map((column, colIndex) => {
