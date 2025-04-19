@@ -23,9 +23,8 @@ export interface Source {
 
 export interface FileUploadResponse {
   message: string;
-  transactions_processed: number;
-  transactions: Transaction[];
-  skipped_duplicates: number;
+  transactionsProcessed: number;
+  skippedDuplicates: number;
 }
 
 export interface ColumnMapping {
@@ -40,26 +39,26 @@ export interface ColumnMapping {
 
 export interface StatementSchemaDefinition {
   id: string;
-  source_id?: number;
-  file_type: string;
-  column_mapping: ColumnMapping;
-  start_row: number;
-  header_row: number;
+  sourceId?: number;
+  fileType: string;
+  columnMapping: ColumnMapping;
+  startRow: number;
+  headerRow: number;
 }
 
 export interface FileAnalysisResponse {
-  statement_id: string;
-  statement_schema: StatementSchemaDefinition;
-  total_transactions: number;
-  total_amount: number;
-  date_range_start: string;
-  date_range_end: string;
-  preview_rows: any[][];
+  statementId: string;
+  statementSchema: StatementSchemaDefinition;
+  totalTransactions: number;
+  totalAmount: number;
+  dateRangeStart: string;
+  dateRangeEnd: string;
+  previewRows: any[][];
 }
 
 export interface UploadResult {
   success: boolean;
   message: string;
-  processed: number;
-  skipped: number;
+  transactionsProcessed: number;
+  skippedDuplicates: number;
 }

@@ -1,3 +1,4 @@
+from datetime import datetime
 import base64
 import json
 import logging
@@ -18,7 +19,7 @@ from ..schemas import (
     FileUploadResponse,
     StatementSchemaDefinition,
 )
-from ..schemas import Transaction as TransactionSchema
+from ..schemas import Transaction as TransactionSchema, UploadStatementParams
 from ..services.file_processing.statement_analysis_service import (
     StatementAnalysisService,
 )
@@ -26,9 +27,25 @@ from ..services.file_processing.statement_upload_service import (
     StatementUploadService,
     UploadFileSpec,
 )
+from ..schemas import ResponseModel
 
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
+
+
+class TransactionResponse(ResponseModel):
+    id: int
+    dtCreated: datetime
+    dtUpdated: datetime
+    sourceId: int
+    categoryId: int
+    subCategoryId: int
+    description: str
+    amount: float
+    currency: str
+    date: date
+    normalizedDescription: str
+    categorizationStatus: str
 
 
 class TransactionRouter:
@@ -182,15 +199,14 @@ class TransactionRouter:
 
     async def upload_statement(
         self,
-        request: Request,
+        request: UploadStatementParams,
         auto_categorize: bool = Query(
             False, description="Automatically trigger categorization after upload"
         ),
     ):
         try:
-            body = await request.json()
-            statement_id = body.get("statement_id")
-            statement_schema_data = body.get("statement_schema")
+            statement_id = request.statement_id
+            statement_schema = request.statement_schema
 
             if not statement_id:
                 raise HTTPException(status_code=400, detail="statement_id is required")
@@ -204,13 +220,9 @@ class TransactionRouter:
                     detail=f"Statement with ID {statement_id} not found",
                 )
 
-            schema_obj = None
-            if statement_schema_data:
-                schema_obj = StatementSchemaDefinition(**statement_schema_data)
-
             spec = UploadFileSpec(
                 statement_id=statement_id,
-                statement_schema=schema_obj,
+                statement_schema=statement_schema,
             )
 
             result = self.upload_statement_service.upload_statement(spec)

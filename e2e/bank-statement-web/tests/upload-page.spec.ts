@@ -10,7 +10,7 @@ test.describe('Upload Page', () => {
   test.beforeAll(async ({ request }) => {
     const apiClient = new ApiClient(request, BACKEND_URL);
     const sourcesApi = new SourcesApi(apiClient);
-    const sourceForTestName = `Test Source ${Math.random().toString(36).slice(2, 10)}`
+    const sourceForTestName = `Test Source`
     sourceForTest = await sourcesApi.ensureExists(sourceForTestName);
   });
 
@@ -58,19 +58,19 @@ test.describe('Upload Page', () => {
     await page.route('**/transactions/upload', async (route, request) => {
       const postData = JSON.parse(request.postData() ?? '{}');
       expect(postData).toMatchObject({
-        statement_id: expect.any(String),
-        statement_schema: {
+        statementId: expect.any(String),
+        statementSchema: {
           id: expect.any(String),
-          source_id: sourceForTest.id,
-          file_type: 'CSV',
-          column_mapping: {
+          sourceId: sourceForTest.id,
+          fileType: 'CSV',
+          columnMapping: {
             amount: 'Amount2',
             balance: 'Balance2',
             date: 'Date2',
             description: 'Another Description2',
           },
-          header_row: 1,
-          start_row: 3,
+          headerRow: 1,
+          startRow: 3,
         },
       });
       await route.continue();

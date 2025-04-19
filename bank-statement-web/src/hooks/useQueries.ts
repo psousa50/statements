@@ -133,18 +133,18 @@ export const useStatementAnalysis = () => {
   });
 };
 
-export interface UploadFileParams {
-  statement_id: string;
-  statement_schema: StatementSchemaDefinition;
+export interface UploadStatementParams {
+  statementId: string;
+  statementSchema: StatementSchemaDefinition;
 }
 
-export type UploadFileMutation = UseMutationResult<FileUploadResponse, Error, UploadFileParams>;
+export type UploadStatementMutation = UseMutationResult<FileUploadResponse, Error, UploadStatementParams>;
 
 export const useStatementUpload = () => {
   const queryClient = useQueryClient();
   const { uploadApi } = useApiContext();
-  return useMutation<FileUploadResponse, Error, UploadFileParams>({
-    mutationFn: ({ statement_schema, statement_id }) => uploadApi.uploadFile(statement_schema, statement_id),
+  return useMutation<FileUploadResponse, Error, UploadStatementParams>({
+    mutationFn: (uploadStatementParams) => uploadApi.uploadStatement(uploadStatementParams),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },

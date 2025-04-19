@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Transaction, Category, Source, FileUploadResponse, StatementSchemaDefinition, FileAnalysisResponse } from '../types';
+import { UploadStatementParams } from '../hooks/useQueries';
 
 const API_URL = 'http://localhost:8000';
 
@@ -82,17 +83,10 @@ export const sourcesApi = {
 };
 
 export const uploadApi = {
-  uploadFile: async (
-    statementSchema?: StatementSchemaDefinition,
-    statement_id?: string
+  uploadStatement: async (
+    uploadStatementParams: UploadStatementParams
   ): Promise<FileUploadResponse> => {
-    // Create the request body with just the statement schema
-    const body = {
-      statement_id: statement_id,
-      statement_schema: statementSchema
-    };
-
-    const response = await api.post('/transactions/upload', body, {
+    const response = await api.post('/transactions/upload', uploadStatementParams, {
       headers: {
         'Content-Type': 'application/json',
       },

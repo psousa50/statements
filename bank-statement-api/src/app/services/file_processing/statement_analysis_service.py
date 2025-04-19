@@ -177,12 +177,12 @@ class StatementAnalysisService:
                 preview_rows.append(row_values)
 
             response = FileAnalysisResponse(
-                statement_schema=statement_schema,
-                statement_id=statement_id,
-                total_transactions=statistics.total_transactions,
-                total_amount=float(statistics.total_amount),
-                date_range_start=statistics.date_range_start,
-                date_range_end=statistics.date_range_end,
+                statementSchema=statement_schema,
+                statementId=statement_id,
+                totalTransactions=statistics.total_transactions,
+                totalAmount=float(statistics.total_amount),
+                dateRangeStart=statistics.date_range_start,
+                dateRangeEnd=statistics.date_range_end,
                 preview_rows=preview_rows,
             )
 

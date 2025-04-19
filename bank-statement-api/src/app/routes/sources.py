@@ -183,7 +183,7 @@ class SourceRouter:
             return {"message": f"Successfully imported {len(sources_created)} sources"}
 
         except Exception as e:
-            self.source_repository.rollback()
+            self.source_repository.db.rollback()
             raise HTTPException(
                 status_code=400, detail=f"Error importing sources: {str(e)}"
             )

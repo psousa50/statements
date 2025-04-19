@@ -66,9 +66,9 @@ export default function AnalysisSummary({
         analysisResult={analysisResult}
         columnMappings={columnMappings}
         onColumnMappingChange={onColumnMappingChange}
-        startRow={uploadFileSpec.statementSchema.start_row}
+        startRow={uploadFileSpec.statementSchema.startRow}
         onStartRowChange={onStartRowChange}
-        headerRow={uploadFileSpec.statementSchema.header_row}
+        headerRow={uploadFileSpec.statementSchema.headerRow}
         onHeaderRowChange={onHeaderRowChange}
       />
       <ValidationMessages columnMappings={columnMappings} isValid={isValid} />

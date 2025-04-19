@@ -74,8 +74,8 @@ def test_get_categories():
     assert response.status_code == 200
     categories = response.json()
     assert len(categories) >= 2
-    assert any(c["category_name"] == category1.category_name for c in categories)
-    assert any(c["category_name"] == category2.category_name for c in categories)
+    assert any(c["categoryName"] == category1.category_name for c in categories)
+    assert any(c["categoryName"] == category2.category_name for c in categories)
 
 
 def test_get_category():
@@ -92,13 +92,13 @@ def test_get_category():
 
     all_categories = client.get("/categories").json()
     test_category = next(
-        c for c in all_categories if c["category_name"] == category.category_name
+        c for c in all_categories if c["categoryName"] == category.category_name
     )
 
     response = client.get(f"/categories/{test_category['id']}")
 
     assert response.status_code == 200
-    assert response.json()["category_name"] == category.category_name
+    assert response.json()["categoryName"] == category.category_name
     assert response.json()["id"] == test_category["id"]
 
 

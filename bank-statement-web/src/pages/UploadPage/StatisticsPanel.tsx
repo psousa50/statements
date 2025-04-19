@@ -19,13 +19,13 @@ export default function StatisticsPanel({ analysisResult }: Props) {
     }}>
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
         <span>Number of Transactions:</span>
-        <span>{analysisResult.total_transactions.toLocaleString()}</span>
+        <span>{analysisResult.totalTransactions.toLocaleString()}</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
         <span>Total amount:</span>
-        <span>EUR {analysisResult.total_amount.toLocaleString()}</span>
+        <span>EUR {analysisResult.totalAmount.toLocaleString()}</span>
       </div>
-      <div style={{ marginTop: 10 }}>From {formatDate(analysisResult.date_range_start)} to {formatDate(analysisResult.date_range_end)}</div>
+      <div style={{ marginTop: 10 }}>From {formatDate(analysisResult.dateRangeStart)} to {formatDate(analysisResult.dateRangeEnd)}</div>
     </div>
   );
 
