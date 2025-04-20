@@ -13,8 +13,19 @@ interface ColumnMappingTableProps {
   onHeaderRowChange: (headerRow: number) => void;
 }
 
-const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({ analysisResult: analysis, columnMappings, onColumnMappingChange, startRow, onStartRowChange, headerRow, onHeaderRowChange }) => {
-  const columns = analysis.previewRows.length > 0 && analysis.previewRows[headerRow] ? analysis.previewRows[headerRow] : [];
+const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({
+  analysisResult: analysis,
+  columnMappings,
+  onColumnMappingChange,
+  startRow,
+  onStartRowChange,
+  headerRow,
+  onHeaderRowChange
+}) => {
+  const columns =
+    analysis.previewRows.length > 0 && analysis.previewRows[headerRow]
+      ? analysis.previewRows[headerRow]
+      : [];
 
   const columnOptions = [
     { value: "ignore", label: "Ignore" },
@@ -28,6 +39,18 @@ const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({ analysisResult:
     { value: "category", label: "Category (optional)" },
   ];
 
+  const handleHeaderRowChange = (value: number) => {
+    if (value < startRow) {
+      onHeaderRowChange(value);
+    }
+  };
+
+  const handleStartRowChange = (value: number) => {
+    if (value > headerRow) {
+      onStartRowChange(value);
+    }
+  };
+
   return (
     <Card className="mb-4">
       <Card.Header className="d-flex justify-content-between align-items-center">
@@ -40,7 +63,7 @@ const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({ analysisResult:
               type="number"
               min="0"
               value={headerRow}
-              onChange={(e) => onHeaderRowChange(parseInt(e.target.value))}
+              onChange={(e) => handleHeaderRowChange(parseInt(e.target.value))}
               style={{ width: '80px' }}
             />
           </Form.Group>
@@ -51,7 +74,7 @@ const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({ analysisResult:
               type="number"
               min="0"
               value={startRow}
-              onChange={(e) => onStartRowChange(parseInt(e.target.value))}
+              onChange={(e) => handleStartRowChange(parseInt(e.target.value))}
               style={{ width: '80px' }}
             />
           </Form.Group>
