@@ -52,7 +52,10 @@ export default function AnalysisSummary({
             sourceId={sourceId}
             sourcePopupOpen={sourcePopupOpen}
             onButtonClick={() => setSourcePopupOpen(!sourcePopupOpen)}
-            onOptionClick={setSourceId}
+            onOptionClick={(id) => {
+            setSourceId(id);
+            setSourcePopupOpen(false);
+          }}
             onMouseEnter={() => { }}
             onMouseLeave={() => { }}
           />
