@@ -29,6 +29,7 @@ from src.app.services.file_processing.transactions_builder import (
 )
 from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
 
+
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
 
@@ -84,29 +85,10 @@ class StatementAnalysisService:
             source_id = None
 
             if existing_schema:
-                schema_data = existing_schema.schema_data
-
-                file_type_value = schema_data.get("file_type")
-                if isinstance(file_type_value, int):
-                    try:
-                        file_type_str = FileType(file_type_value).name
-                    except ValueError:
-                        file_type_str = str(file_type_value)
-                else:
-                    file_type_str = str(file_type_value)
-
-                statement_schema = StatementSchemaDefinition(
-                    id=existing_schema.id,
-                    source_id=schema_data.get("source_id"),
-                    file_type=file_type_str,
-                    column_mapping=ColumnMapping(
-                        **schema_data.get("column_mapping", {})
-                    ),
-                    start_row=schema_data.get("start_row", 1),
-                    header_row=schema_data.get("header_row", 0),
-                    column_names=schema_data.get("column_names", []),
+                statement_schema = StatementSchemaDefinition.model_validate(
+                    existing_schema.schema_data
                 )
-                source_id = schema_data.get("source_id")
+                source_id = statement_schema.source_id
             else:
                 column_names = (
                     df.columns.tolist()
@@ -133,21 +115,11 @@ class StatementAnalysisService:
                     column_names=column_names,
                 )
 
-                schema_data = {
-                    "id": schema_id,
-                    "source_id": source_id,
-                    "file_type": file_type.name,
-                    "column_mapping": conversion_model.column_map,
-                    "start_row": conversion_model.start_row,
-                    "header_row": conversion_model.header_row,
-                    "column_names": column_names,
-                }
-
                 self.statement_schema_repository.save(
                     {
                         "id": schema_id,
                         "statement_hash": statement_hash,
-                        "schema_data": schema_data,
+                        "schema_data": statement_schema.model_dump(),
                     }
                 )
 
