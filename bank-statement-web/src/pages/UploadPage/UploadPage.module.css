@@ -1,4 +1,5 @@
-.table-sm td, .table-sm th {
+.table-sm td,
+.table-sm th {
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
 }
@@ -8,5 +9,6 @@
 }
 
 .header-row-highlight {
-  background-color: #ffb347 !important; /* deeper orange */
+  background-color: #ffb347 !important;
+  /* deeper orange */
 }

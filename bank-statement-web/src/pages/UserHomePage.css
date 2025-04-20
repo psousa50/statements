@@ -5,11 +5,12 @@
 }
 
 .card {
-  transition: transform 0.2s;
+  transition: none !important;
+  transform: none !important;
 }
 
 .card:hover {
-  transform: translateY(-5px);
+  transform: none !important;
 }
 
 .text-primary {
