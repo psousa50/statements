@@ -1,14 +1,7 @@
-.table-sm td,
-.table-sm th {
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-}
-
-.table-sm {
-  font-size: 0.93rem;
-}
-
-.header-row-highlight {
+.header-row-highlight td {
   background-color: #ffb347 !important;
-  /* deeper orange */
+}
+
+.start-row-highlight td {
+  background-color: #cce0ff !important;
 }

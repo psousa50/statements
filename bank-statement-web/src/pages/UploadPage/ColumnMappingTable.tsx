@@ -85,8 +85,10 @@ const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({ analysisResult:
             </thead>
             <tbody>
               {analysis.previewRows.map((row, rowIndex) => {
+                const isStartRow = rowIndex === startRow;
+                const isHeaderRow = rowIndex === headerRow;
                 return (
-                  <tr key={rowIndex}>
+                  <tr key={rowIndex} className={`${isStartRow ? styles['start-row-highlight'] : ''} ${isHeaderRow ? styles['header-row-highlight'] : ''}`}>
                     {columns.map((column, colIndex) => {
                       const value = colIndex < row.length ? row[colIndex] : '';
                       const isAssignedColumn = columnMappings[column] !== 'ignore';
@@ -113,7 +115,7 @@ const ColumnMappingTable: React.FC<ColumnMappingTableProps> = ({ analysisResult:
                       return (
                         <td
                           key={colIndex}
-                          className={`${rowIndex === headerRow ? styles['header-row-highlight'] : isAssignedColumn ? 'bg-info bg-opacity-10' : ''} ${isAssignedColumn ? 'fw-bold' : ''} ${amountClass} ${alignClass}`}
+                          className={`${isAssignedColumn ? 'bg-info bg-opacity-10' : ''} ${isAssignedColumn ? 'fw-bold' : ''} ${amountClass} ${alignClass}`}
                         >
                           {displayValue}
                         </td>
