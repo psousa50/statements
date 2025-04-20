@@ -29,7 +29,6 @@ from src.app.services.file_processing.transactions_builder import (
 )
 from src.app.services.file_processing.transactions_cleaner import TransactionsCleaner
 
-
 logger_content = logging.getLogger("app.llm.big")
 logger = logging.getLogger("app")
 
