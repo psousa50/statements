@@ -4,7 +4,7 @@ import logging
 from datetime import date
 from typing import Callable, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, File, UploadFile
 from fastapi.encoders import jsonable_encoder
 
 from ..logging.utils import log_exception
@@ -157,11 +157,11 @@ class TransactionRouter:
 
     async def analyze_statement(
         self,
-        request: StatementAnalysisRequest,
+        file: UploadFile = File(...),
     ):
         try:
-            file_content = base64.b64decode(request.file_content)
-            filename = request.file_name
+            file_content = await file.read()
+            filename = file.filename
 
             response = self.statement_analysis_service.analyze_statement(
                 file_content, filename

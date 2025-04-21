@@ -6,7 +6,10 @@ interface FileUploadZoneProps {
   isLoading: boolean;
 }
 
-const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, isLoading }) => {
+const FileUploadZone: React.FC<FileUploadZoneProps> = ({
+  onFileSelected,
+  isLoading,
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -19,19 +22,25 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, isLoadi
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFileSelected(e.dataTransfer.files[0]);
-    }
-  }, [onFileSelected]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragging(false);
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        onFileSelected(e.dataTransfer.files[0]);
+      }
+    },
+    [onFileSelected]
+  );
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      onFileSelected(e.target.files[0]);
-    }
-  }, [onFileSelected]);
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        onFileSelected(e.target.files[0]);
+      }
+    },
+    [onFileSelected]
+  );
 
   const handleButtonClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -53,7 +62,10 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, isLoadi
         ) : (
           <>
             <div className="mb-4">
-              <i className="bi bi-cloud-upload" style={{ fontSize: '3rem' }}></i>
+              <i
+                className="bi bi-cloud-upload"
+                style={{ fontSize: '3rem' }}
+              ></i>
             </div>
             <h5>Drag and drop your bank statement file here</h5>
             <p className="text-muted">or</p>
@@ -69,6 +81,9 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onFileSelected, isLoadi
             />
             <p className="mt-3 text-muted">
               Supported formats: CSV, Excel (.xls, .xlsx) - Max 10MB
+            </p>
+            <p className="mt-3 text-muted">
+              Ensure the file is correctly formatted for analysis.
             </p>
           </>
         )}

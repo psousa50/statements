@@ -1,6 +1,12 @@
 import axios from 'axios';
-import { Transaction, Category, Source, StatementUploadResponse, StatementAnalysisResponse } from '../types';
-import { AnalyzeStatementParams, UploadStatementRequest } from '../hooks/useQueries';
+import {
+  Transaction,
+  Category,
+  Source,
+  StatementUploadResponse,
+  StatementAnalysisResponse,
+} from '../types';
+import { UploadStatementRequest } from '../hooks/useQueries';
 
 const API_URL = 'http://localhost:8000';
 
@@ -13,7 +19,10 @@ const api = axios.create({
 
 function toSnakeCase(obj?: any) {
   return Object.fromEntries(
-    Object.entries(obj || {}).map(([key, value]) => [key.replace(/([A-Z])/g, "_$1").toLowerCase(), value])
+    Object.entries(obj || {}).map(([key, value]) => [
+      key.replace(/([A-Z])/g, '_$1').toLowerCase(),
+      value,
+    ])
   );
 }
 
@@ -27,7 +36,9 @@ export const transactionsApi = {
     skip?: number;
     limit?: number;
   }): Promise<Transaction[]> => {
-    const response = await api.get('/transactions', { params: toSnakeCase(params) });
+    const response = await api.get('/transactions', {
+      params: toSnakeCase(params),
+    });
     return response.data;
   },
 
@@ -36,9 +47,12 @@ export const transactionsApi = {
     return response.data;
   },
 
-  updateCategory: async (transactionId: number, categoryId: number): Promise<Transaction> => {
+  updateCategory: async (
+    transactionId: number,
+    categoryId: number
+  ): Promise<Transaction> => {
     const response = await api.patch(`/transactions/${transactionId}`, {
-      categoryId: categoryId
+      categoryId: categoryId,
     });
     return response.data;
   },
@@ -55,14 +69,20 @@ export const categoriesApi = {
     return response.data;
   },
 
-  create: async (category: { categoryName: string; parentCategoryId?: number | null }): Promise<Category> => {
+  create: async (category: {
+    categoryName: string;
+    parentCategoryId?: number | null;
+  }): Promise<Category> => {
     const response = await api.post('/categories', category);
     return response.data;
   },
 };
 
 export const sourcesApi = {
-  getAll: async (params?: { skip?: number; limit?: number }): Promise<Source[]> => {
+  getAll: async (params?: {
+    skip?: number;
+    limit?: number;
+  }): Promise<Source[]> => {
     const response = await api.get('/sources', { params });
     return response.data;
   },
@@ -72,12 +92,18 @@ export const sourcesApi = {
     return response.data;
   },
 
-  create: async (source: { name: string; description?: string }): Promise<Source> => {
+  create: async (source: {
+    name: string;
+    description?: string;
+  }): Promise<Source> => {
     const response = await api.post('/sources', source);
     return response.data;
   },
 
-  update: async (id: number, source: { name: string; description?: string }): Promise<Source> => {
+  update: async (
+    id: number,
+    source: { name: string; description?: string }
+  ): Promise<Source> => {
     const response = await api.put(`/sources/${id}`, source);
     return response.data;
   },
@@ -92,24 +118,30 @@ export const uploadApi = {
   uploadStatement: async (
     uploadStatementParams: UploadStatementRequest
   ): Promise<StatementUploadResponse> => {
-    const response = await api.post('/transactions/upload', uploadStatementParams, {
+    const response = await api.post(
+      '/transactions/upload',
+      uploadStatementParams,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  },
+
+  analyzeFile: async (
+    formData: FormData
+  ): Promise<StatementAnalysisResponse> => {
+    const response = await api.post('/transactions/analyze', formData, {
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'multipart/form-data',
       },
     });
 
     return response.data;
   },
-
-  analyzeFile: async (analyzeStatementParams: AnalyzeStatementParams): Promise<StatementAnalysisResponse> => {
-    const response = await api.post('/transactions/analyze', analyzeStatementParams, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    return response.data;
-  }
 };
 
 export default api;

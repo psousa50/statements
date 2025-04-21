@@ -193,16 +193,10 @@ async function performAnalyseStatement(
   selectedFile: File,
   analyzeStatementMutation: StatementAnalysisMutation['mutateAsync'],
 ) {
-  const fileContent = await new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      const base64Content = base64.split(',')[1];
-      resolve(base64Content);
-    };
-    reader.readAsDataURL(selectedFile);
-  });
-  const analysisResult = await analyzeStatementMutation({ fileContent, fileName: selectedFile.name });
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+
+  const analysisResult = await analyzeStatementMutation(formData);
   const headerRow = analysisResult.statementSchema.headerRow;
   const initialMappings: Record<string, string> = {};
   const columnNames = analysisResult.previewRows.length > headerRow && analysisResult.previewRows[headerRow] ? analysisResult.previewRows[headerRow] : [];
@@ -221,7 +215,7 @@ async function performAnalyseStatement(
   return {
     analysisResult,
     initialMappings,
-  }
+  };
 }
 
 async function performFinalizeUpload(
