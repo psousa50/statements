@@ -12,6 +12,9 @@ class DynamicContentFileHandler(logging.Handler):
     def emit(self, record):
         try:
             os.makedirs(self.directory, exist_ok=True)
+
+            self.delete_old_files()
+
             prefix = getattr(record, "prefix", "log")
             ext = getattr(record, "ext", "log")
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S.%f")
@@ -23,3 +26,17 @@ class DynamicContentFileHandler(logging.Handler):
                 f.write(self.format(record))
         except Exception:
             self.handleError(record)
+
+    def delete_old_files(self):
+        now = datetime.now()
+        cutoff = now - timedelta(days=self.max_age_days)
+
+        for filename in os.listdir(self.directory):
+            filepath = os.path.join(self.directory, filename)
+            if os.path.isfile(filepath):
+                mtime = datetime.fromtimestamp(os.path.getmtime(filepath))
+                if mtime < cutoff:
+                    try:
+                        os.remove(filepath)
+                    except Exception:
+                        pass
